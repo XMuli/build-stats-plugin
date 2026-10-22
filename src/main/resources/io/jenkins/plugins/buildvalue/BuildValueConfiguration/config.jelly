@@ -1,0 +1,9 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="构建统计">
+    <f:entry title="每次失败的排查时间（分钟）" field="minutesPerFailure"
+             description="失败次数乘以该分钟数。不计入执行耗时。">
+      <f:number clazz="positive-number" min="0" max="480" default="15"/>
+    </f:entry>
+  </f:section>
+</j:jelly>

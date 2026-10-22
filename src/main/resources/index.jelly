@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  Build counts, duration, queue time, success rate, triggers, and pipeline stage time.
+</div>

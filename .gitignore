@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+preview/out/
+preview/classes/
+preview/index.html
+preview/index.next.html
+preview/signs.html
+preview/signs/
+work/

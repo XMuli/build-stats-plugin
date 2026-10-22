@@ -1,0 +1,8 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+  <j:set var="card" value="${it.markup}"/>
+  <j:if test="${card != null and card != ''}">
+    <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css?v=4" type="text/css"/>
+    <j:out value="${card}"/>
+  </j:if>
+</j:jelly>
