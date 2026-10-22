@@ -15,7 +15,7 @@
   <packaging>hpi</packaging>
 
   <name>Build Stats</name>
-  <url>https://github.com/XMuli/build-stats-plugin</url>
+  <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   <description>Build counts, duration, queue time, success rate, triggers, and pipeline stage time.</description>
 
   <licenses>
@@ -24,13 +24,6 @@
       <url>https://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
-
-  <developers>
-    <developer>
-      <id>XMuli</id>
-      <name>XMuli</name>
-    </developer>
-  </developers>
 
   <scm>
     <connection>scm:git:https://github.com/XMuli/build-stats-plugin.git</connection>
@@ -47,13 +40,26 @@
     <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
     <ban-deprecated-stapler.skip>false</ban-deprecated-stapler.skip>
     <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
+    <banObsoleteDependencyOverrides.skip>false</banObsoleteDependencyOverrides.skip>
+    <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
+        <version>7216.v6cb_72de2015d</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>ionicons-api</artifactId>
-      <version>94.vcc3065403257</version>
     </dependency>
   </dependencies>
 
