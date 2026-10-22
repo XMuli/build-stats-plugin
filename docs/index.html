@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>构建统计</title>
+  <meta name="description" content="构建统计是一个 Jenkins 插件，查看构建次数、耗时、排队、成功率，以及运行 Jenkins 的这台电脑。">
+  <link rel="icon" href="images/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    try {
+      if (localStorage.getItem("build-stats-site-lang") === "en") {
+        document.documentElement.lang = "en";
+      }
+    } catch (e) {}
+  </script>
+  <style>
+    :root {
+      --ink: #173044;
+      --muted: #4d6270;
+      --paper: #e7eef0;
+      --sheet: #f7fafb;
+      --line: #c5d2d8;
+      --blue: #3ca2ea;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "IBM Plex Sans SC", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 1.0625rem;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    .skip {
+      position: absolute;
+      left: 0.75rem;
+      top: 0.75rem;
+      transform: translateY(-160%);
+      background: #fff;
+      color: var(--ink);
+      padding: 0.45rem 0.7rem;
+      z-index: 3;
+    }
+
+    .skip:focus { transform: none; }
+
+    .en { display: none; }
+    html[lang="en"] .zh { display: none; }
+    html[lang="en"] .en { display: revert; }
+
+    a { color: inherit; }
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 2.5rem));
+      margin: 0 auto;
+      padding-bottom: 4.5rem;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem 1.5rem;
+      padding: 1.15rem 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .brand img { width: 1.65rem; height: 1.65rem; }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 1.1rem;
+    }
+
+    nav a { text-decoration: none; }
+    nav a:hover { text-decoration: underline; text-underline-offset: 0.22em; }
+
+    .lang { display: inline-flex; }
+
+    .lang button {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      font: inherit;
+      padding: 0.3rem 0.35rem;
+      cursor: pointer;
+      opacity: 0.5;
+    }
+
+    .lang button[aria-pressed="true"] {
+      opacity: 1;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 0.22em;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 16.5rem;
+      gap: 2rem 3rem;
+      align-items: end;
+      padding: 2.2rem 0 0.4rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.7rem, 6vw, 4.4rem);
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      line-height: 0.98;
+    }
+
+    .lede {
+      max-width: 36rem;
+      margin: 1rem 0 0;
+      color: var(--muted);
+      font-size: 1.15rem;
+    }
+
+    .hero figure {
+      margin: 0;
+      justify-self: end;
+    }
+
+    .hero img {
+      display: block;
+      width: 16.5rem;
+      height: auto;
+    }
+
+    .shot {
+      margin: 1.6rem 0 0;
+      background: var(--sheet);
+      border: 1px solid var(--line);
+    }
+
+    .shot a { display: block; text-decoration: none; }
+
+    .shot img {
+      display: block;
+      width: 100%;
+      height: min(34rem, 72vw);
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    #overview img {
+      height: auto;
+      aspect-ratio: 3360 / 2400;
+    }
+
+    .shot figcaption,
+    figure figcaption {
+      padding: 0.55rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .shot figcaption { padding: 0.65rem 0.9rem 0.75rem; }
+
+    section { margin-top: 3.6rem; }
+
+    h2 {
+      margin: 0;
+      font-size: 1.65rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .copy {
+      max-width: 36rem;
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+    }
+
+    .plates {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.15rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .plates img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #e4eaec;
+    }
+
+    .plate-name {
+      margin: 0.55rem 0 0;
+      font-weight: 600;
+    }
+
+    .plate-mean {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .pair {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.35fr);
+      gap: 1.4rem 2rem;
+      align-items: center;
+    }
+
+    .pair.flip { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr); }
+
+    .pair .shot { margin: 0; }
+
+    .entry {
+      margin: 1.15rem 0 0;
+    }
+
+    .entry img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    #install pre {
+      max-width: 36rem;
+      margin: 0.9rem 0 0;
+      padding: 0.1rem 0 0.1rem 0.85rem;
+      border-left: 3px solid var(--blue);
+      font: inherit;
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 3.4rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    footer p { margin: 0.15rem 0; }
+
+    footer a { color: var(--ink); }
+
+    @media (max-width: 800px) {
+      .wrap { width: min(1120px, calc(100% - 1.4rem)); }
+      .hero,
+      .pair,
+      .pair.flip {
+        grid-template-columns: 1fr;
+      }
+      .hero figure { justify-self: start; }
+      .hero img { width: min(16.5rem, 100%); }
+      .plates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .shot img { height: 16rem; }
+      #overview img { height: auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#content">
+    <span class="zh">跳到正文</span>
+    <span class="en">Skip to content</span>
+  </a>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#top">
+        <img src="images/icon.svg" alt="">
+        <span class="zh">构建统计</span>
+        <span class="en">Build Stats</span>
+      </a>
+      <nav aria-label="page">
+        <a href="#overview"><span class="zh">总览</span><span class="en">Overview</span></a>
+        <a href="#plates"><span class="zh">状态牌</span><span class="en">Plates</span></a>
+        <a href="#pipeline"><span class="zh">流水线</span><span class="en">Pipeline</span></a>
+        <a href="#machine"><span class="zh">本机</span><span class="en">Computer</span></a>
+        <a href="#install"><span class="zh">安装</span><span class="en">Install</span></a>
+        <a href="https://github.com/XMuli/build-stats-plugin">GitHub</a>
+        <div class="lang">
+          <button type="button" data-set-lang="zh-CN">中文</button>
+          <button type="button" data-set-lang="en">English</button>
+        </div>
+      </nav>
+    </header>
+
+    <main id="content">
+      <div class="hero" id="top">
+        <div>
+          <h1>
+            <span class="zh">构建统计</span>
+            <span class="en">Build Stats</span>
+          </h1>
+          <p class="lede zh">当前账号能看到的构建，收成一页：次数、耗时、排队、成功率，以及流水线阶段耗时。</p>
+          <p class="lede en">The builds you can see, on one page: counts, duration, queue time, success rate, and pipeline stage time.</p>
+        </div>
+        <figure>
+          <img src="images/home.png" alt="首页右下角的状态牌" data-alt-en="The status card on the Jenkins home page" width="640" height="760">
+        </figure>
+      </div>
+
+      <figure class="shot" id="overview">
+        <a href="images/overview.png">
+          <img src="images/overview.png" alt="构建统计总览：热力图、趋势和右侧状态牌" data-alt-en="Build Stats overview: heatmap, charts, and the status plate">
+        </a>
+        <figcaption>
+          <span class="zh">总览。点开看完整一页。</span>
+          <span class="en">Overview. Open the image for the full page.</span>
+        </figcaption>
+      </figure>
+
+      <section id="plates">
+        <h2><span class="zh">状态牌</span><span class="en">Status plates</span></h2>
+        <p class="copy zh">总览和每条流水线都挂着这块牌子，跟着当前范围内最新一次构建变。</p>
+        <p class="copy en">The overview and each pipeline carry this plate. It follows the newest build in the current range.</p>
+        <ul class="plates">
+          <li>
+            <img src="images/hybrid-zaiganle.jpg" alt="在干了" width="512" height="512">
+            <p class="plate-name">在干了</p>
+            <p class="plate-mean"><span class="zh">正在构建</span><span class="en">Running</span></p>
+          </li>
+          <li>
+            <img src="images/hybrid-ganwanle.jpg" alt="干完了" width="512" height="512">
+            <p class="plate-name">干完了</p>
+            <p class="plate-mean"><span class="zh">成功</span><span class="en">Success</span></p>
+          </li>
+          <li>
+            <img src="images/hybrid-ganbuwan.jpg" alt="干不完" width="512" height="512">
+            <p class="plate-name">干不完</p>
+            <p class="plate-mean"><span class="zh">失败或不稳定</span><span class="en">Failure or unstable</span></p>
+          </li>
+          <li>
+            <img src="images/hybrid-buganle.jpg" alt="不干了" width="512" height="512">
+            <p class="plate-name">不干了</p>
+            <p class="plate-mean"><span class="zh">中止或未构建</span><span class="en">Aborted or not built</span></p>
+          </li>
+        </ul>
+      </section>
+
+      <section id="pipeline">
+        <div class="pair">
+          <div>
+            <h2><span class="zh">一条流水线</span><span class="en">One pipeline</span></h2>
+            <p class="copy zh">每条流水线单独一页。有 Pipeline Stage View 的数据时，页上还有阶段耗时。</p>
+            <p class="copy en">Each pipeline has its own page. Stage duration appears when Pipeline Stage View data exists.</p>
+          </div>
+          <figure class="shot">
+            <a href="images/pipeline.png">
+              <img src="images/pipeline.png" alt="一条流水线的耗时、次数和成功率" data-alt-en="Duration, count, and success rate for one pipeline">
+            </a>
+            <figcaption>
+              <span class="zh">点开看完整一页。</span>
+              <span class="en">Open the image for the full page.</span>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="machine">
+        <div class="pair flip">
+          <figure class="shot">
+            <a href="images/host.png">
+              <img src="images/host.png" alt="本机的 CPU、内存、磁盘、显卡和网络" data-alt-en="This computer: CPU, memory, disk, GPU, and network">
+            </a>
+            <figcaption>
+              <span class="zh">点开看完整一页。</span>
+              <span class="en">Open the image for the full page.</span>
+            </figcaption>
+          </figure>
+          <div>
+            <h2><span class="zh">这台电脑</span><span class="en">This computer</span></h2>
+            <p class="copy zh">运行 Jenkins 的这台机器：CPU、内存、磁盘、显卡、网速，以及磁盘读写。</p>
+            <p class="copy en">The machine running Jenkins: CPU, memory, disk, GPU, network, and disk throughput.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="open">
+        <h2><span class="zh">从哪里进来</span><span class="en">How to open it</span></h2>
+        <p class="copy zh">右上角的折线图标进入插件。首页右下角的状态牌可以拖动、收到右边，或关闭。点图片进入构建统计，点下面的文字打开这一次构建。</p>
+        <p class="copy en">The chart icon at the top right opens the plugin. The home card can be dragged, docked, or closed. The picture opens Build Stats. The text opens that build.</p>
+        <figure class="entry">
+          <img src="images/entry.svg" alt="从 Jenkins 右上角图标和首页状态牌进入构建统计" data-alt-en="Open Build Stats from the chart icon or the home status card">
+        </figure>
+      </section>
+
+      <section id="install">
+        <h2><span class="zh">安装</span><span class="en">Install</span></h2>
+        <p class="copy zh">需要 Jenkins 2.555.3 或更新版本，控制器使用 Java 21。进入更新中心之前，用 JDK 21 打包，再从插件管理的高级设置里部署。</p>
+        <p class="copy en">Requires Jenkins 2.555.3 or newer, and Java 21 on the controller. Until it is in the update center, package with JDK 21 and deploy the file from the plugin manager.</p>
+        <pre><code>mvn package</code></pre>
+        <p class="copy zh">产物是 target/build-stats.hpi。页面地址是 /build-stats。</p>
+        <p class="copy en">The package is target/build-stats.hpi. The page is /build-stats.</p>
+      </section>
+
+      <footer>
+        <p>
+          <span class="zh">作者</span><span class="en">Author</span>
+          XMuli
+        </p>
+        <p><a href="https://github.com/XMuli/build-stats-plugin">github.com/XMuli/build-stats-plugin</a></p>
+      </footer>
+    </main>
+  </div>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var buttons = document.querySelectorAll("[data-set-lang]");
+
+      function apply(lang) {
+        var english = lang === "en";
+        root.lang = english ? "en" : "zh-CN";
+        document.title = english ? "Build Stats" : "构建统计";
+        buttons.forEach(function (btn) {
+          var on = (btn.getAttribute("data-set-lang") === "en") === english;
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        document.querySelectorAll("img[data-alt-en]").forEach(function (img) {
+          if (!img.dataset.altZh) img.dataset.altZh = img.alt;
+          img.alt = english ? img.dataset.altEn : img.dataset.altZh;
+        });
+        try {
+          localStorage.setItem("build-stats-site-lang", english ? "en" : "zh");
+        } catch (e) {}
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          apply(btn.getAttribute("data-set-lang"));
+        });
+      });
+
+      apply(root.lang === "en" ? "en" : "zh-CN");
+    })();
+  </script>
+</body>
+</html>
