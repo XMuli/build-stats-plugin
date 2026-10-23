@@ -1,27 +1,85 @@
 # Build Stats
 
-[中文说明](README.zh-CN.md)
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/"><img alt="Website" src="https://img.shields.io/badge/website-build--stats--plugin.xmuli.tech-3ca2ea"></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
+  <a href="https://www.jenkins.io/"><img alt="Jenkins 2.555.3 or newer" src="https://img.shields.io/badge/Jenkins-2.555.3%2B-D24939?logo=jenkins&logoColor=white"></a>
+  <a href="https://adoptium.net/"><img alt="Java 21" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-4d6270"></a>
+</p>
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/"><strong>Website</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://github.com/XMuli/build-stats-plugin"><strong>GitHub</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="README.zh-CN.md"><strong>中文说明</strong></a>
+</p>
 
 Build Stats turns the builds you can see into one page: counts, duration, queue time, success rate, who triggered them, and pipeline stage time. It also shows this computer's CPU, memory, disk, GPU, and network.
 
-Requires Jenkins 2.555.3 or newer, and Java 21 on the controller.
+Requires Jenkins 2.555.3 or newer, and Java 21 on the controller. After install, open `/build-stats`.
+
+## Screenshots
+
+### Overview
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#overview">
+    <img src="docs/images/overview.png" alt="Build Stats overview: heatmap, charts, and the status plate" width="860">
+  </a>
+</p>
+
+Heatmap, cumulative machine time, success and failure, build count, time of day, success rate, result, machine time, trigger, and trigger account. Numbers come from builds visible to the signed-in user. [Open this section on the website](https://build-stats-plugin.xmuli.tech/#overview).
+
+### One pipeline
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#pipeline">
+    <img src="docs/images/pipeline.png" alt="Duration, count, and success rate for one pipeline" width="860">
+  </a>
+</p>
+
+Each pipeline has its own page. Stage duration is included when Pipeline: Stage View data exists. [Open this section on the website](https://build-stats-plugin.xmuli.tech/#pipeline).
+
+### This computer
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#machine">
+    <img src="docs/images/host.png" alt="This computer: CPU, memory, disk, GPU, and network" width="860">
+  </a>
+</p>
+
+The machine running Jenkins: CPU, memory, disk, GPU, network, and disk throughput. [Open this section on the website](https://build-stats-plugin.xmuli.tech/#machine).
+
+### Status plates
+
+The overview and each pipeline carry this plate. It follows the newest build in the current range.
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/images/hybrid-zaiganle.jpg" alt="在干了" width="180"><br><strong>在干了</strong><br>Running</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganwanle.jpg" alt="干完了" width="180"><br><strong>干完了</strong><br>Success</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganbuwan.jpg" alt="干不完" width="180"><br><strong>干不完</strong><br>Failure or unstable</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-buganle.jpg" alt="不干了" width="180"><br><strong>不干了</strong><br>Aborted or not built</td>
+  </tr>
+</table>
+
+[See the plates on the website](https://build-stats-plugin.xmuli.tech/#plates).
 
 ## How to open it
 
 After install, the chart icon at the top right of Jenkins opens the plugin. On the Jenkins home page, the status card sits at the bottom right. Drag it, dock it to the right edge, or close it. The picture opens Build Stats. The text under the picture opens that build.
 
-![Where the plugin is opened from](docs/images/entry.svg)
+<p align="center">
+  <img src="docs/images/entry.svg" alt="Open Build Stats from the chart icon or the home status card" width="860">
+</p>
+
+<p align="center">
+  <img src="docs/images/home.png" alt="The status card on the Jenkins home page" width="280">
+</p>
 
 The page address is `/build-stats`.
-
-## What the page shows
-
-Numbers are computed from builds visible to the signed-in user.
-
-- Overview: heatmap, cumulative machine time, success and failure, build count, time of day, success rate, result, machine time, trigger, and trigger account.
-- One page per pipeline. Stage duration is included when Pipeline: Stage View data exists.
-- A status plate for the newest build in the current range.
-- This computer: CPU, memory, disk, GPU, network, and disk throughput.
 
 The page follows the Jenkins language. On About, Language can be set to 中文 or English. That choice stays in this browser and overrides Jenkins until you change it again.
 
@@ -32,6 +90,7 @@ The author and GitHub link are fixed. A replacement logo stays in this browser o
 | Field | Default |
 | --- | --- |
 | Author | XMuli |
+| Website | https://build-stats-plugin.xmuli.tech/ |
 | GitHub | https://github.com/XMuli/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 

@@ -1,27 +1,85 @@
 # 构建统计
 
-[English](README.md)
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/"><img alt="官网" src="https://img.shields.io/badge/website-build--stats--plugin.xmuli.tech-3ca2ea"></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
+  <a href="https://www.jenkins.io/"><img alt="Jenkins 2.555.3 或更新版本" src="https://img.shields.io/badge/Jenkins-2.555.3%2B-D24939?logo=jenkins&logoColor=white"></a>
+  <a href="https://adoptium.net/"><img alt="Java 21" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-4d6270"></a>
+</p>
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/"><strong>官网</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://github.com/XMuli/build-stats-plugin"><strong>GitHub</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="README.md"><strong>English</strong></a>
+</p>
 
 构建统计把当前账号能看到的构建收成一页：次数、耗时、排队、成功率、谁触发的，以及流水线阶段耗时。同时显示这台电脑的 CPU、内存、磁盘、显卡和网络。
 
-控制器需要 Jenkins 2.555.3 或更新版本，并使用 Java 21。
+控制器需要 Jenkins 2.555.3 或更新版本，并使用 Java 21。安装后打开 `/build-stats`。
+
+## 页面示例
+
+### 总览
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#overview">
+    <img src="docs/images/overview.png" alt="构建统计总览：热力图、趋势和右侧状态牌" width="860">
+  </a>
+</p>
+
+热力图、累计机器时间、成功和失败、构建次数、时间段、成功率、结果、机器时间、触发方式、触发账号。数字按当前账号能看到的构建现算。[在官网查看这一节](https://build-stats-plugin.xmuli.tech/#overview)。
+
+### 一条流水线
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#pipeline">
+    <img src="docs/images/pipeline.png" alt="一条流水线的耗时、次数和成功率" width="860">
+  </a>
+</p>
+
+每条流水线单独一页。有 Pipeline Stage View 数据时包含阶段耗时。[在官网查看这一节](https://build-stats-plugin.xmuli.tech/#pipeline)。
+
+### 这台电脑
+
+<p align="center">
+  <a href="https://build-stats-plugin.xmuli.tech/#machine">
+    <img src="docs/images/host.png" alt="本机的 CPU、内存、磁盘、显卡和网络" width="860">
+  </a>
+</p>
+
+运行 Jenkins 的这台机器：CPU、内存、磁盘、显卡、网速，以及磁盘读写。[在官网查看这一节](https://build-stats-plugin.xmuli.tech/#machine)。
+
+### 状态牌
+
+总览和每条流水线都挂着这块牌子，跟着当前范围内最新一次构建变。
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/images/hybrid-zaiganle.jpg" alt="在干了" width="180"><br><strong>在干了</strong><br>正在构建</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganwanle.jpg" alt="干完了" width="180"><br><strong>干完了</strong><br>成功</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganbuwan.jpg" alt="干不完" width="180"><br><strong>干不完</strong><br>失败或不稳定</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-buganle.jpg" alt="不干了" width="180"><br><strong>不干了</strong><br>中止或未构建</td>
+  </tr>
+</table>
+
+[在官网查看状态牌](https://build-stats-plugin.xmuli.tech/#plates)。
 
 ## 从哪里进来
 
 安装后，Jenkins 右上角的折线图标进入插件。首页右下角有一张状态牌，可以拖动、收到屏幕右边，或关闭。点图片进入构建统计，点图片下面的文字打开这一次构建。
 
-![入口示意](docs/images/entry.svg)
+<p align="center">
+  <img src="docs/images/entry.svg" alt="从 Jenkins 右上角图标和首页状态牌进入构建统计" width="860">
+</p>
+
+<p align="center">
+  <img src="docs/images/home.png" alt="首页右下角的状态牌" width="280">
+</p>
 
 页面地址是 `/build-stats`。
-
-## 页面上有什么
-
-数字按当前账号能看到的构建现算。
-
-- 总览：热力图、累计机器时间、成功和失败、构建次数、时间段、成功率、结果、机器时间、触发方式、触发账号。
-- 每条流水线一页。有 Pipeline Stage View 数据时包含阶段耗时。
-- 当前范围内最新一条构建的状态牌。
-- 本机：CPU、内存、磁盘、显卡、网速、磁盘读写。
 
 页面语言默认跟随 Jenkins。在「关于」里可以把语言改成中文或 English。这个选择只留在这台浏览器里，并盖过 Jenkins 的语言，直到再次修改。
 
@@ -32,6 +90,7 @@
 | 项 | 默认 |
 | --- | --- |
 | 作者 | XMuli |
+| 官网 | https://build-stats-plugin.xmuli.tech/ |
 | GitHub | https://github.com/XMuli/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 
