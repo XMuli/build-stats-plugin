@@ -104,12 +104,12 @@ public class BuildValueRootAction implements RootAction {
 
     private static int days(StaplerRequest2 request) {
         if (request == null) {
-            return 30;
+            return 0;
         }
         String raw = request.getParameter("days");
         if ("7".equals(raw) || "30".equals(raw) || "90".equals(raw) || "0".equals(raw)) {
             return Integer.parseInt(raw);
         }
-        return 30;
+        return 0;
     }
 }

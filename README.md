@@ -83,7 +83,7 @@ The page address is `/build-stats`. The page is in English unless you choose 中
 
 Time, language, the summary, and the status plate sit together at the top right.
 
-- **Time** is 7 days, 30 days, 90 days, or All. The default is 30 days.
+- **Time** is 7 days, 30 days, 90 days, or All. The default is All.
 - **Language** is the globe. English is used unless you choose 中文. That choice stays in this browser.
 - **Summary** is off until you turn it on. It shows the note about locally exported records, and the paragraph of runs, machine time, queue time, success rate, and trigger accounts.
 - **Status plate** is on by default, on the Jenkins home page and on each pipeline page. **Home only** keeps the card on the Jenkins home page and hides it after you open a pipeline.
