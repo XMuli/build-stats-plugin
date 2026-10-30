@@ -342,23 +342,23 @@
         <p class="copy en">The overview and each pipeline carry this plate. It follows the newest build in the current range.</p>
         <ul class="plates">
           <li>
-            <img src="images/hybrid-zaiganle.jpg" alt="在干了" width="512" height="512">
-            <p class="plate-name">在干了</p>
+            <img src="images/hybrid-zaiganle-en.jpg" data-src-en="images/hybrid-zaiganle-en.jpg" data-src-zh="images/hybrid-zaiganle.jpg" alt="ON IT!" width="512" height="512">
+            <p class="plate-name"><span class="zh">在干了</span><span class="en">ON IT!</span></p>
             <p class="plate-mean"><span class="zh">正在构建</span><span class="en">Running</span></p>
           </li>
           <li>
-            <img src="images/hybrid-ganwanle.jpg" alt="干完了" width="512" height="512">
-            <p class="plate-name">干完了</p>
+            <img src="images/hybrid-ganwanle-en.jpg" data-src-en="images/hybrid-ganwanle-en.jpg" data-src-zh="images/hybrid-ganwanle.jpg" alt="ALL DONE!" width="512" height="512">
+            <p class="plate-name"><span class="zh">干完了</span><span class="en">ALL DONE!</span></p>
             <p class="plate-mean"><span class="zh">成功</span><span class="en">Success</span></p>
           </li>
           <li>
-            <img src="images/hybrid-ganbuwan.jpg" alt="干不完" width="512" height="512">
-            <p class="plate-name">干不完</p>
+            <img src="images/hybrid-ganbuwan-en.jpg" data-src-en="images/hybrid-ganbuwan-en.jpg" data-src-zh="images/hybrid-ganbuwan.jpg" alt="NEVER-ENDING WORK" width="512" height="512">
+            <p class="plate-name"><span class="zh">干不完</span><span class="en">NEVER-ENDING WORK</span></p>
             <p class="plate-mean"><span class="zh">失败或不稳定</span><span class="en">Failure or unstable</span></p>
           </li>
           <li>
-            <img src="images/hybrid-buganle.jpg" alt="不干了" width="512" height="512">
-            <p class="plate-name">不干了</p>
+            <img src="images/hybrid-buganle-en.jpg" data-src-en="images/hybrid-buganle-en.jpg" data-src-zh="images/hybrid-buganle.jpg" alt="I QUIT!" width="512" height="512">
+            <p class="plate-name"><span class="zh">不干了</span><span class="en">I QUIT!</span></p>
             <p class="plate-mean"><span class="zh">中止或未构建</span><span class="en">Aborted or not built</span></p>
           </li>
         </ul>
@@ -445,6 +445,9 @@
         document.querySelectorAll("img[data-alt-en]").forEach(function (img) {
           if (!img.dataset.altZh) img.dataset.altZh = img.alt;
           img.alt = english ? img.dataset.altEn : img.dataset.altZh;
+        });
+        document.querySelectorAll("img[data-src-en]").forEach(function (img) {
+          img.src = english ? img.getAttribute("data-src-en") : img.getAttribute("data-src-zh");
         });
         try {
           localStorage.setItem("build-stats-site-lang", english ? "en" : "zh");

@@ -65,6 +65,10 @@ public final class PageHtml {
         range(html, host, dashboard.days, 90, "近 90 天");
         range(html, host, dashboard.days, 0, "全部");
         html.append("</nav><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label></header>");
+        html.append("<div class=\"bv-lang-guide\" hidden>");
+        html.append("<p data-i18n=\"guide.lang\" data-zh=\"可以在关于页里把语言改成中文或 English。没有选择时使用英文。\">You can change the language on About. English is used unless you choose otherwise.</p>");
+        html.append("<button type=\"button\" class=\"bv-lang-guide-open\" data-i18n=\"guide.open\" data-zh=\"打开关于\">Open About</button>");
+        html.append("<button type=\"button\" class=\"bv-lang-guide-ok\" data-i18n=\"guide.ok\" data-zh=\"知道了\">Got it</button></div>");
         if (dashboard.banner != null && !dashboard.banner.isEmpty()) {
             html.append("<p class=\"bv-banner\">").append(Texts.escape(dashboard.banner)).append("</p>");
         }
@@ -243,8 +247,8 @@ public final class PageHtml {
         if (sign.live) {
             html.append("<span class=\"bv-live-badge\">LIVE</span>");
         }
-        html.append("<img src=\"").append(Texts.escape(pluginAsset("images/" + sign.image)))
-                .append("\" alt=\"").append(Texts.escape(sign.alt)).append("\"></a>");
+        plateImg(html, sign.image, sign.alt);
+        html.append("</a>");
         int split = sign.caption == null ? -1 : sign.caption.indexOf('\n');
         String subject = split < 0 ? sign.caption : sign.caption.substring(0, split);
         String state = split < 0 ? "" : sign.caption.substring(split + 1);
@@ -269,6 +273,23 @@ public final class PageHtml {
         return html.toString();
     }
 
+    private static void plateImg(StringBuilder html, String image, String alt) {
+        String zh = pluginAsset("images/" + image);
+        String en = pluginAsset("images/" + englishPlate(image));
+        html.append("<img src=\"").append(Texts.escape(en))
+                .append("\" data-src-en=\"").append(Texts.escape(en))
+                .append("\" data-src-zh=\"").append(Texts.escape(zh))
+                .append("\" alt=\"").append(Texts.escape(alt)).append("\">");
+    }
+
+    private static String englishPlate(String image) {
+        int dot = image.lastIndexOf('.');
+        if (dot < 0) {
+            return image + "-en";
+        }
+        return image.substring(0, dot) + "-en" + image.substring(dot);
+    }
+
     private static void sign(StringBuilder html, String image, String alt, String caption, boolean live) {
         if (image == null || image.isEmpty()) {
             return;
@@ -280,8 +301,8 @@ public final class PageHtml {
         int split = caption == null ? -1 : caption.indexOf('\n');
         String subject = split < 0 ? caption : caption.substring(0, split);
         String state = split < 0 ? "" : caption.substring(split + 1);
-        html.append("<img src=\"").append(Texts.escape(pluginAsset("images/" + image)))
-                .append("\" alt=\"").append(Texts.escape(alt)).append("\"><figcaption><strong>")
+        plateImg(html, image, alt);
+        html.append("<figcaption><strong>")
                 .append(Texts.escape(subject)).append("</strong>");
         if (!state.isEmpty()) {
             html.append("<span class=\"bv-state ").append(stateClass(state)).append("\" data-i18n=\"")

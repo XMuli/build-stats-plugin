@@ -58,10 +58,10 @@ The overview and each pipeline carry this plate. It follows the newest build in 
 
 <table>
   <tr>
-    <td align="center" width="25%"><img src="docs/images/hybrid-zaiganle.jpg" alt="在干了" width="180"><br><strong>在干了</strong><br>Running</td>
-    <td align="center" width="25%"><img src="docs/images/hybrid-ganwanle.jpg" alt="干完了" width="180"><br><strong>干完了</strong><br>Success</td>
-    <td align="center" width="25%"><img src="docs/images/hybrid-ganbuwan.jpg" alt="干不完" width="180"><br><strong>干不完</strong><br>Failure or unstable</td>
-    <td align="center" width="25%"><img src="docs/images/hybrid-buganle.jpg" alt="不干了" width="180"><br><strong>不干了</strong><br>Aborted or not built</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-zaiganle-en.jpg" alt="ON IT!" width="180"><br><strong>ON IT!</strong><br>Running</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganwanle-en.jpg" alt="ALL DONE!" width="180"><br><strong>ALL DONE!</strong><br>Success</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-ganbuwan-en.jpg" alt="NEVER-ENDING WORK" width="180"><br><strong>NEVER-ENDING WORK</strong><br>Failure or unstable</td>
+    <td align="center" width="25%"><img src="docs/images/hybrid-buganle-en.jpg" alt="I QUIT!" width="180"><br><strong>I QUIT!</strong><br>Aborted or not built</td>
   </tr>
 </table>
 
