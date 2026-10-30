@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>构建统计</title>
-  <meta name="description" content="构建统计是一个 Jenkins 插件，查看构建次数、耗时、排队、成功率，以及运行 Jenkins 的这台电脑。">
+  <title>Build Stats</title>
+  <meta name="description" content="Build Stats is a Jenkins plugin for build counts, duration, queue time, success rate, and the computer running Jenkins.">
   <link rel="icon" href="images/icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     try {
-      if (localStorage.getItem("build-stats-site-lang") === "en") {
-        document.documentElement.lang = "en";
+      if (localStorage.getItem("build-stats-site-lang") === "zh") {
+        document.documentElement.lang = "zh-CN";
       }
     } catch (e) {}
   </script>
@@ -305,8 +305,8 @@
         <a href="#install"><span class="zh">安装</span><span class="en">Install</span></a>
         <a href="https://github.com/XMuli/build-stats-plugin">GitHub</a>
         <div class="lang">
-          <button type="button" data-set-lang="zh-CN">中文</button>
-          <button type="button" data-set-lang="en">English</button>
+          <button type="button" data-set-lang="zh-CN" aria-pressed="false">中文</button>
+          <button type="button" data-set-lang="en" aria-pressed="true">English</button>
         </div>
       </nav>
     </header>
@@ -406,6 +406,8 @@
         <h2><span class="zh">从哪里进来</span><span class="en">How to open it</span></h2>
         <p class="copy zh">右上角的折线图标进入插件。首页右下角的状态牌可以拖动、收到右边，或关闭。点图片进入构建统计，点下面的文字打开这一次构建。</p>
         <p class="copy en">The chart icon at the top right opens the plugin. The home card can be dragged, docked, or closed. The picture opens Build Stats. The text opens that build.</p>
+        <p class="copy zh">插件页右上角还有时间、语言、说明和状态牌。时间默认近 30 天。语言默认英文。说明默认关闭，打开后才显示次数、机器时间、排队、成功率和触发账号那段话。状态牌默认各页都显示，选「仅首页」后只留在 Jenkins 首页。</p>
+        <p class="copy en">The plugin page also keeps time, language, the summary, and the status plate at the top right. Time defaults to 30 days. Language defaults to English. The summary stays off until you turn it on, and then shows runs, machine time, queue time, success rate, and trigger accounts. The status plate is on for every page. Home only leaves it on the Jenkins home page.</p>
         <figure class="entry">
           <img src="images/entry.svg" alt="从 Jenkins 右上角图标和首页状态牌进入构建统计" data-alt-en="Open Build Stats from the chart icon or the home status card">
         </figure>

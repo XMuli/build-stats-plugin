@@ -379,7 +379,11 @@ public final class PageHtml {
     }
 
     private static void tools(StringBuilder html, String host, int days) {
-        html.append("<div class=\"bv-nav-tools\"><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label>");
+        html.append("<div class=\"bv-nav-tools\"><label class=\"bv-summary-switch\"><input type=\"checkbox\"><span data-i18n=\"summary.toggle\" data-zh=\"说明\">Summary</span></label>");
+        html.append("<label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label>");
+        html.append("<select class=\"bv-sign-where\" aria-label=\"Status plate\">");
+        html.append("<option value=\"all\" selected data-i18n=\"sign.all\" data-zh=\"全部页面\">All pages</option>");
+        html.append("<option value=\"home\" data-i18n=\"sign.home\" data-zh=\"仅首页\">Home only</option></select>");
         html.append("<label class=\"bv-range-menu\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"M8 3v4M16 3v4M4 10h16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>");
         html.append("<select class=\"bv-range\" data-base=\"");
         html.append(host.isEmpty() ? "?" : "?host=" + Texts.escape(host) + "&");

@@ -79,9 +79,14 @@ After install, the chart icon at the top right of Jenkins opens the plugin. On t
   <img src="docs/images/home.png" alt="The status card on the Jenkins home page" width="280">
 </p>
 
-The page address is `/build-stats`.
+The page address is `/build-stats`. The page is in English unless you choose 中文.
 
-The page follows the Jenkins language. On About, Language can be set to 中文 or English. That choice stays in this browser and overrides Jenkins until you change it again.
+Time, language, the summary, and the status plate sit together at the top right.
+
+- **Time** is 7 days, 30 days, 90 days, or All. The default is 30 days.
+- **Language** is the globe. English is used unless you choose 中文. That choice stays in this browser.
+- **Summary** is off until you turn it on. It shows the note about locally exported records, and the paragraph of runs, machine time, queue time, success rate, and trigger accounts.
+- **Status plate** is on for every page. **Home only** leaves the card on the Jenkins home page and hides it on Build Stats and on each pipeline.
 
 ## About
 
