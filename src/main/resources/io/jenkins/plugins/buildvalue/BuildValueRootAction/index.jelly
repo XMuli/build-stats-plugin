@@ -1,6 +1,6 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
-  <l:layout title="构建统计" norefresh="true">
+  <l:layout title="Build Stats" norefresh="true">
     <l:main-panel>
       <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css" type="text/css"/>
       <j:out value="${it.body}"/>
