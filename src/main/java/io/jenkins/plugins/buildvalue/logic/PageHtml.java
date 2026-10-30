@@ -20,8 +20,12 @@ public final class PageHtml {
         StringBuilder html = new StringBuilder(12_000);
         html.append("<div class=\"bv\" data-logo=\"").append(pluginAsset("images/logo.jpg")).append("\">");
         if (dashboard.empty) {
+            html.append("<header class=\"bv-nav\"><span class=\"bv-crumb\" data-i18n=\"nav.brand\">构建统计</span>");
+            tools(html, host, dashboard.days);
+            html.append("</header>");
             html.append("<p class=\"bv-empty\" data-i18n=\"empty.builds\" data-zh=\"无构建记录。\">No builds yet.</p>");
             note(html, dashboard);
+            html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("\"></script>");
             html.append("</div>");
             return html.toString();
         }
@@ -59,19 +63,8 @@ public final class PageHtml {
         if (!host.isEmpty()) {
             html.append("<span class=\"bv-range-label\" data-i18n=\"nav.machine\">机器</span>");
         }
-        html.append("<span class=\"bv-range-label\" data-i18n=\"nav.time\">时间</span><nav class=\"bv-ranges\">");
-        range(html, host, dashboard.days, 7, "近 7 天");
-        range(html, host, dashboard.days, 30, "近 30 天");
-        range(html, host, dashboard.days, 90, "近 90 天");
-        range(html, host, dashboard.days, 0, "全部");
-        html.append("</nav><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label>");
-        html.append("<div class=\"bv-lang-menu\"><button type=\"button\" class=\"bv-lang-btn\" aria-haspopup=\"listbox\" aria-expanded=\"false\" aria-label=\"Language\">");
-        html.append("<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/>");
-        html.append("<path d=\"M3 12h18M12 3c2.5 2.8 3.8 6 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-6-3.8-9s1.3-6.2 3.8-9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>");
-        html.append("<span class=\"bv-lang-code\">EN</span></button>");
-        html.append("<div class=\"bv-lang-pop\" hidden role=\"listbox\">");
-        html.append("<button type=\"button\" data-lang=\"en\" role=\"option\">English</button>");
-        html.append("<button type=\"button\" data-lang=\"zh\" role=\"option\">中文</button></div></div></header>");
+        tools(html, host, dashboard.days);
+        html.append("</header>");
         html.append("<div class=\"bv-lang-guide\" hidden>");
         html.append("<p data-i18n=\"guide.lang\" data-zh=\"语言在右上角的地球图标里切换。没有选择时使用英文。\">The language control is the globe at the top right. English is used unless you choose otherwise.</p>");
         html.append("<button type=\"button\" class=\"bv-lang-guide-ok\" data-i18n=\"guide.ok\" data-zh=\"知道了\">Got it</button></div>");
@@ -385,16 +378,33 @@ public final class PageHtml {
         html.append("</article>");
     }
 
-    private static void range(StringBuilder html, String host, int current, int days, String label) {
-        html.append("<a");
+    private static void tools(StringBuilder html, String host, int days) {
+        html.append("<div class=\"bv-nav-tools\"><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label>");
+        html.append("<label class=\"bv-range-menu\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"M8 3v4M16 3v4M4 10h16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>");
+        html.append("<select class=\"bv-range\" data-base=\"");
+        html.append(host.isEmpty() ? "?" : "?host=" + Texts.escape(host) + "&");
+        html.append("\" aria-label=\"Time\">");
+        rangeOption(html, days, 7, "range.7", "7 days", "近 7 天");
+        rangeOption(html, days, 30, "range.30", "30 days", "近 30 天");
+        rangeOption(html, days, 90, "range.90", "90 days", "近 90 天");
+        rangeOption(html, days, 0, "range.all", "All", "全部");
+        html.append("</select></label>");
+        html.append("<div class=\"bv-lang-menu\"><button type=\"button\" class=\"bv-lang-btn\" aria-haspopup=\"listbox\" aria-expanded=\"false\" aria-label=\"Language\">");
+        html.append("<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/>");
+        html.append("<path d=\"M3 12h18M12 3c2.5 2.8 3.8 6 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-6-3.8-9s1.3-6.2 3.8-9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>");
+        html.append("<span class=\"bv-lang-code\">EN</span></button>");
+        html.append("<div class=\"bv-lang-pop\" hidden role=\"listbox\">");
+        html.append("<button type=\"button\" data-lang=\"en\" role=\"option\">English</button>");
+        html.append("<button type=\"button\" data-lang=\"zh\" role=\"option\">中文</button></div></div></div>");
+    }
+
+    private static void rangeOption(StringBuilder html, int current, int days, String key, String english, String chinese) {
+        html.append("<option value=\"").append(days).append("\"");
         if (current == days) {
-            html.append(" class=\"is-on\"");
+            html.append(" selected");
         }
-        html.append(" href=\"?");
-        if (!host.isEmpty()) {
-            html.append("host=").append(host).append("&");
-        }
-        html.append("days=").append(days).append("\"").append(i18nAttr(label)).append(">").append(label).append("</a>");
+        html.append(" data-i18n=\"").append(key).append("\" data-zh=\"").append(chinese).append("\">")
+                .append(english).append("</option>");
     }
 
     private static void link(StringBuilder html, String href, String label) {

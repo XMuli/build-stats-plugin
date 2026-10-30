@@ -75,9 +75,39 @@
   border-bottom: 1px solid var(--panel-border-color, #e4e9ee);
 }
 
+.bv-nav-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.bv-range-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px 0 8px;
+  border: 1px solid var(--panel-border-color, #d7dee6);
+  border-radius: 8px;
+  background: var(--background, #fff);
+  color: var(--text-color, #17242c);
+}
+
+.bv-range {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  outline: none;
+}
+
 .bv-lang-menu {
   position: relative;
-  margin-left: auto;
   flex: 0 0 auto;
 }
 
