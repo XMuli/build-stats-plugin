@@ -49,7 +49,6 @@ public final class BuildValueComputer {
         Totals other = totals(filter(current, "other"));
         boolean empty = current.isEmpty();
 
-        String headline = headline(days, all, pack, test, prev);
         String wasteLine = wasteLine(all, safeMinutes);
         Dashboard.Kpi kpi = kpi(days, all, prev, compare);
 
@@ -69,7 +68,9 @@ public final class BuildValueComputer {
         List<Dashboard.JobRow> rows = pipelineRows(byJob, zone);
         Ledger ledger = timeLedger(current, now, zone);
         List<Dashboard.PersonRow> people = peopleOf(current, zone, true);
-        String effort = headline + " Triggered by " + people.size() + " accounts.";
+        String effort = Texts.both(
+                headline(days, all, pack, test, prev, false) + " Triggered by " + people.size() + " accounts.",
+                headline(days, all, pack, test, prev, true) + "这些构建由 " + people.size() + " 个账号触发。");
         Sign sign = signOf(current);
         Sign home = signOf(samples);
 
@@ -93,7 +94,7 @@ public final class BuildValueComputer {
                 dailyHoursChart(current, now, zone),
                 SvgCharts.columns("Time of day", hourLabels(current, zone), hourValues(current, zone), "#3479B0"),
                 Integer.toString(all.success),
-                Texts.duration(all.failedDuration + all.abortedDuration),
+                Texts.durations(all.failedDuration + all.abortedDuration),
                 people,
                 tabs,
                 ledger.chart,
@@ -259,8 +260,8 @@ public final class BuildValueComputer {
             totalHours.add(cum / 3_600_000d);
             successHours.add(cumSuccess / 3_600_000d);
             wasteHours.add(cumWaste / 3_600_000d);
-            rows.add(new Dashboard.CumRow(label, Texts.duration(period), Texts.duration(cum), Texts.duration(cumSuccess),
-                    Texts.duration(cumWaste)));
+            rows.add(new Dashboard.CumRow(label, Texts.durations(period), Texts.durations(cum), Texts.durations(cumSuccess),
+                    Texts.durations(cumWaste)));
         }
         Collections.reverse(rows);
         ledger.rows = List.copyOf(rows);
@@ -439,7 +440,7 @@ public final class BuildValueComputer {
                     sample.label(),
                     Texts.resultLabel(sample.result),
                     Texts.resultClass(sample.result),
-                    sample.running() ? "Running" : Texts.duration(sample.durationMs),
+                    sample.running() ? Texts.both("Running", "进行中") : Texts.durations(sample.durationMs),
                     failed,
                     Texts.when(sample.startMs, zone),
                     sample.actor));
@@ -454,10 +455,10 @@ public final class BuildValueComputer {
                 BuildSample.shortName(jobName),
                 jobUrl,
                 Integer.toString(cur.builds),
-                cur.completed == 0 ? "—" : Texts.duration(cur.duration / cur.completed),
+                cur.completed == 0 ? "—" : Texts.durations(cur.duration / cur.completed),
                 Texts.percent(cur.success, cur.completed),
                 Integer.toString(cur.failure),
-                Texts.duration(cur.duration),
+                Texts.durations(cur.duration),
                 compareText,
                 SvgCharts.line(durationTitle, labels, minutes, "#3479B0", false, "m"),
                 SvgCharts.bars(BuildSample.shortName(jobName) + " stage average", bars),
@@ -612,15 +613,15 @@ public final class BuildValueComputer {
                     last.jobUrl,
                     BuildSample.shortName(entry.getKey()),
                     cur.builds,
-                    Texts.duration(cur.duration),
-                    cur.completed == 0 ? "—" : Texts.duration(cur.duration / cur.completed),
+                    Texts.durations(cur.duration),
+                    cur.completed == 0 ? "—" : Texts.durations(cur.duration / cur.completed),
                     Texts.percent(cur.success, cur.completed),
                     cur.failure,
                     Texts.resultLabel(last.result),
                     Texts.resultClass(last.result),
                     Texts.when(last.startMs, zone),
                     cur.aborted,
-                    Texts.duration(cur.failedDuration + cur.abortedDuration),
+                    Texts.durations(cur.failedDuration + cur.abortedDuration),
                     topPerson(builds)));
         }
         rows.sort(Comparator.comparingInt((Dashboard.JobRow row) -> row.builds).reversed());
@@ -811,7 +812,7 @@ public final class BuildValueComputer {
                     (int) row[1],
                     (int) row[2],
                     (int) row[3],
-                    Texts.duration(row[4]),
+                    Texts.durations(row[4]),
                     Texts.percent((int) row[1], finished),
                     Texts.when(row[5], zone),
                     touched));
@@ -907,34 +908,58 @@ public final class BuildValueComputer {
         return JOB_COLORS[index % JOB_COLORS.length];
     }
 
-    private static String headline(int days, Totals all, Totals pack, Totals test, Totals prev) {
+    private static String headline(int days, Totals all, Totals pack, Totals test, Totals prev, boolean chinese) {
         StringBuilder text = new StringBuilder();
         if (days <= 0) {
-            text.append("All visible builds");
+            text.append(chinese ? "全部可见构建" : "All visible builds");
+        } else if (chinese) {
+            text.append("近 ").append(days).append(" 天");
         } else {
             text.append("Last ").append(days).append(" days");
         }
-        text.append(": ").append(all.builds).append(" runs, machine time ").append(Texts.duration(all.duration))
-                .append(", queue ").append(Texts.duration(all.queue)).append(". ");
+        if (chinese) {
+            text.append("共 ").append(all.builds).append(" 次，机器执行 ").append(Texts.duration(all.duration, true))
+                    .append("，排队 ").append(Texts.duration(all.queue, true)).append("。");
+        } else {
+            text.append(": ").append(all.builds).append(" runs, machine time ").append(Texts.duration(all.duration))
+                    .append(", queue ").append(Texts.duration(all.queue)).append(". ");
+        }
         if (pack.builds > 0) {
-            text.append("LADM 2.0 package ").append(pack.builds).append(" runs, average ")
-                    .append(pack.completed == 0 ? "—" : Texts.duration(pack.duration / pack.completed))
-                    .append(", success rate ").append(Texts.percent(pack.success, pack.completed)).append(". ");
+            String average = pack.completed == 0 ? "—" : Texts.duration(pack.duration / pack.completed, chinese);
+            if (chinese) {
+                text.append("LADM 2.0 整包 ").append(pack.builds).append(" 次，平均 ").append(average)
+                        .append("，成功率 ").append(Texts.percent(pack.success, pack.completed)).append("。");
+            } else {
+                text.append("LADM 2.0 package ").append(pack.builds).append(" runs, average ").append(average)
+                        .append(", success rate ").append(Texts.percent(pack.success, pack.completed)).append(". ");
+            }
         }
         if (test.builds > 0) {
-            text.append("Test package ").append(test.builds).append(" runs, success rate ")
-                    .append(Texts.percent(test.success, test.completed)).append(". ");
+            if (chinese) {
+                text.append("测试包 ").append(test.builds).append(" 次，成功率 ")
+                        .append(Texts.percent(test.success, test.completed)).append("。");
+            } else {
+                text.append("Test package ").append(test.builds).append(" runs, success rate ")
+                        .append(Texts.percent(test.success, test.completed)).append(". ");
+            }
         }
-        text.append("Success ").append(all.success).append(". ");
-        text.append("Failure time ").append(Texts.duration(all.failedDuration)).append(".");
+        if (chinese) {
+            text.append("成功 ").append(all.success).append(" 次。");
+            text.append("失败耗时 ").append(Texts.duration(all.failedDuration, true)).append("。");
+        } else {
+            text.append("Success ").append(all.success).append(". ");
+            text.append("Failure time ").append(Texts.duration(all.failedDuration)).append(".");
+        }
         if (days > 0) {
-            text.append(rateSentence(days, all, prev));
+            text.append(rateSentence(days, all, prev, chinese));
         }
         return text.toString();
     }
 
     private static String wasteLine(Totals all, int minutes) {
-        return "Failure time " + Texts.duration(all.failedDuration) + ", abort time " + Texts.duration(all.abortedDuration) + ".";
+        return Texts.both(
+                "Failure time " + Texts.duration(all.failedDuration) + ", abort time " + Texts.duration(all.abortedDuration) + ".",
+                "失败耗时 " + Texts.duration(all.failedDuration, true) + "，中止耗时 " + Texts.duration(all.abortedDuration, true) + "。");
     }
 
     private static Dashboard.Kpi kpi(int days, Totals all, Totals prev, boolean compare) {
@@ -959,60 +984,83 @@ public final class BuildValueComputer {
         return new Dashboard.Kpi(
                 Integer.toString(all.builds),
                 countSentence(days, all.builds, prev.builds, compare),
-                Texts.duration(all.duration),
-                avgSentence(days, all, prev, compare),
+                Texts.durations(all.duration),
+                Texts.both(
+                        avgSentence(days, all, prev, compare, false).stripLeading(),
+                        avgSentence(days, all, prev, compare, true).stripLeading()),
                 durationClass,
                 Texts.duration(all.queue),
                 Texts.percent(all.success, all.completed),
-                rateSentence(days, all, prev),
+                rateSentence(days, all, prev, false),
                 successClass);
     }
 
     private static String jobCompare(int days, Totals cur, Totals prev, boolean compare) {
         if (!compare) {
-            return "All time. Not compared with the previous window.";
+            return Texts.both("All time. Not compared with the previous window.", "全部时间，不和上一窗口对比。");
         }
         if (prev.completed == 0 || cur.completed == 0) {
-            return "The previous " + days + " days do not have enough finished builds to compare.";
+            return Texts.both(
+                    "The previous " + days + " days do not have enough finished builds to compare.",
+                    "前 " + days + " 天没有足够的完成记录，暂不对比。");
         }
-        return rateSentence(days, cur, prev) + avgSentence(days, cur, prev, true);
+        String english = (rateSentence(days, cur, prev, false) + avgSentence(days, cur, prev, true, false)).stripLeading();
+        String chinese = (rateSentence(days, cur, prev, true) + avgSentence(days, cur, prev, true, true)).stripLeading();
+        return Texts.both(english, chinese);
     }
 
     private static String countSentence(int days, int current, int previous, boolean compare) {
         if (!compare) {
-            return "Not compared with the previous window";
+            return Texts.both("Not compared with the previous window", "不和上一窗口对比");
         }
         if (previous == 0) {
-            return "No builds in the previous " + days + " days";
+            return Texts.both(
+                    "No builds in the previous " + days + " days",
+                    "前 " + days + " 天没有记录");
         }
         int delta = current - previous;
         if (delta == 0) {
-            return "Same as the previous " + days + " days";
+            return Texts.both(
+                    "Same as the previous " + days + " days",
+                    "与前 " + days + " 天相同");
         }
         if (delta > 0) {
-            return delta + " more than the previous " + days + " days";
+            return Texts.both(
+                    delta + " more than the previous " + days + " days",
+                    "比前 " + days + " 天多 " + delta + " 次");
         }
-        return (-delta) + " fewer than the previous " + days + " days";
+        return Texts.both(
+                (-delta) + " fewer than the previous " + days + " days",
+                "比前 " + days + " 天少 " + (-delta) + " 次");
     }
 
-    private static String rateSentence(int days, Totals current, Totals previous) {
+    private static String rateSentence(int days, Totals current, Totals previous, boolean chinese) {
         if (days <= 0) {
             return "";
         }
         if (current.completed == 0 || previous.completed == 0) {
-            return " The previous " + days + " days do not have enough finished builds to compare success rate.";
+            return chinese
+                    ? "前 " + days + " 天没有足够的完成记录，暂不对比成功率。"
+                    : " The previous " + days + " days do not have enough finished builds to compare success rate.";
         }
         double pp = (100d * current.success / current.completed) - (100d * previous.success / previous.completed);
+        String points = Texts.points(pp);
         if (Math.abs(pp) < 0.05) {
-            return " Success rate is level with the previous " + days + " days.";
+            return chinese
+                    ? "成功率与前 " + days + " 天持平。"
+                    : " Success rate is level with the previous " + days + " days.";
         }
         if (pp > 0) {
-            return " Success rate is " + Texts.points(pp) + " points above the previous " + days + " days.";
+            return chinese
+                    ? "成功率比前 " + days + " 天高 " + points + " 个百分点。"
+                    : " Success rate is " + points + " points above the previous " + days + " days.";
         }
-        return " Success rate is " + Texts.points(pp) + " points below the previous " + days + " days.";
+        return chinese
+                ? "成功率比前 " + days + " 天低 " + points + " 个百分点。"
+                : " Success rate is " + points + " points below the previous " + days + " days.";
     }
 
-    private static String avgSentence(int days, Totals current, Totals previous, boolean compare) {
+    private static String avgSentence(int days, Totals current, Totals previous, boolean compare, boolean chinese) {
         if (!compare || current.completed == 0 || previous.completed == 0) {
             return "";
         }
@@ -1020,12 +1068,19 @@ public final class BuildValueComputer {
         long prevAvg = previous.duration / previous.completed;
         long diff = Math.abs(curAvg - prevAvg);
         if (diff < 1000) {
-            return " Average duration is level with the previous " + days + " days.";
+            return chinese
+                    ? "平均耗时与前 " + days + " 天持平。"
+                    : " Average duration is level with the previous " + days + " days.";
         }
+        String duration = Texts.duration(diff, chinese);
         if (curAvg < prevAvg) {
-            return " Average duration is " + Texts.duration(diff) + " shorter than the previous " + days + " days.";
+            return chinese
+                    ? "平均耗时比前 " + days + " 天少 " + duration + "。"
+                    : " Average duration is " + duration + " shorter than the previous " + days + " days.";
         }
-        return " Average duration is " + Texts.duration(diff) + " longer than the previous " + days + " days.";
+        return chinese
+                ? "平均耗时比前 " + days + " 天多 " + duration + "。"
+                : " Average duration is " + duration + " longer than the previous " + days + " days.";
     }
 
     private static String otherSummary(Totals other, Map<String, List<BuildSample>> byJob) {
@@ -1036,24 +1091,38 @@ public final class BuildValueComputer {
             }
         }
         if (jobs == 0) {
-            return "Outside package and test jobs: 0 jobs.";
+            return Texts.both("Outside package and test jobs: 0 jobs.", "整包、测试包以外：0 个任务。");
         }
-        return "Other jobs: " + jobs + ", " + other.builds + " runs, machine time " + Texts.duration(other.duration)
-                + ", success rate " + Texts.percent(other.success, other.completed) + ".";
+        String rate = Texts.percent(other.success, other.completed);
+        return Texts.both(
+                "Other jobs: " + jobs + ", " + other.builds + " runs, machine time " + Texts.duration(other.duration)
+                        + ", success rate " + rate + ".",
+                "其它任务 " + jobs + " 个，构建 " + other.builds + " 次，机器执行 " + Texts.duration(other.duration, true)
+                        + "，成功率 " + rate + "。");
     }
 
     private static String methodNote(int days, int minutes) {
-        String window = days <= 0
+        String english = days <= 0
                 ? "All time starts at the earliest visible build."
                 : "The last " + days + " days use build start time.";
-        return window
-                + " Times use the Jenkins controller time zone. Duration excludes queue time. Queue time is from entering the queue until the build starts."
+        String chinese = days <= 0
+                ? "选择全部时，从最早一条可见构建算起。"
+                : "近 " + days + " 天按构建开始时间。";
+        english += " Times use the Jenkins controller time zone. Duration excludes queue time. Queue time is from entering the queue until the build starts."
                 + " Success rate = successes / finished builds. A running build is not finished. Successes are builds whose result is SUCCESS."
                 + " Counts are calendar days, and a day with no builds is 0. Aborted means result ABORTED."
                 + " When the span is longer than 120 days, cumulative charts use weeks."
                 + " Trigger account is the userId on the build cause."
                 + " A package job name contains ladm and not test. A test job name contains both."
                 + " Stage time comes from Pipeline: Stage View. Stages that did not run are omitted. Failed stage is the first failed stage of that build.";
+        chinese += "时区为 Jenkins 所在时区。执行耗时不含排队。排队是从进入队列到开始。"
+                + "成功率 = 成功 / 已完成。构建中不计入已完成。成功是结果为 SUCCESS 的构建。"
+                + "次数按自然日，没有构建的日子记 0。中止是结果为 ABORTED。"
+                + "跨度超过 120 天时，累计图按周。"
+                + "触发账号是构建原因里的 userId。"
+                + "整包是任务名包含 ladm 且不含 test。测试包是两者都包含。"
+                + "阶段耗时来自 Pipeline: Stage View。未执行的阶段不计。失败阶段是该次第一个失败阶段。";
+        return Texts.both(english, chinese);
     }
 
     private static List<BuildSample> filter(List<BuildSample> samples, String group) {

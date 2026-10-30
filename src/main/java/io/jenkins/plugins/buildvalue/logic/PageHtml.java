@@ -64,15 +64,21 @@ public final class PageHtml {
         range(html, host, dashboard.days, 30, "近 30 天");
         range(html, host, dashboard.days, 90, "近 90 天");
         range(html, host, dashboard.days, 0, "全部");
-        html.append("</nav><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label></header>");
+        html.append("</nav><label class=\"bv-sign-switch\"><input type=\"checkbox\" checked><span data-i18n=\"sign.toggle\">状态牌</span></label>");
+        html.append("<div class=\"bv-lang-menu\"><button type=\"button\" class=\"bv-lang-btn\" aria-haspopup=\"listbox\" aria-expanded=\"false\" aria-label=\"Language\">");
+        html.append("<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/>");
+        html.append("<path d=\"M3 12h18M12 3c2.5 2.8 3.8 6 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-6-3.8-9s1.3-6.2 3.8-9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>");
+        html.append("<span class=\"bv-lang-code\">EN</span></button>");
+        html.append("<div class=\"bv-lang-pop\" hidden role=\"listbox\">");
+        html.append("<button type=\"button\" data-lang=\"en\" role=\"option\">English</button>");
+        html.append("<button type=\"button\" data-lang=\"zh\" role=\"option\">中文</button></div></div></header>");
         html.append("<div class=\"bv-lang-guide\" hidden>");
-        html.append("<p data-i18n=\"guide.lang\" data-zh=\"可以在关于页里把语言改成中文或 English。没有选择时使用英文。\">You can change the language on About. English is used unless you choose otherwise.</p>");
-        html.append("<button type=\"button\" class=\"bv-lang-guide-open\" data-i18n=\"guide.open\" data-zh=\"打开关于\">Open About</button>");
+        html.append("<p data-i18n=\"guide.lang\" data-zh=\"语言在右上角的地球图标里切换。没有选择时使用英文。\">The language control is the globe at the top right. English is used unless you choose otherwise.</p>");
         html.append("<button type=\"button\" class=\"bv-lang-guide-ok\" data-i18n=\"guide.ok\" data-zh=\"知道了\">Got it</button></div>");
         if (dashboard.banner != null && !dashboard.banner.isEmpty()) {
-            html.append("<p class=\"bv-banner\">").append(Texts.escape(dashboard.banner)).append("</p>");
+            prose(html, "p", "bv-banner", dashboard.banner);
         }
-        html.append("<p class=\"bv-lead\">").append(Texts.escape(dashboard.headline)).append("</p>");
+        prose(html, "p", "bv-lead", dashboard.headline);
 
         html.append("<div class=\"bv-panel bv-panel-all\"><div class=\"bv-page-head\">");
         heat(html, dashboard.heatJson);
@@ -93,12 +99,14 @@ public final class PageHtml {
         scoreRow(html, "执行耗时", kpi.duration);
         scoreRow(html, "触发次数", kpi.builds);
         scoreRow(html, "失败和中止耗时", dashboard.wasteMachine);
-        html.append("</ul><p class=\"bv-score-note\">").append(Texts.escape(dashboard.wasteLine)).append("</p></article>");
+        html.append("</ul>");
+        prose(html, "p", "bv-score-note", dashboard.wasteLine);
+        html.append("</article>");
 
         html.append("<article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h3>");
         peopleTable(html, dashboard.people, true);
-        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.pipes\" data-zh=\"各流水线\">Pipelines</h3><p class=\"bv-muted\">")
-                .append(Texts.escape(dashboard.otherSummary)).append("</p>");
+        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.pipes\" data-zh=\"各流水线\">Pipelines</h3>");
+        prose(html, "p", "bv-muted", dashboard.otherSummary);
         if (!dashboard.others.isEmpty()) {
             html.append("<div class=\"bv-table-card\"><table class=\"bv-table\"><thead><tr>");
             html.append("<th data-i18n=\"col.pipeline\" data-zh=\"流水线\">Pipeline</th><th class=\"bv-num\" data-i18n=\"col.count\" data-zh=\"次数\">Count</th><th class=\"bv-num\" data-i18n=\"col.total\" data-zh=\"总耗时\">Total time</th><th class=\"bv-num\" data-i18n=\"col.avg\" data-zh=\"平均\">Average</th>");
@@ -106,9 +114,10 @@ public final class PageHtml {
             for (Dashboard.JobRow row : dashboard.others) {
                 html.append("<tr><td>");
                 link(html, row.href, row.name);
-                html.append("</td><td class=\"bv-num\">").append(row.builds).append("</td><td class=\"bv-num\">")
-                        .append(Texts.escape(row.duration)).append("</td><td class=\"bv-num\">")
-                        .append(Texts.escape(row.average)).append("</td><td class=\"bv-num\">")
+                html.append("</td><td class=\"bv-num\">").append(row.builds).append("</td>");
+                numCell(html, row.duration);
+                numCell(html, row.average);
+                html.append("<td class=\"bv-num\">")
                         .append(Texts.escape(row.success)).append("</td><td class=\"bv-num\">")
                         .append(row.failures).append("</td><td>")
                         .append(Texts.escape(row.topPerson)).append("</td></tr>");
@@ -120,11 +129,12 @@ public final class PageHtml {
         html.append("<th data-i18n=\"col.when\" data-zh=\"时间\">When</th><th class=\"bv-num\" data-i18n=\"col.period\" data-zh=\"本期耗时\">This period</th><th class=\"bv-num\" data-i18n=\"col.cum\" data-zh=\"累计耗时\">Cumulative</th>");
         html.append("<th class=\"bv-num\" data-i18n=\"col.cumOk\" data-zh=\"累计成功\">Cumulative success</th><th class=\"bv-num\" data-i18n=\"col.cumBad\" data-zh=\"累计失败和中止\">Cumulative failure and abort</th></tr></thead><tbody>");
         for (Dashboard.CumRow row : dashboard.cumRows) {
-            html.append("<tr><td>").append(Texts.escape(row.label)).append("</td><td class=\"bv-num\">")
-                    .append(Texts.escape(row.period)).append("</td><td class=\"bv-num\">")
-                    .append(Texts.escape(row.total)).append("</td><td class=\"bv-num\">")
-                    .append(Texts.escape(row.success)).append("</td><td class=\"bv-num\">")
-                    .append(Texts.escape(row.waste)).append("</td></tr>");
+            html.append("<tr><td>").append(Texts.escape(row.label)).append("</td>");
+            numCell(html, row.period);
+            numCell(html, row.total);
+            numCell(html, row.success);
+            numCell(html, row.waste);
+            html.append("</tr>");
         }
         html.append("</tbody></table></div></article></div>");
         note(html, dashboard);
@@ -147,11 +157,17 @@ public final class PageHtml {
     private static void renderPanel(StringBuilder html, Dashboard.JobPanel panel) {
         html.append("<section class=\"bv-section bv-section-first\"><h2><i class=\"bv-mark ").append(panel.mark).append("\"></i>");
         link(html, panel.jobUrl, panel.jobName);
-        html.append("</h2><p class=\"bv-muted\">").append(Texts.escape(panel.compare)).append("</p>");
+        html.append("</h2>");
+        prose(html, "p", "bv-muted", panel.compare);
         html.append("<div class=\"bv-page-head bv-job-head\"><section class=\"bv-kpis\">");
         card(html, "执行耗时", panel.machineTime, "", "");
-        card(html, "触发次数", panel.builds, panel.people.size() + " accounts", "");
-        card(html, "成功率", panel.success, "Avg " + panel.average, "");
+        int accounts = panel.people.size();
+        String averageZh = Texts.chinese(panel.average);
+        if (averageZh.isEmpty()) {
+            averageZh = Texts.english(panel.average);
+        }
+        card(html, "触发次数", panel.builds, Texts.both(accounts + " accounts", accounts + " 个账号"), "");
+        card(html, "成功率", panel.success, Texts.both("Avg " + Texts.english(panel.average), "平均 " + averageZh), "");
         card(html, "失败次数", panel.failures, "", "");
         html.append("</section>");
         sign(html, panel.signImage, panel.signAlt, panel.signCaption, panel.signLive);
@@ -163,10 +179,14 @@ public final class PageHtml {
         chart(html, "成功率走势", panel.rateChart);
         if (panel.hasStages) {
             chartCaption(html, "阶段状态", panel.stageDots,
-                    "The horizontal axis is the latest 36 builds, left to right. The vertical axis is the stage name. Green is success, orange is failure, gray is anything else. Hover a cell for the build number and status.",
+                    Texts.both(
+                            "The horizontal axis is the latest 36 builds, left to right. The vertical axis is the stage name. Green is success, orange is failure, gray is anything else. Hover a cell for the build number and status.",
+                            "横轴是最近 36 次构建，从左到右。纵轴是阶段名。绿是成功，橙是失败，灰是其它。停在格子上可看编号和状态。"),
                     false);
             chartCaption(html, "阶段名称变化", panel.scriptChart,
-                    "Each bar is one week. The height is how many times stage names were added or removed compared with the previous build. No bar, or No data, means stage names did not change in that span.",
+                    Texts.both(
+                            "Each bar is one week. The height is how many times stage names were added or removed compared with the previous build. No bar, or No data, means stage names did not change in that span.",
+                            "每一根柱是一周。柱高是这一周里，和上一次构建相比，阶段名称有增加或删除的次数。没有柱或写着无数据，表示这段时间阶段名称没有变。"),
                     false);
             chart(html, "阶段平均耗时", panel.stageBars);
             chart(html, "失败落在哪个阶段", panel.failPie);
@@ -184,9 +204,11 @@ public final class PageHtml {
             for (Dashboard.BuildRow row : panel.recent) {
                 html.append("<tr><td>");
                 link(html, row.href, row.label);
-                html.append("</td><td><span class=\"bv-badge ").append(row.resultClass).append("\">")
-                        .append(Texts.escape(row.result)).append("</span></td><td class=\"bv-num\">")
-                        .append(Texts.escape(row.duration)).append("</td><td>")
+                html.append("</td><td><span class=\"bv-badge ").append(row.resultClass).append("\" data-i18n=\"")
+                        .append(stateKey(row.result)).append("\" data-zh=\"").append(Texts.escape(stateZh(row.result)))
+                        .append("\">").append(Texts.escape(row.result)).append("</span></td>");
+                numCell(html, row.duration);
+                html.append("<td>")
                         .append(Texts.escape(row.actor)).append("</td><td>")
                         .append(Texts.escape(row.when)).append("</td></tr>");
             }
@@ -223,7 +245,9 @@ public final class PageHtml {
                     .append(row.builds).append("</td><td class=\"bv-num\">").append(row.success)
                     .append("</td><td class=\"bv-num\">").append(row.failure).append("</td><td class=\"bv-num\">")
                     .append(row.aborted).append("</td><td class=\"bv-num\">").append(Texts.escape(row.successRate))
-                    .append("</td><td class=\"bv-num\">").append(Texts.escape(row.duration)).append("</td><td>")
+                    .append("</td>");
+            numCell(html, row.duration);
+            html.append("<td>")
                     .append(Texts.escape(row.lastWhen)).append("</td>");
             if (withJobs) {
                 html.append("<td>").append(Texts.escape(row.jobs)).append("</td>");
@@ -334,10 +358,11 @@ public final class PageHtml {
     }
 
     private static void card(StringBuilder html, String label, String value, String delta, String deltaClass) {
-        html.append("<article class=\"bv-kpi\"><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><strong>")
-                .append(Texts.escape(value)).append("</strong>");
+        html.append("<article class=\"bv-kpi\"><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><strong")
+                .append(Texts.bilingualAttrs(value)).append(">").append(Texts.escape(Texts.english(value))).append("</strong>");
         if (delta != null && !delta.isEmpty()) {
-            html.append("<em class=\"").append(deltaClass).append("\">").append(Texts.escape(delta)).append("</em>");
+            html.append("<em class=\"").append(deltaClass).append('"').append(Texts.bilingualAttrs(delta)).append(">")
+                    .append(Texts.escape(Texts.english(delta))).append("</em>");
         }
         html.append("</article>");
     }
@@ -347,8 +372,8 @@ public final class PageHtml {
         if (wide) {
             html.append(" bv-span-3");
         }
-        html.append("\"><h3").append(i18nAttr(title)).append(">").append(Texts.escape(title)).append("</h3><p class=\"bv-chart-note\">")
-                .append(Texts.escape(caption)).append("</p>");
+        html.append("\"><h3").append(i18nAttr(title)).append(">").append(Texts.escape(title)).append("</h3>");
+        prose(html, "p", "bv-chart-note", caption);
         html.append(svg);
         html.append("</article>");
     }
@@ -381,8 +406,22 @@ public final class PageHtml {
     }
 
     private static void scoreRow(StringBuilder html, String label, String value) {
-        html.append("<li><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><b>")
-                .append(Texts.escape(value)).append("</b></li>");
+        html.append("<li><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><b")
+                .append(Texts.bilingualAttrs(value)).append(">").append(Texts.escape(Texts.english(value))).append("</b></li>");
+    }
+
+    private static void prose(StringBuilder html, String tag, String className, String packed) {
+        html.append('<').append(tag);
+        if (className != null && !className.isEmpty()) {
+            html.append(" class=\"").append(className).append('"');
+        }
+        html.append(Texts.bilingualAttrs(packed)).append('>').append(Texts.escape(Texts.english(packed)))
+                .append("</").append(tag).append('>');
+    }
+
+    private static void numCell(StringBuilder html, String packed) {
+        html.append("<td class=\"bv-num\"").append(Texts.bilingualAttrs(packed)).append('>')
+                .append(Texts.escape(Texts.english(packed))).append("</td>");
     }
 
     private static void hostPanel(StringBuilder html) {
@@ -440,7 +479,6 @@ public final class PageHtml {
         html.append("<a class=\"bv-star-go\" href=\"https://github.com/XMuli/build-stats-plugin\" target=\"_blank\" rel=\"noopener noreferrer\"><span data-i18n=\"about.starGo\">去点 Star</span></a>");
         html.append("<button type=\"button\" class=\"bv-star-close\" aria-label=\"Close\">×</button></div>");
         html.append("<div class=\"bv-about-meta\">");
-        html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.lang\">语言</span><select class=\"bv-lang\"><option value=\"zh\">中文</option><option value=\"en\">English</option></select></div>");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.author\">作者</span><strong>XMuli</strong></div>");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.repo\">GitHub</span><a href=\"https://github.com/XMuli/build-stats-plugin\" target=\"_blank\" rel=\"noopener noreferrer\">github.com/XMuli/build-stats-plugin</a></div>");
         html.append("</div></section></div>");
@@ -520,8 +558,9 @@ public final class PageHtml {
 
 
     private static void note(StringBuilder html, Dashboard dashboard) {
-        html.append("<footer class=\"bv-note\"><strong data-i18n=\"note.title\" data-zh=\"统计\">Notes</strong><p>")
-                .append(Texts.escape(dashboard.methodNote)).append("</p></footer>");
+        html.append("<footer class=\"bv-note\"><strong data-i18n=\"note.title\" data-zh=\"统计\">Notes</strong>");
+        prose(html, "p", "", dashboard.methodNote);
+        html.append("</footer>");
     }
 
     private static String contextPath() {

@@ -26,7 +26,7 @@ public class BuildValueRootAction implements RootAction {
 
     @Override
     public String getDisplayName() {
-        return Messages.BuildValueRootAction_DisplayName();
+        return "Build Stats";
     }
 
     @Override
@@ -64,7 +64,7 @@ public class BuildValueRootAction implements RootAction {
                 for (BuildSample sample : remote) {
                     now = Math.max(now, sample.startMs);
                 }
-                banner = "Build records exported for local development.";
+                banner = "Build records exported for local development.\u001f本地开发导出的构建记录。";
             }
         }
         String html = PageHtml.body(BuildValueComputer.compute(

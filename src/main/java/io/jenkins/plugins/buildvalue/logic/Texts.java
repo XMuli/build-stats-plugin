@@ -11,7 +11,18 @@ final class Texts {
 
     private Texts() {}
 
+    static final char LANG_SPLIT = '\u001f';
+
     static String duration(long ms) {
+        return duration(ms, false);
+    }
+
+    /** English and Chinese text for one value, so the page can switch language. */
+    static String durations(long ms) {
+        return both(duration(ms, false), duration(ms, true));
+    }
+
+    static String duration(long ms, boolean chinese) {
         if (ms < 0) {
             ms = 0;
         }
@@ -20,6 +31,18 @@ final class Texts {
         long hours = (totalSeconds % 86_400) / 3_600;
         long minutes = (totalSeconds % 3_600) / 60;
         long seconds = totalSeconds % 60;
+        if (chinese) {
+            if (days > 0) {
+                return hours == 0 ? days + " 天" : days + " 天 " + hours + " 小时";
+            }
+            if (hours > 0) {
+                return minutes == 0 ? hours + " 小时" : hours + " 小时 " + minutes + " 分";
+            }
+            if (minutes > 0) {
+                return seconds == 0 ? minutes + " 分" : minutes + " 分 " + seconds + " 秒";
+            }
+            return seconds + " 秒";
+        }
         if (days > 0) {
             return hours == 0 ? days + "d" : days + "d " + hours + "h";
         }
@@ -30,6 +53,43 @@ final class Texts {
             return seconds == 0 ? minutes + "m" : minutes + "m " + seconds + "s";
         }
         return seconds + "s";
+    }
+
+    static String both(String english, String chinese) {
+        if (english == null) {
+            english = "";
+        }
+        if (chinese == null || chinese.isEmpty() || chinese.equals(english)) {
+            return english;
+        }
+        return english + LANG_SPLIT + chinese;
+    }
+
+    static String chinese(String packed) {
+        if (packed == null) {
+            return "";
+        }
+        int split = packed.indexOf(LANG_SPLIT);
+        return split < 0 ? "" : packed.substring(split + 1);
+    }
+
+    static String english(String packed) {
+        if (packed == null) {
+            return "";
+        }
+        int split = packed.indexOf(LANG_SPLIT);
+        return split < 0 ? packed : packed.substring(0, split);
+    }
+
+    static String bilingualAttrs(String packed) {
+        if (packed == null) {
+            return "";
+        }
+        int split = packed.indexOf(LANG_SPLIT);
+        if (split < 0) {
+            return "";
+        }
+        return " data-en=\"" + escape(packed.substring(0, split)) + "\" data-zh=\"" + escape(packed.substring(split + 1)) + "\"";
     }
 
     static String percent(int numerator, int denominator) {
