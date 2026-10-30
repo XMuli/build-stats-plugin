@@ -251,11 +251,16 @@ public final class PageHtml {
     }
 
     public static String homeMarkup(StatusSign sign) {
+        return homeMarkup(sign, "home");
+    }
+
+    public static String homeMarkup(StatusSign sign, String page) {
         if (sign == null || sign.image == null || sign.image.isEmpty()) {
             return "";
         }
+        String place = "job".equals(page) ? "job" : "home";
         StringBuilder html = new StringBuilder();
-        html.append("<div class=\"bv-home-sign\" data-bv-home>");
+        html.append("<div class=\"bv-home-sign\" data-bv-home data-bv-page=\"").append(place).append("\">");
         html.append("<div class=\"bv-home-card\"><div class=\"bv-home-tools\">");
         html.append("<button type=\"button\" class=\"bv-home-peek\" aria-label=\"Dock right\">⟩</button>");
         html.append("<button type=\"button\" class=\"bv-home-close\" aria-label=\"Close\">×</button>");
@@ -286,7 +291,7 @@ public final class PageHtml {
         html.append("<p class=\"bv-entry-text\"></p><div class=\"bv-entry-actions\">");
         html.append("<button type=\"button\" class=\"bv-entry-show\" hidden></button>");
         html.append("<button type=\"button\" class=\"bv-entry-ok\"></button></div></div>");
-        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=4\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=5\"></script>");
         return html.toString();
     }
 

@@ -8,6 +8,11 @@
   if (!root || !guide) {
     return;
   }
+  if (!allowed(root)) {
+    root.remove();
+    guide.remove();
+    return;
+  }
   document.body.appendChild(root);
   document.body.appendChild(guide);
   var card = root.querySelector(".bv-home-card");
@@ -41,6 +46,19 @@
       again: "Show the card again"
     }
   };
+
+  function allowed(card) {
+    var page = card.getAttribute("data-bv-page") || "home";
+    try {
+      if (localStorage.getItem("bv-sign-show") === "0") {
+        return false;
+      }
+      if (localStorage.getItem("bv-sign-where") === "home" && page !== "home") {
+        return false;
+      }
+    } catch (e) {}
+    return true;
+  }
 
   function lang() {
     try {

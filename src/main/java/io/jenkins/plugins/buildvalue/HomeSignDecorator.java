@@ -11,7 +11,7 @@ import io.jenkins.plugins.buildvalue.logic.StatusSign;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.Stapler;
 
-/** One status plate under the Jenkins home job list. It follows the newest real build. */
+/** The status card on the Jenkins home page and on each pipeline page. */
 @Extension
 public class HomeSignDecorator extends PageDecorator {
     public HomeSignDecorator() {
@@ -20,49 +20,78 @@ public class HomeSignDecorator extends PageDecorator {
 
     public String getMarkup() {
         try {
-            if (!isHome()) {
-                return "";
-            }
             Jenkins jenkins = Jenkins.get();
             if (!jenkins.hasPermission(Jenkins.READ)) {
                 return "";
             }
-            Run<?, ?> running = null;
-            Run<?, ?> newest = null;
-            for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
-                if (!job.hasPermission(Item.READ)) {
-                    continue;
-                }
-                Run<?, ?> last;
-                try {
-                    last = job.getLastBuild();
-                } catch (RuntimeException ex) {
-                    continue;
-                }
-                if (last == null) {
-                    continue;
-                }
-                long when = last.getStartTimeInMillis();
-                boolean building = last.isBuilding() || last.getResult() == null;
-                if (building && (running == null || when >= running.getStartTimeInMillis())) {
-                    running = last;
-                }
-                if (newest == null || when >= newest.getStartTimeInMillis()) {
-                    newest = last;
-                }
+            var request = Stapler.getCurrentRequest2();
+            if (request == null) {
+                return "";
             }
-            Run<?, ?> chosen = running != null ? running : newest;
+            Job<?, ?> current = request.findAncestorObject(Job.class);
+            if (current != null) {
+                return PageHtml.homeMarkup(signOf(current), "job");
+            }
+            if (!isHome()) {
+                return "";
+            }
+            Run<?, ?> chosen = newest(jenkins);
             if (chosen == null || chosen.getParent() == null) {
-                return PageHtml.homeMarkup(DevFeed.sign());
+                return PageHtml.homeMarkup(DevFeed.sign(), "home");
             }
-            boolean live = chosen.isBuilding() || chosen.getResult() == null;
-            String result = live ? "RUNNING" : String.valueOf(chosen.getResult());
-            StatusSign sign = StatusSign.of(
-                    result, chosen.getParent().getFullName(), chosen.getNumber(), buildHref(chosen));
-            return PageHtml.homeMarkup(sign);
+            return PageHtml.homeMarkup(signOf(chosen), "home");
         } catch (RuntimeException ex) {
             return "";
         }
+    }
+
+    private static Run<?, ?> newest(Jenkins jenkins) {
+        Run<?, ?> running = null;
+        Run<?, ?> newest = null;
+        for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
+            if (!job.hasPermission(Item.READ)) {
+                continue;
+            }
+            Run<?, ?> last = lastBuild(job);
+            if (last == null) {
+                continue;
+            }
+            long when = last.getStartTimeInMillis();
+            if (live(last) && (running == null || when >= running.getStartTimeInMillis())) {
+                running = last;
+            }
+            if (newest == null || when >= newest.getStartTimeInMillis()) {
+                newest = last;
+            }
+        }
+        return running != null ? running : newest;
+    }
+
+    private static StatusSign signOf(Job<?, ?> job) {
+        if (!job.hasPermission(Item.READ)) {
+            return StatusSign.none();
+        }
+        return signOf(lastBuild(job));
+    }
+
+    private static StatusSign signOf(Run<?, ?> run) {
+        if (run == null || run.getParent() == null) {
+            return StatusSign.none();
+        }
+        String result = live(run) ? "RUNNING" : String.valueOf(run.getResult());
+        return StatusSign.of(result, run.getParent().getFullName(), run.getNumber(), buildHref(run));
+    }
+
+    private static Run<?, ?> lastBuild(Job<?, ?> job) {
+        try {
+            return job.getLastBuild();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static boolean live(Run<?, ?> run) {
+        return run.isBuilding() || run.getResult() == null;
     }
 
     private static boolean isHome() {
