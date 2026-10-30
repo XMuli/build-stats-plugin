@@ -34,11 +34,11 @@ public class BuildValueConfiguration extends GlobalConfiguration {
         try {
             int parsed = Integer.parseInt(value);
             if (parsed < 0 || parsed > 480) {
-                return FormValidation.error("填 0 到 480 之间的分钟数");
+                return FormValidation.error("Enter a number of minutes from 0 to 480");
             }
             return FormValidation.ok();
         } catch (NumberFormatException ex) {
-            return FormValidation.error("填 0 到 480 之间的分钟数");
+            return FormValidation.error("Enter a number of minutes from 0 to 480");
         }
     }
 }

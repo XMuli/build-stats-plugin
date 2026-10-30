@@ -68,7 +68,7 @@ public final class BuildSample {
         return slash < 0 ? fullName : fullName.substring(slash + 1);
     }
 
-    /** package = LADM 整包, test = LADM 测试包, other = 其余任务. */
+    /** package = LADM package, test = LADM test package, other = every other job. */
     public static String group(String fullName) {
         String name = shortName(fullName).toLowerCase(Locale.ROOT);
         boolean ladm = name.contains("ladm");

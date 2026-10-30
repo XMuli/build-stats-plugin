@@ -6,7 +6,7 @@ public final class StageSample {
     public final String status;
 
     public StageSample(String name, long durationMs, String status) {
-        this.name = name == null || name.isBlank() ? "未命名阶段" : name;
+        this.name = name == null || name.isBlank() ? "Unnamed stage" : name;
         this.durationMs = Math.max(0, durationMs);
         this.status = status == null ? "OTHER" : status;
     }

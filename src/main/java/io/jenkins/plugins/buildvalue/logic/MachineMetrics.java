@@ -369,7 +369,7 @@ public final class MachineMetrics {
         if (total > 0) {
             return gb(used) + " / " + gb(total);
         }
-        return "已用 " + gb(used);
+        return "Used " + gb(used);
     }
 
     private static String gpuMemoryText() {
@@ -379,7 +379,7 @@ public final class MachineMetrics {
         if (gpuMemoryTotal > 0) {
             return gb(gpuMemoryUsed) + " / " + gb(gpuMemoryTotal);
         }
-        return "已用 " + gb(gpuMemoryUsed);
+        return "Used " + gb(gpuMemoryUsed);
     }
 
     private static String readDisks() {

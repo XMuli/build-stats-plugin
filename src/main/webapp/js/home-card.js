@@ -49,8 +49,7 @@
         return saved;
       }
     } catch (e) {}
-    var value = (document.documentElement.lang || "").toLowerCase();
-    return value.indexOf("en") === 0 ? "en" : "zh";
+    return "en";
   }
 
   function words() {

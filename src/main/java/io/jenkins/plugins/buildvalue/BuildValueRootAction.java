@@ -64,7 +64,7 @@ public class BuildValueRootAction implements RootAction {
                 for (BuildSample sample : remote) {
                     now = Math.max(now, sample.startMs);
                 }
-                banner = "本地开发导出的构建记录。";
+                banner = "Build records exported for local development.";
             }
         }
         String html = PageHtml.body(BuildValueComputer.compute(

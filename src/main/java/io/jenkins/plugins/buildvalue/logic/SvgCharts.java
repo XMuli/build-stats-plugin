@@ -144,7 +144,7 @@ final class SvgCharts {
                 }
                 tip.append("  ").append(seriesItem.name).append(' ').append(Texts.num(value)).append(unit);
             }
-            tip.insert(labels.get(i).length(), "  全部 " + Texts.num(total) + unit);
+            tip.insert(labels.get(i).length(), "  All " + Texts.num(total) + unit);
             svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(tip.toString()))
                     .append("\" x=\"").append(fmt(left + i * slot)).append("\" y=\"").append(top)
                     .append("\" width=\"").append(fmt(slot)).append("\" height=\"").append(innerH)
@@ -387,7 +387,7 @@ final class SvgCharts {
                     .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"#8b97a3\">")
                     .append(Texts.escape(labels.get(i))).append("</text>");
         }
-        legend(svg, List.of(new Series("次数", color, List.of())), 12, height - 12, width - 16);
+        legend(svg, List.of(new Series("Count", color, List.of())), 12, height - 12, width - 16);
         for (int i = 0; i < n; i++) {
             double value = values.get(i) == null ? 0 : values.get(i);
             String tip = labels.get(i) + "  " + Texts.num(value);
@@ -546,7 +546,7 @@ final class SvgCharts {
 
     static String stageFlow(String buildLabel, List<StageSample> stages) {
         if (stages == null || stages.isEmpty()) {
-            return empty("最近一次阶段");
+            return empty("Latest stage");
         }
         int perRow = 6;
         int nodeW = 112;
@@ -610,7 +610,7 @@ final class SvgCharts {
         int cellH = 12;
         int pitch = 15;
         int cellW = Math.max(6, Math.min(12, 640 / Math.max(1, cols)));
-        int width = left + cols * cellW + 8;
+        int width = Math.max(left + cols * cellW + 8, left + 200);
         int height = top + rows * pitch + 20;
         StringBuilder svg = new StringBuilder();
         svg.append("<svg class=\"bv-status\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ")
@@ -623,18 +623,18 @@ final class SvgCharts {
                 String status = c < cells.get(r).size() ? cells.get(r).get(c) : "";
                 String color = statusColor(status);
                 int x = left + c * cellW;
-                String tip = labels.get(c) + "  " + stages.get(r) + "  " + (status.isEmpty() ? "无" : status);
+                String tip = labels.get(c) + "  " + stages.get(r) + "  " + (status.isEmpty() ? "none" : status);
                 svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(tip)).append("\" x=\"").append(x)
                         .append("\" y=\"").append(y).append("\" width=\"").append(cellW - 2).append("\" height=\"").append(cellH)
                         .append("\" fill=\"").append(color).append("\"/>");
             }
         }
         svg.append("<rect x=\"").append(left).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#50A040\"/>");
-        svg.append("<text x=\"").append(left + 12).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">成功</text>");
-        svg.append("<rect x=\"").append(left + 52).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#F08048\"/>");
-        svg.append("<text x=\"").append(left + 64).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">失败</text>");
-        svg.append("<rect x=\"").append(left + 104).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#9DA0A5\"/>");
-        svg.append("<text x=\"").append(left + 116).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">其它</text>");
+        svg.append("<text x=\"").append(left + 12).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Success</text>");
+        svg.append("<rect x=\"").append(left + 70).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#F08048\"/>");
+        svg.append("<text x=\"").append(left + 82).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Failure</text>");
+        svg.append("<rect x=\"").append(left + 140).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#9DA0A5\"/>");
+        svg.append("<text x=\"").append(left + 152).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Other</text>");
         svg.append("</svg>");
         return svg.toString();
     }
@@ -653,7 +653,7 @@ final class SvgCharts {
     }
 
     private static String empty(String title) {
-        return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 80\" role=\"img\"><text x=\"0\" y=\"36\" font-size=\"13\" fill=\"#9DA0A5\">无数据</text></svg>";
+        return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 80\" role=\"img\"><text x=\"0\" y=\"36\" font-size=\"13\" fill=\"#9DA0A5\">No data</text></svg>";
     }
 
     private static StringBuilder start(int width, int height, String title) {

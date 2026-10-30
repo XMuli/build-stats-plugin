@@ -49,10 +49,10 @@ final class StageReader {
             }
             return List.copyOf(out);
         } catch (ClassNotFoundException ex) {
-            report("阶段耗时未读取：没有 Pipeline: Stage View", ex);
+            report("Stage durations were not read: Pipeline: Stage View is not installed", ex);
             return List.of();
         } catch (ReflectiveOperationException | RuntimeException ex) {
-            report("阶段耗时未读取", ex);
+            report("Stage durations were not read", ex);
             return List.of();
         }
     }

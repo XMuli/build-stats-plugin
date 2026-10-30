@@ -21,15 +21,15 @@ final class Texts {
         long minutes = (totalSeconds % 3_600) / 60;
         long seconds = totalSeconds % 60;
         if (days > 0) {
-            return hours == 0 ? days + " 天" : days + " 天 " + hours + " 小时";
+            return hours == 0 ? days + "d" : days + "d " + hours + "h";
         }
         if (hours > 0) {
-            return minutes == 0 ? hours + " 小时" : hours + " 小时 " + minutes + " 分";
+            return minutes == 0 ? hours + "h" : hours + "h " + minutes + "m";
         }
         if (minutes > 0) {
-            return seconds == 0 ? minutes + " 分" : minutes + " 分 " + seconds + " 秒";
+            return seconds == 0 ? minutes + "m" : minutes + "m " + seconds + "s";
         }
-        return seconds + " 秒";
+        return seconds + "s";
     }
 
     static String percent(int numerator, int denominator) {
@@ -64,12 +64,12 @@ final class Texts {
 
     static String resultLabel(String result) {
         return switch (result) {
-            case "SUCCESS" -> "成功";
-            case "FAILURE" -> "失败";
-            case "UNSTABLE" -> "不稳定";
-            case "ABORTED" -> "中止";
-            case "NOT_BUILT" -> "未构建";
-            default -> "构建中";
+            case "SUCCESS" -> "Success";
+            case "FAILURE" -> "Failure";
+            case "UNSTABLE" -> "Unstable";
+            case "ABORTED" -> "Aborted";
+            case "NOT_BUILT" -> "Not built";
+            default -> "Running";
         };
     }
 
@@ -85,11 +85,11 @@ final class Texts {
 
     static String triggerLabel(String trigger) {
         return switch (trigger) {
-            case "manual" -> "手动";
-            case "scm" -> "代码提交";
-            case "timer" -> "定时";
-            case "upstream" -> "上游任务";
-            default -> "其它";
+            case "manual" -> "Manual";
+            case "scm" -> "Commit";
+            case "timer" -> "Timer";
+            case "upstream" -> "Upstream";
+            default -> "Other";
         };
     }
 

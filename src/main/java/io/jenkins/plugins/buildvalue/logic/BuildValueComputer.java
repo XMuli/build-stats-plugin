@@ -69,7 +69,7 @@ public final class BuildValueComputer {
         List<Dashboard.JobRow> rows = pipelineRows(byJob, zone);
         Ledger ledger = timeLedger(current, now, zone);
         List<Dashboard.PersonRow> people = peopleOf(current, zone, true);
-        String effort = headline + " 这些构建由 " + people.size() + " 个账号触发。";
+        String effort = headline + " Triggered by " + people.size() + " accounts.";
         Sign sign = signOf(current);
         Sign home = signOf(samples);
 
@@ -79,9 +79,9 @@ public final class BuildValueComputer {
                 effort,
                 wasteLine,
                 kpi,
-                SvgCharts.line("累计构建次数", labels, counts, "#3479B0", true, ""),
-                SvgCharts.line("累计机器小时", labels, hours, "#3C74A3", true, "h"),
-                SvgCharts.line("成功率", labels, rates, "#50A040", false, "%"),
+                SvgCharts.line("Cumulative builds", labels, counts, "#3479B0", true, ""),
+                SvgCharts.line("Machine hours", labels, hours, "#3C74A3", true, "h"),
+                SvgCharts.line("Success rate", labels, rates, "#50A040", false, "%"),
                 resultPie(all),
                 timePie(current),
                 triggerPie(all),
@@ -91,8 +91,8 @@ public final class BuildValueComputer {
                 rows,
                 dailyCountsChart(current, now, zone),
                 dailyHoursChart(current, now, zone),
-                SvgCharts.columns("构建时间段", hourLabels(current, zone), hourValues(current, zone), "#3479B0"),
-                all.success + " 次",
+                SvgCharts.columns("Time of day", hourLabels(current, zone), hourValues(current, zone), "#3479B0"),
+                Integer.toString(all.success),
                 Texts.duration(all.failedDuration + all.abortedDuration),
                 people,
                 tabs,
@@ -215,7 +215,7 @@ public final class BuildValueComputer {
     private static Ledger timeLedger(List<BuildSample> samples, long now, ZoneId zone) {
         Ledger ledger = new Ledger();
         if (samples.isEmpty()) {
-            ledger.chart = SvgCharts.lines("累计时间", List.of(), List.of(), "h");
+            ledger.chart = SvgCharts.lines("Cumulative time", List.of(), List.of(), "h");
             ledger.rows = List.of();
             return ledger;
         }
@@ -264,10 +264,10 @@ public final class BuildValueComputer {
         }
         Collections.reverse(rows);
         ledger.rows = List.copyOf(rows);
-        ledger.chart = SvgCharts.lines("累计时间", labels, List.of(
-                new SvgCharts.Series("累计总时间", "#3C74A3", totalHours),
-                new SvgCharts.Series("累计成功", "#50A040", successHours),
-                new SvgCharts.Series("累计失败和中止", "#F08048", wasteHours)), "h");
+        ledger.chart = SvgCharts.lines("Cumulative time", labels, List.of(
+                new SvgCharts.Series("Total", "#3C74A3", totalHours),
+                new SvgCharts.Series("Success", "#50A040", successHours),
+                new SvgCharts.Series("Failure and abort", "#F08048", wasteHours)), "h");
         return ledger;
     }
 
@@ -329,9 +329,9 @@ public final class BuildValueComputer {
                 finished.add(sample);
             }
         }
-        String durationTitle = BuildSample.shortName(jobName) + " 每次耗时";
+        String durationTitle = BuildSample.shortName(jobName) + " duration";
         if (finished.size() > 48) {
-            durationTitle = BuildSample.shortName(jobName) + " 每周平均耗时";
+            durationTitle = BuildSample.shortName(jobName) + " weekly average";
             Map<LocalDate, long[]> weeks = new LinkedHashMap<>();
             for (BuildSample sample : finished) {
                 LocalDate day = Instant.ofEpochMilli(sample.startMs).atZone(zone).toLocalDate();
@@ -370,7 +370,7 @@ public final class BuildValueComputer {
                 }
             }
             if ("FAILURE".equals(sample.result)) {
-                String key = failedStage == null ? "未标到阶段" : failedStage;
+                String key = failedStage == null ? "Unassigned stage" : failedStage;
                 failAgg.merge(key, 1, Integer::sum);
             }
         }
@@ -392,7 +392,7 @@ public final class BuildValueComputer {
                     entry.getKey(),
                     entry.getKey(),
                     average / 60_000d,
-                    "均 " + Texts.duration(average) + " · " + entry.getValue()[1] + " 次"));
+                    "avg " + Texts.duration(average) + " · " + entry.getValue()[1]));
         }
         long folded = 0;
         int shown = 0;
@@ -410,14 +410,14 @@ public final class BuildValueComputer {
             }
         }
         if (folded > 0) {
-            stageSlices.add(new SvgCharts.Slice("其它阶段", folded, "#9DA0A5", Texts.duration(folded)));
+            stageSlices.add(new SvgCharts.Slice("Other stages", folded, "#9DA0A5", Texts.duration(folded)));
         }
         List<SvgCharts.Slice> failSlices = new ArrayList<>();
         String[] failColors = {"#F08048", "#D07848", "#3479B0", "#3C74A3", "#9DA0A5"};
         int failIndex = 0;
         for (Map.Entry<String, Integer> entry : failAgg.entrySet()) {
             failSlices.add(new SvgCharts.Slice(
-                    entry.getKey(), entry.getValue(), failColors[failIndex % failColors.length], entry.getValue() + " 次"));
+                    entry.getKey(), entry.getValue(), failColors[failIndex % failColors.length], entry.getValue() + " runs"));
             failIndex++;
         }
         List<Dashboard.BuildRow> recent = new ArrayList<>();
@@ -426,7 +426,7 @@ public final class BuildValueComputer {
             BuildSample sample = newestFirst.get(i);
             String failed = "—";
             if ("FAILURE".equals(sample.result)) {
-                failed = "未标到阶段";
+                failed = "Unassigned stage";
                 for (StageSample stage : sample.stages) {
                     if (stage.failed()) {
                         failed = stage.name;
@@ -439,7 +439,7 @@ public final class BuildValueComputer {
                     sample.label(),
                     Texts.resultLabel(sample.result),
                     Texts.resultClass(sample.result),
-                    sample.running() ? "进行中" : Texts.duration(sample.durationMs),
+                    sample.running() ? "Running" : Texts.duration(sample.durationMs),
                     failed,
                     Texts.when(sample.startMs, zone),
                     sample.actor));
@@ -460,12 +460,12 @@ public final class BuildValueComputer {
                 Texts.duration(cur.duration),
                 compareText,
                 SvgCharts.line(durationTitle, labels, minutes, "#3479B0", false, "m"),
-                SvgCharts.bars(BuildSample.shortName(jobName) + " 阶段平均耗时", bars),
-                SvgCharts.donut("阶段累计耗时", center, "小时", stageSlices),
-                SvgCharts.donut("失败阶段", Integer.toString(cur.failure), "次失败", failSlices),
+                SvgCharts.bars(BuildSample.shortName(jobName) + " stage average", bars),
+                SvgCharts.donut("Stage time", center, "h", stageSlices),
+                SvgCharts.donut("Failed stage", Integer.toString(cur.failure), "failed", failSlices),
                 hasStages,
                 List.copyOf(recent),
-                SvgCharts.columns("构建时间段", hourLabels(builds, zone), hourValues(builds, zone), "#3479B0"),
+                SvgCharts.columns("Time of day", hourLabels(builds, zone), hourValues(builds, zone), "#3479B0"),
                 dailyCountsChart(builds, now, zone),
                 rateSeries(finished, zone),
                 stageDots(builds),
@@ -501,7 +501,7 @@ public final class BuildValueComputer {
                 rates.add("SUCCESS".equals(sample.result) ? 100d : 0d);
             }
         }
-        return SvgCharts.line("成功率", labels, rates, "#50A040", false, "%");
+        return SvgCharts.line("Success rate", labels, rates, "#50A040", false, "%");
     }
 
     private static String stageDots(List<BuildSample> builds) {
@@ -513,7 +513,7 @@ public final class BuildValueComputer {
         }
         ordered.sort(Comparator.comparingLong(sample -> sample.startMs));
         if (ordered.isEmpty()) {
-            return SvgCharts.emptyPublic("阶段状态");
+            return SvgCharts.emptyPublic("Stage status");
         }
         if (ordered.size() > 36) {
             ordered = new ArrayList<>(ordered.subList(ordered.size() - 36, ordered.size()));
@@ -541,7 +541,7 @@ public final class BuildValueComputer {
                 cells.get(i).add(status.getOrDefault(names.get(i), ""));
             }
         }
-        return SvgCharts.statusDots("阶段状态", labels, names, cells);
+        return SvgCharts.statusDots("Stage status", labels, names, cells);
     }
 
     private static String scriptChanges(List<BuildSample> builds, ZoneId zone) {
@@ -572,9 +572,9 @@ public final class BuildValueComputer {
             values.add(entry.getValue().doubleValue());
         }
         if (values.stream().allMatch(value -> value == 0d)) {
-            return SvgCharts.emptyPublic("阶段名称变化");
+            return SvgCharts.emptyPublic("Stage name changes");
         }
-        return SvgCharts.columns("阶段名称变化", labels, values, "#F08048");
+        return SvgCharts.columns("Stage name changes", labels, values, "#F08048");
     }
 
     private static List<Dashboard.JobPanel> allPanels(
@@ -589,7 +589,7 @@ public final class BuildValueComputer {
         List<Dashboard.JobPanel> panels = new ArrayList<>();
         for (String name : names) {
             String group = BuildSample.group(name);
-            String title = "package".equals(group) ? "LADM 整包" : "test".equals(group) ? "LADM 测试包" : "流水线";
+            String title = "package".equals(group) ? "LADM package" : "test".equals(group) ? "LADM test" : "Pipeline";
             String mark = "package".equals(group) ? "is-pack" : "test".equals(group) ? "is-test" : "is-other";
             List<BuildSample> prevBuilds = new ArrayList<>();
             for (BuildSample sample : previous) {
@@ -633,10 +633,10 @@ public final class BuildValueComputer {
         if (weekly) {
             days = foldWeeks(days);
         }
-        return SvgCharts.stacked(weekly ? "每周构建次数" : "每天构建次数", days.labels, List.of(
-                new SvgCharts.Series("成功", "#50A040", days.success),
-                new SvgCharts.Series("失败", "#F08048", days.failure),
-                new SvgCharts.Series("中止", "#9DA0A5", days.aborted)), "");
+        return SvgCharts.stacked(weekly ? "Builds per week" : "Builds per day", days.labels, List.of(
+                new SvgCharts.Series("Success", "#50A040", days.success),
+                new SvgCharts.Series("Failure", "#F08048", days.failure),
+                new SvgCharts.Series("Aborted", "#9DA0A5", days.aborted)), "");
     }
 
     private static DayCounts foldWeeks(DayCounts days) {
@@ -667,7 +667,7 @@ public final class BuildValueComputer {
 
     private static String dailyHoursChart(List<BuildSample> samples, long now, ZoneId zone) {
         DayCounts days = byDay(samples, now, zone);
-        return SvgCharts.line("每天机器耗时", days.labels, days.hours, "#3479B0", true, "h");
+        return SvgCharts.line("Machine hours per day", days.labels, days.hours, "#3479B0", true, "h");
     }
 
     private static List<String> hourLabels(List<BuildSample> samples, ZoneId zone) {
@@ -695,9 +695,9 @@ public final class BuildValueComputer {
         int limit = Math.min(people.size(), 12);
         for (int i = 0; i < limit; i++) {
             Dashboard.PersonRow person = people.get(i);
-            bars.add(new SvgCharts.Bar(person.name, person.name, person.builds, person.builds + " 次"));
+            bars.add(new SvgCharts.Bar(person.name, person.name, person.builds, person.builds + " runs"));
         }
-        return SvgCharts.bars("触发次数", bars);
+        return SvgCharts.bars("Triggers", bars);
     }
 
     private static DayCounts byDay(List<BuildSample> samples, long now, ZoneId zone) {
@@ -839,12 +839,12 @@ public final class BuildValueComputer {
 
     private static String resultPie(Totals all) {
         List<SvgCharts.Slice> slices = List.of(
-                new SvgCharts.Slice("成功", all.success, "#50A040", all.success + " 次"),
-                new SvgCharts.Slice("失败", all.failure, "#F08048", all.failure + " 次"),
-                new SvgCharts.Slice("不稳定", all.unstable, "#D07848", all.unstable + " 次"),
-                new SvgCharts.Slice("中止", all.aborted, "#9DA0A5", all.aborted + " 次"),
-                new SvgCharts.Slice("构建中", all.running, "#3479B0", all.running + " 次"));
-        return SvgCharts.donut("结果累计", Integer.toString(all.builds), "次", slices);
+                new SvgCharts.Slice("Success", all.success, "#50A040", all.success + " runs"),
+                new SvgCharts.Slice("Failure", all.failure, "#F08048", all.failure + " runs"),
+                new SvgCharts.Slice("Unstable", all.unstable, "#D07848", all.unstable + " runs"),
+                new SvgCharts.Slice("Aborted", all.aborted, "#9DA0A5", all.aborted + " runs"),
+                new SvgCharts.Slice("Running", all.running, "#3479B0", all.running + " runs"));
+        return SvgCharts.donut("Results", Integer.toString(all.builds), "runs", slices);
     }
 
     private static String timePie(List<BuildSample> current) {
@@ -880,20 +880,20 @@ public final class BuildValueComputer {
             }
         }
         if (folded > 0) {
-            slices.add(new SvgCharts.Slice("其余任务", folded, "#9DA0A5", Texts.duration(folded)));
+            slices.add(new SvgCharts.Slice("Other jobs", folded, "#9DA0A5", Texts.duration(folded)));
         }
         String center = total == 0 ? "0" : Texts.num(total / 3_600_000d);
-        return SvgCharts.donut("机器时间累计", center, "小时", slices);
+        return SvgCharts.donut("Machine time", center, "h", slices);
     }
 
     private static String triggerPie(Totals all) {
         List<SvgCharts.Slice> slices = List.of(
-                new SvgCharts.Slice("手动", all.manual, "#3479B0", all.manual + " 次"),
-                new SvgCharts.Slice("代码提交", all.scm, "#50A040", all.scm + " 次"),
-                new SvgCharts.Slice("定时", all.timer, "#F08048", all.timer + " 次"),
-                new SvgCharts.Slice("上游任务", all.upstream, "#3C74A3", all.upstream + " 次"),
-                new SvgCharts.Slice("其它", all.otherTrigger, "#9DA0A5", all.otherTrigger + " 次"));
-        return SvgCharts.donut("触发方式", Integer.toString(all.builds), "次", slices);
+                new SvgCharts.Slice("Manual", all.manual, "#3479B0", all.manual + " runs"),
+                new SvgCharts.Slice("Commit", all.scm, "#50A040", all.scm + " runs"),
+                new SvgCharts.Slice("Timer", all.timer, "#F08048", all.timer + " runs"),
+                new SvgCharts.Slice("Upstream", all.upstream, "#3C74A3", all.upstream + " runs"),
+                new SvgCharts.Slice("Other", all.otherTrigger, "#9DA0A5", all.otherTrigger + " runs"));
+        return SvgCharts.donut("Trigger", Integer.toString(all.builds), "runs", slices);
     }
 
     private static String colorFor(String fullName, int index) {
@@ -910,23 +910,23 @@ public final class BuildValueComputer {
     private static String headline(int days, Totals all, Totals pack, Totals test, Totals prev) {
         StringBuilder text = new StringBuilder();
         if (days <= 0) {
-            text.append("全部可见构建");
+            text.append("All visible builds");
         } else {
-            text.append("近 ").append(days).append(" 天");
+            text.append("Last ").append(days).append(" days");
         }
-        text.append("共 ").append(all.builds).append(" 次，机器执行 ").append(Texts.duration(all.duration))
-                .append("，排队 ").append(Texts.duration(all.queue)).append("。");
+        text.append(": ").append(all.builds).append(" runs, machine time ").append(Texts.duration(all.duration))
+                .append(", queue ").append(Texts.duration(all.queue)).append(". ");
         if (pack.builds > 0) {
-            text.append(" LADM 2.0 整包 ").append(pack.builds).append(" 次，平均 ")
+            text.append("LADM 2.0 package ").append(pack.builds).append(" runs, average ")
                     .append(pack.completed == 0 ? "—" : Texts.duration(pack.duration / pack.completed))
-                    .append("，成功率 ").append(Texts.percent(pack.success, pack.completed)).append("。");
+                    .append(", success rate ").append(Texts.percent(pack.success, pack.completed)).append(". ");
         }
         if (test.builds > 0) {
-            text.append(" 测试包 ").append(test.builds).append(" 次，成功率 ")
-                    .append(Texts.percent(test.success, test.completed)).append("。");
+            text.append("Test package ").append(test.builds).append(" runs, success rate ")
+                    .append(Texts.percent(test.success, test.completed)).append(". ");
         }
-        text.append(" 成功 ").append(all.success).append(" 次。");
-        text.append(" 失败耗时 ").append(Texts.duration(all.failedDuration)).append("。");
+        text.append("Success ").append(all.success).append(". ");
+        text.append("Failure time ").append(Texts.duration(all.failedDuration)).append(".");
         if (days > 0) {
             text.append(rateSentence(days, all, prev));
         }
@@ -934,7 +934,7 @@ public final class BuildValueComputer {
     }
 
     private static String wasteLine(Totals all, int minutes) {
-        return "失败耗时 " + Texts.duration(all.failedDuration) + "，中止耗时 " + Texts.duration(all.abortedDuration) + "。";
+        return "Failure time " + Texts.duration(all.failedDuration) + ", abort time " + Texts.duration(all.abortedDuration) + ".";
     }
 
     private static Dashboard.Kpi kpi(int days, Totals all, Totals prev, boolean compare) {
@@ -970,29 +970,29 @@ public final class BuildValueComputer {
 
     private static String jobCompare(int days, Totals cur, Totals prev, boolean compare) {
         if (!compare) {
-            return "全部时间，不和上一窗口对比。";
+            return "All time. Not compared with the previous window.";
         }
         if (prev.completed == 0 || cur.completed == 0) {
-            return "前 " + days + " 天没有足够的完成记录，暂不对比。";
+            return "The previous " + days + " days do not have enough finished builds to compare.";
         }
         return rateSentence(days, cur, prev) + avgSentence(days, cur, prev, true);
     }
 
     private static String countSentence(int days, int current, int previous, boolean compare) {
         if (!compare) {
-            return "不和上一窗口对比";
+            return "Not compared with the previous window";
         }
         if (previous == 0) {
-            return "前 " + days + " 天没有记录";
+            return "No builds in the previous " + days + " days";
         }
         int delta = current - previous;
         if (delta == 0) {
-            return "与前 " + days + " 天相同";
+            return "Same as the previous " + days + " days";
         }
         if (delta > 0) {
-            return "比前 " + days + " 天多 " + delta + " 次";
+            return delta + " more than the previous " + days + " days";
         }
-        return "比前 " + days + " 天少 " + (-delta) + " 次";
+        return (-delta) + " fewer than the previous " + days + " days";
     }
 
     private static String rateSentence(int days, Totals current, Totals previous) {
@@ -1000,16 +1000,16 @@ public final class BuildValueComputer {
             return "";
         }
         if (current.completed == 0 || previous.completed == 0) {
-            return "前 " + days + " 天没有足够的完成记录，暂不对比成功率。";
+            return " The previous " + days + " days do not have enough finished builds to compare success rate.";
         }
         double pp = (100d * current.success / current.completed) - (100d * previous.success / previous.completed);
         if (Math.abs(pp) < 0.05) {
-            return "成功率与前 " + days + " 天持平。";
+            return " Success rate is level with the previous " + days + " days.";
         }
         if (pp > 0) {
-            return "成功率比前 " + days + " 天高 " + Texts.points(pp) + " 个百分点。";
+            return " Success rate is " + Texts.points(pp) + " points above the previous " + days + " days.";
         }
-        return "成功率比前 " + days + " 天低 " + Texts.points(pp) + " 个百分点。";
+        return " Success rate is " + Texts.points(pp) + " points below the previous " + days + " days.";
     }
 
     private static String avgSentence(int days, Totals current, Totals previous, boolean compare) {
@@ -1020,12 +1020,12 @@ public final class BuildValueComputer {
         long prevAvg = previous.duration / previous.completed;
         long diff = Math.abs(curAvg - prevAvg);
         if (diff < 1000) {
-            return "平均耗时与前 " + days + " 天持平。";
+            return " Average duration is level with the previous " + days + " days.";
         }
         if (curAvg < prevAvg) {
-            return "平均耗时比前 " + days + " 天少 " + Texts.duration(diff) + "。";
+            return " Average duration is " + Texts.duration(diff) + " shorter than the previous " + days + " days.";
         }
-        return "平均耗时比前 " + days + " 天多 " + Texts.duration(diff) + "。";
+        return " Average duration is " + Texts.duration(diff) + " longer than the previous " + days + " days.";
     }
 
     private static String otherSummary(Totals other, Map<String, List<BuildSample>> byJob) {
@@ -1036,22 +1036,24 @@ public final class BuildValueComputer {
             }
         }
         if (jobs == 0) {
-            return "整包、测试包以外：0 个任务。";
+            return "Outside package and test jobs: 0 jobs.";
         }
-        return "其它任务 " + jobs + " 个，构建 " + other.builds + " 次，机器执行 " + Texts.duration(other.duration)
-                + "，成功率 " + Texts.percent(other.success, other.completed) + "。";
+        return "Other jobs: " + jobs + ", " + other.builds + " runs, machine time " + Texts.duration(other.duration)
+                + ", success rate " + Texts.percent(other.success, other.completed) + ".";
     }
 
     private static String methodNote(int days, int minutes) {
-        String window = days <= 0 ? "选择全部时，从最早一条可见构建算起。" : "近 " + days + " 天按构建开始时间。";
+        String window = days <= 0
+                ? "All time starts at the earliest visible build."
+                : "The last " + days + " days use build start time.";
         return window
-                + " 时区为 Jenkins 所在时区。执行耗时不含排队。排队 = 进入队列到开始。"
-                + " 成功率 = 成功 / 已完成。构建中不计入已完成。成功次数 = 结果为成功。"
-                + " 次数按自然日，无构建日记 0。中止 = 结果为 ABORTED。"
-                + " 跨度超过 120 天时，累计图按周。"
-                + " 触发账号 = 构建原因里的 userId。"
-                + " 整包 = 任务名包含 ladm 且不含 test。测试包 = 两者都包含。"
-                + " 阶段耗时来自 Pipeline: Stage View。未执行阶段不计。失败阶段 = 该次第一个失败阶段。";
+                + " Times use the Jenkins controller time zone. Duration excludes queue time. Queue time is from entering the queue until the build starts."
+                + " Success rate = successes / finished builds. A running build is not finished. Successes are builds whose result is SUCCESS."
+                + " Counts are calendar days, and a day with no builds is 0. Aborted means result ABORTED."
+                + " When the span is longer than 120 days, cumulative charts use weeks."
+                + " Trigger account is the userId on the build cause."
+                + " A package job name contains ladm and not test. A test job name contains both."
+                + " Stage time comes from Pipeline: Stage View. Stages that did not run are omitted. Failed stage is the first failed stage of that build.";
     }
 
     private static List<BuildSample> filter(List<BuildSample> samples, String group) {

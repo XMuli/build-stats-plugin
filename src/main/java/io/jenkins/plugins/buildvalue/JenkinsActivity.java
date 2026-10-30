@@ -137,9 +137,9 @@ public final class JenkinsActivity {
     private static String ago(long millis) {
         long seconds = Math.max(0, millis / 1000);
         if (seconds < 60) {
-            return seconds + " 秒";
+            return seconds + "s";
         }
-        return (seconds / 60) + " 分";
+        return (seconds / 60) + "m";
     }
 
     private static String quote(String raw) {

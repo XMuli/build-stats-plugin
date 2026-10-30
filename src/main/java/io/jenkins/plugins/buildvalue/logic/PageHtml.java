@@ -20,7 +20,7 @@ public final class PageHtml {
         StringBuilder html = new StringBuilder(12_000);
         html.append("<div class=\"bv\" data-logo=\"").append(pluginAsset("images/logo.jpg")).append("\">");
         if (dashboard.empty) {
-            html.append("<p class=\"bv-empty\">无构建记录。</p>");
+            html.append("<p class=\"bv-empty\" data-i18n=\"empty.builds\" data-zh=\"无构建记录。\">No builds yet.</p>");
             note(html, dashboard);
             html.append("</div>");
             return html.toString();
@@ -87,7 +87,7 @@ public final class PageHtml {
         chart(html, "结果", dashboard.resultPie);
         chart(html, "机器时间", dashboard.timePie);
         chart(html, "触发方式", dashboard.triggerPie);
-        html.append("<article class=\"bv-tile bv-score\"><h3>成功率</h3><strong>")
+        html.append("<article class=\"bv-tile bv-score\"><h3 data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</h3><strong>")
                 .append(Texts.escape(kpi.success)).append("</strong><ul class=\"bv-score-list\">");
         scoreRow(html, "成功次数", dashboard.deliveryText);
         scoreRow(html, "执行耗时", kpi.duration);
@@ -95,14 +95,14 @@ public final class PageHtml {
         scoreRow(html, "失败和中止耗时", dashboard.wasteMachine);
         html.append("</ul><p class=\"bv-score-note\">").append(Texts.escape(dashboard.wasteLine)).append("</p></article>");
 
-        html.append("<article class=\"bv-tile bv-span-3\"><h3>触发账号</h3>");
+        html.append("<article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h3>");
         peopleTable(html, dashboard.people, true);
-        html.append("</article><article class=\"bv-tile bv-span-3\"><h3>各流水线</h3><p class=\"bv-muted\">")
+        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.pipes\" data-zh=\"各流水线\">Pipelines</h3><p class=\"bv-muted\">")
                 .append(Texts.escape(dashboard.otherSummary)).append("</p>");
         if (!dashboard.others.isEmpty()) {
             html.append("<div class=\"bv-table-card\"><table class=\"bv-table\"><thead><tr>");
-            html.append("<th>流水线</th><th class=\"bv-num\">次数</th><th class=\"bv-num\">总耗时</th><th class=\"bv-num\">平均</th>");
-            html.append("<th class=\"bv-num\">成功率</th><th class=\"bv-num\">失败</th><th>触发账号</th></tr></thead><tbody>");
+            html.append("<th data-i18n=\"col.pipeline\" data-zh=\"流水线\">Pipeline</th><th class=\"bv-num\" data-i18n=\"col.count\" data-zh=\"次数\">Count</th><th class=\"bv-num\" data-i18n=\"col.total\" data-zh=\"总耗时\">Total time</th><th class=\"bv-num\" data-i18n=\"col.avg\" data-zh=\"平均\">Average</th>");
+            html.append("<th class=\"bv-num\" data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</th><th class=\"bv-num\" data-i18n=\"col.fail\" data-zh=\"失败\">Failed</th><th data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</th></tr></thead><tbody>");
             for (Dashboard.JobRow row : dashboard.others) {
                 html.append("<tr><td>");
                 link(html, row.href, row.name);
@@ -115,10 +115,10 @@ public final class PageHtml {
             }
             html.append("</tbody></table></div>");
         }
-        html.append("</article><article class=\"bv-tile bv-span-3\"><h3>累计时间明细</h3>");
+        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.ledger\" data-zh=\"累计时间明细\">Cumulative time</h3>");
         html.append("<div class=\"bv-table-card bv-table-scroll\"><table class=\"bv-table\"><thead><tr>");
-        html.append("<th>时间</th><th class=\"bv-num\">本期耗时</th><th class=\"bv-num\">累计耗时</th>");
-        html.append("<th class=\"bv-num\">累计成功</th><th class=\"bv-num\">累计失败和中止</th></tr></thead><tbody>");
+        html.append("<th data-i18n=\"col.when\" data-zh=\"时间\">When</th><th class=\"bv-num\" data-i18n=\"col.period\" data-zh=\"本期耗时\">This period</th><th class=\"bv-num\" data-i18n=\"col.cum\" data-zh=\"累计耗时\">Cumulative</th>");
+        html.append("<th class=\"bv-num\" data-i18n=\"col.cumOk\" data-zh=\"累计成功\">Cumulative success</th><th class=\"bv-num\" data-i18n=\"col.cumBad\" data-zh=\"累计失败和中止\">Cumulative failure and abort</th></tr></thead><tbody>");
         for (Dashboard.CumRow row : dashboard.cumRows) {
             html.append("<tr><td>").append(Texts.escape(row.label)).append("</td><td class=\"bv-num\">")
                     .append(Texts.escape(row.period)).append("</td><td class=\"bv-num\">")
@@ -150,8 +150,8 @@ public final class PageHtml {
         html.append("</h2><p class=\"bv-muted\">").append(Texts.escape(panel.compare)).append("</p>");
         html.append("<div class=\"bv-page-head bv-job-head\"><section class=\"bv-kpis\">");
         card(html, "执行耗时", panel.machineTime, "", "");
-        card(html, "触发次数", panel.builds, panel.people.size() + " 个账号", "");
-        card(html, "成功率", panel.success, "平均 " + panel.average, "");
+        card(html, "触发次数", panel.builds, panel.people.size() + " accounts", "");
+        card(html, "成功率", panel.success, "Avg " + panel.average, "");
         card(html, "失败次数", panel.failures, "", "");
         html.append("</section>");
         sign(html, panel.signImage, panel.signAlt, panel.signCaption, panel.signLive);
@@ -163,23 +163,23 @@ public final class PageHtml {
         chart(html, "成功率走势", panel.rateChart);
         if (panel.hasStages) {
             chartCaption(html, "阶段状态", panel.stageDots,
-                    "横轴是最近 36 次构建，从左到右。纵轴是阶段名。绿是成功，橙是失败，灰是其它。停在格子上可看编号和状态。",
+                    "The horizontal axis is the latest 36 builds, left to right. The vertical axis is the stage name. Green is success, orange is failure, gray is anything else. Hover a cell for the build number and status.",
                     false);
             chartCaption(html, "阶段名称变化", panel.scriptChart,
-                    "每一根柱是一周。柱高是这一周里，和上一次构建相比，阶段名称有增加或删除的次数。没有柱或写着无数据，表示这段时间阶段名称没有变。",
+                    "Each bar is one week. The height is how many times stage names were added or removed compared with the previous build. No bar, or No data, means stage names did not change in that span.",
                     false);
             chart(html, "阶段平均耗时", panel.stageBars);
             chart(html, "失败落在哪个阶段", panel.failPie);
         }
         html.append("</div>");
-        html.append("<div class=\"bv-pair\"><section><h2>触发账号</h2>");
+        html.append("<div class=\"bv-pair\"><section><h2 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h2>");
         peopleTable(html, panel.people, false);
-        html.append("</section><section><h2>最近的构建</h2>");
+        html.append("</section><section><h2 data-i18n=\"h.recent\" data-zh=\"最近的构建\">Recent builds</h2>");
         if (panel.recent.isEmpty()) {
-            html.append("<p class=\"bv-muted\">无记录。</p>");
+            html.append("<p class=\"bv-muted\" data-i18n=\"empty.none\" data-zh=\"无记录。\">No records.</p>");
         } else {
             html.append("<div class=\"bv-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
-            html.append("<th>构建</th><th>结果</th><th class=\"bv-num\">耗时</th><th>触发人</th><th>开始</th>");
+            html.append("<th data-i18n=\"col.build\" data-zh=\"构建\">Build</th><th data-i18n=\"col.result\" data-zh=\"结果\">Result</th><th class=\"bv-num\" data-i18n=\"col.duration\" data-zh=\"耗时\">Duration</th><th data-i18n=\"col.who\" data-zh=\"触发人\">Who</th><th data-i18n=\"col.start\" data-zh=\"开始\">Started</th>");
             html.append("</tr></thead><tbody>");
             for (Dashboard.BuildRow row : panel.recent) {
                 html.append("<tr><td>");
@@ -200,22 +200,22 @@ public final class PageHtml {
         int limit = Math.min(people.size(), 12);
         for (int i = 0; i < limit; i++) {
             Dashboard.PersonRow person = people.get(i);
-            bars.add(new SvgCharts.Bar(person.name, person.name + " 触发 " + person.builds + " 次", person.builds,
-                    person.builds + " 次"));
+            bars.add(new SvgCharts.Bar(person.name, person.name + " triggered " + person.builds + " runs", person.builds,
+                    person.builds + " runs"));
         }
-        return SvgCharts.bars("触发次数", bars);
+        return SvgCharts.bars("Triggers", bars);
     }
 
     private static void peopleTable(StringBuilder html, java.util.List<Dashboard.PersonRow> people, boolean withJobs) {
         if (people.isEmpty()) {
-            html.append("<p class=\"bv-muted\">无记录。</p>");
+            html.append("<p class=\"bv-muted\" data-i18n=\"empty.none\" data-zh=\"无记录。\">No records.</p>");
             return;
         }
         html.append("<div class=\"bv-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
-        html.append("<th>账号</th><th class=\"bv-num\">次数</th><th class=\"bv-num\">成功</th><th class=\"bv-num\">失败</th>");
-        html.append("<th class=\"bv-num\">中止</th><th class=\"bv-num\">成功率</th><th class=\"bv-num\">执行耗时</th><th>最近</th>");
+        html.append("<th data-i18n=\"col.account\" data-zh=\"账号\">Account</th><th class=\"bv-num\" data-i18n=\"col.count\" data-zh=\"次数\">Count</th><th class=\"bv-num\" data-i18n=\"col.ok\" data-zh=\"成功\">Success</th><th class=\"bv-num\" data-i18n=\"col.fail\" data-zh=\"失败\">Failed</th>");
+        html.append("<th class=\"bv-num\" data-i18n=\"col.abort\" data-zh=\"中止\">Aborted</th><th class=\"bv-num\" data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</th><th class=\"bv-num\" data-i18n=\"kpi.time\" data-zh=\"执行耗时\">Duration</th><th data-i18n=\"col.last\" data-zh=\"最近\">Latest</th>");
         if (withJobs) {
-            html.append("<th>流水线</th>");
+            html.append("<th data-i18n=\"col.pipeline\" data-zh=\"流水线\">Pipeline</th>");
         }
         html.append("</tr></thead><tbody>");
         for (Dashboard.PersonRow row : people) {
@@ -240,8 +240,8 @@ public final class PageHtml {
         StringBuilder html = new StringBuilder();
         html.append("<div class=\"bv-home-sign\" data-bv-home>");
         html.append("<div class=\"bv-home-card\"><div class=\"bv-home-tools\">");
-        html.append("<button type=\"button\" class=\"bv-home-peek\" aria-label=\"收到右侧\">⟩</button>");
-        html.append("<button type=\"button\" class=\"bv-home-close\" aria-label=\"关闭\">×</button>");
+        html.append("<button type=\"button\" class=\"bv-home-peek\" aria-label=\"Dock right\">⟩</button>");
+        html.append("<button type=\"button\" class=\"bv-home-close\" aria-label=\"Close\">×</button>");
         html.append("</div><figure class=\"bv-sign\"><a class=\"bv-home-picture\" href=\"")
                 .append(contextPath()).append("/build-stats\">");
         if (sign.live) {
@@ -264,7 +264,7 @@ public final class PageHtml {
             html.append(caption);
         }
         html.append("</figure></div>");
-        html.append("<button type=\"button\" class=\"bv-home-reopen\">统计</button></div>");
+        html.append("<button type=\"button\" class=\"bv-home-reopen\">Card</button></div>");
         html.append("<div class=\"bv-entry-guide\" hidden><div class=\"bv-entry-arrow\"></div>");
         html.append("<p class=\"bv-entry-text\"></p><div class=\"bv-entry-actions\">");
         html.append("<button type=\"button\" class=\"bv-entry-show\" hidden></button>");
@@ -306,7 +306,7 @@ public final class PageHtml {
                 .append(Texts.escape(subject)).append("</strong>");
         if (!state.isEmpty()) {
             html.append("<span class=\"bv-state ").append(stateClass(state)).append("\" data-i18n=\"")
-                    .append(stateKey(state)).append("\">")
+                    .append(stateKey(state)).append("\" data-zh=\"").append(Texts.escape(stateZh(state))).append("\">")
                     .append(Texts.escape(state)).append("</span>");
         }
         html.append("</figcaption></figure>");
@@ -314,10 +314,10 @@ public final class PageHtml {
 
     private static String stateClass(String state) {
         return switch (state) {
-            case "构建中" -> "is-run";
-            case "成功" -> "is-ok";
-            case "失败", "不稳定" -> "is-bad";
-            case "中止", "未构建" -> "is-stop";
+            case "Running" -> "is-run";
+            case "Success" -> "is-ok";
+            case "Failure", "Unstable" -> "is-bad";
+            case "Aborted", "Not built" -> "is-stop";
             default -> "";
         };
     }
@@ -388,20 +388,20 @@ public final class PageHtml {
     private static void hostPanel(StringBuilder html) {
         html.append("<div class=\"bv-panel bv-panel-host\">");
         html.append("<div class=\"bv-pace\"><span data-i18n=\"host.pace\">刷新</span>");
-        html.append("<button type=\"button\" data-pace=\"1\" class=\"is-on\">1 秒</button>");
-        html.append("<button type=\"button\" data-pace=\"5\">5 秒</button></div>");
+        html.append("<button type=\"button\" data-pace=\"1\" class=\"is-on\">1s</button>");
+        html.append("<button type=\"button\" data-pace=\"5\">5s</button></div>");
         html.append("<div class=\"bv-board bv-host-board\">");
-        liveCard(html, "cpu", "CPU", "占用", "#3479B0");
-        liveCard(html, "mem", "内存", "已用 / 总共", "#3C74A3");
-        liveCard(html, "disk", "磁盘", "活动时间", "#F08048");
+        liveCard(html, "cpu", "CPU", "Usage", "#3479B0");
+        liveCard(html, "mem", "内存", "Used / total", "#3C74A3");
+        liveCard(html, "disk", "磁盘", "Active time", "#F08048");
         html.append("<div class=\"bv-gpu-slot\"></div>");
-        liveCard(html, "down", "下载", "每秒", "#3479B0");
-        liveCard(html, "up", "上传", "每秒", "#A2C7E4");
-        liveCard(html, "read", "磁盘读", "每秒", "#3C74A3");
-        liveCard(html, "write", "磁盘写", "每秒", "#F08048");
+        liveCard(html, "down", "下载", "Per second", "#3479B0");
+        liveCard(html, "up", "上传", "Per second", "#A2C7E4");
+        liveCard(html, "read", "磁盘读", "Per second", "#3C74A3");
+        liveCard(html, "write", "磁盘写", "Per second", "#F08048");
         html.append("</div>");
         html.append("<article class=\"bv-tile bv-host-jenkins\"><h3 data-i18n=\"host.now\">Jenkins 当前</h3><div class=\"bv-jenkins\"></div></article>");
-        html.append("<p class=\"bv-live-status\">采样中</p></div>");
+        html.append("<p class=\"bv-live-status\">Sampling</p></div>");
     }
 
     private static void liveCard(StringBuilder html, String key, String title, String sub, String color) {
@@ -410,7 +410,7 @@ public final class PageHtml {
             html.append("<div class=\"bv-card-top\"><h3").append(i18nAttr(title)).append(">").append(title).append("</h3>");
             html.append("<div class=\"bv-core-switch\"><button type=\"button\" data-cpu=\"total\" class=\"is-on\" data-i18n=\"host.total\">总占用</button>");
             html.append("<button type=\"button\" data-cpu=\"cores\" data-i18n=\"host.cores\">各核心</button></div></div>");
-            html.append("<p class=\"bv-cpu-meta\">型号读取中</p>");
+            html.append("<p class=\"bv-cpu-meta\">Reading model</p>");
             html.append("<svg class=\"bv-spark bv-cpu-total\" viewBox=\"0 0 320 150\" preserveAspectRatio=\"none\"></svg>");
             html.append("<div class=\"bv-core-grid\"></div>");
         } else {
@@ -438,7 +438,7 @@ public final class PageHtml {
         html.append("<div class=\"bv-star\"><span class=\"bv-star-mark\">★</span>");
         html.append("<p data-i18n=\"about.star\">如果构建统计帮助了你，请在 GitHub 点个 Star，这对我们意义重大</p>");
         html.append("<a class=\"bv-star-go\" href=\"https://github.com/XMuli/build-stats-plugin\" target=\"_blank\" rel=\"noopener noreferrer\"><span data-i18n=\"about.starGo\">去点 Star</span></a>");
-        html.append("<button type=\"button\" class=\"bv-star-close\" aria-label=\"关闭\">×</button></div>");
+        html.append("<button type=\"button\" class=\"bv-star-close\" aria-label=\"Close\">×</button></div>");
         html.append("<div class=\"bv-about-meta\">");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.lang\">语言</span><select class=\"bv-lang\"><option value=\"zh\">中文</option><option value=\"en\">English</option></select></div>");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.author\">作者</span><strong>XMuli</strong></div>");
@@ -451,14 +451,26 @@ public final class PageHtml {
         return key.isEmpty() ? "" : " data-i18n=\"" + key + "\"";
     }
 
+    private static String stateZh(String state) {
+        return switch (state) {
+            case "Running" -> "构建中";
+            case "Success" -> "成功";
+            case "Failure" -> "失败";
+            case "Unstable" -> "不稳定";
+            case "Aborted" -> "中止";
+            case "Not built" -> "未构建";
+            default -> state;
+        };
+    }
+
     private static String stateKey(String state) {
         return switch (state) {
-            case "构建中" -> "state.run";
-            case "成功" -> "state.ok";
-            case "失败" -> "state.fail";
-            case "不稳定" -> "state.unstable";
-            case "中止" -> "state.abort";
-            case "未构建" -> "state.none";
+            case "Running" -> "state.run";
+            case "Success" -> "state.ok";
+            case "Failure" -> "state.fail";
+            case "Unstable" -> "state.unstable";
+            case "Aborted" -> "state.abort";
+            case "Not built" -> "state.none";
             default -> "";
         };
     }
@@ -508,7 +520,7 @@ public final class PageHtml {
 
 
     private static void note(StringBuilder html, Dashboard dashboard) {
-        html.append("<footer class=\"bv-note\"><strong>统计</strong><p>")
+        html.append("<footer class=\"bv-note\"><strong data-i18n=\"note.title\" data-zh=\"统计\">Notes</strong><p>")
                 .append(Texts.escape(dashboard.methodNote)).append("</p></footer>");
     }
 

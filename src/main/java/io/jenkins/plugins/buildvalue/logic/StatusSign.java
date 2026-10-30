@@ -30,16 +30,16 @@ public final class StatusSign {
         String alt;
         if (live) {
             image = "hybrid-zaiganle.jpg";
-            alt = "在干了";
+            alt = "ON IT!";
         } else if ("SUCCESS".equals(result)) {
             image = "hybrid-ganwanle.jpg";
-            alt = "干完了";
+            alt = "ALL DONE!";
         } else if ("FAILURE".equals(result) || "UNSTABLE".equals(result)) {
             image = "hybrid-ganbuwan.jpg";
-            alt = "干不完";
+            alt = "NEVER-ENDING WORK";
         } else if ("ABORTED".equals(result) || "NOT_BUILT".equals(result)) {
             image = "hybrid-buganle.jpg";
-            alt = "不干了";
+            alt = "I QUIT!";
         } else {
             return none();
         }
