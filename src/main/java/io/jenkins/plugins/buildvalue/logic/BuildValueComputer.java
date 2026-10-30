@@ -105,6 +105,7 @@ public final class BuildValueComputer {
                 sign.alt,
                 sign.caption,
                 sign.live,
+                sign.url,
                 home.image,
                 home.alt,
                 home.caption,
@@ -118,11 +119,14 @@ public final class BuildValueComputer {
         final String caption;
         final boolean live;
 
+        final String url;
+
         Sign(StatusSign status) {
             this.image = status.image;
             this.alt = status.alt;
             this.caption = status.caption;
             this.live = status.live;
+            this.url = status.buildUrl;
         }
     }
 
@@ -143,7 +147,7 @@ public final class BuildValueComputer {
             return new Sign(StatusSign.none());
         }
         String result = sample.running() ? "RUNNING" : sample.result;
-        return new Sign(StatusSign.of(result, sample.jobFullName, sample.number));
+        return new Sign(StatusSign.of(result, sample.jobFullName, sample.number, sample.buildUrl));
     }
 
     private static String heatJson(List<BuildSample> samples, ZoneId zone) {
@@ -475,7 +479,8 @@ public final class BuildValueComputer {
                 sign.image,
                 sign.alt,
                 sign.caption,
-                sign.live);
+                sign.live,
+                sign.url);
     }
 
     private static String rateSeries(List<BuildSample> finished, ZoneId zone) {

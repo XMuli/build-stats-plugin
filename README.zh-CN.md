@@ -26,7 +26,7 @@
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#overview">
-    <img src="docs/images/overview.png" alt="构建统计总览：热力图、趋势和右侧状态牌" width="860">
+    <img src="docs/images/overview-zh.png" alt="构建统计总览：热力图、趋势和右侧状态牌" width="860">
   </a>
 </p>
 
@@ -36,7 +36,7 @@
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#pipeline">
-    <img src="docs/images/pipeline.png" alt="一条流水线的耗时、次数和成功率" width="860">
+    <img src="docs/images/pipeline-zh.png" alt="一条流水线的耗时、次数和成功率" width="860">
   </a>
 </p>
 
@@ -46,7 +46,7 @@
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#machine">
-    <img src="docs/images/host.png" alt="本机的 CPU、内存、磁盘、显卡和网络" width="860">
+    <img src="docs/images/host-zh.png" alt="本机的 CPU、内存、磁盘、显卡和网络" width="860">
   </a>
 </p>
 
@@ -76,7 +76,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/home.png" alt="首页右下角的状态牌" width="280">
+  <img src="docs/images/home-zh.png" alt="首页右下角的状态牌" width="280">
 </p>
 
 页面地址是 `/build-stats`。没有选择时使用英文。

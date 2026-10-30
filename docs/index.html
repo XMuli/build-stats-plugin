@@ -164,14 +164,12 @@
     .shot img {
       display: block;
       width: 100%;
-      height: min(34rem, 72vw);
-      object-fit: cover;
-      object-position: top center;
+      height: auto;
     }
 
     #overview img {
       height: auto;
-      aspect-ratio: 3360 / 2400;
+      aspect-ratio: auto;
     }
 
     .shot figcaption,
@@ -276,7 +274,7 @@
       .hero figure { justify-self: start; }
       .hero img { width: min(16.5rem, 100%); }
       .plates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .shot img { height: 16rem; }
+      .shot img { height: auto; }
       #overview img { height: auto; }
     }
 
@@ -322,13 +320,13 @@
           <p class="lede en">The builds you can see, on one page: counts, duration, queue time, success rate, and pipeline stage time.</p>
         </div>
         <figure>
-          <img src="images/home.png" alt="首页右下角的状态牌" data-alt-en="The status card on the Jenkins home page" width="640" height="760">
+          <img src="images/home.png" data-src-en="images/home.png" data-src-zh="images/home-zh.png" alt="首页右下角的状态牌" data-alt-en="The status card on the Jenkins home page" width="640" height="760">
         </figure>
       </div>
 
       <figure class="shot" id="overview">
         <a href="images/overview.png">
-          <img src="images/overview.png" alt="构建统计总览：热力图、趋势和右侧状态牌" data-alt-en="Build Stats overview: heatmap, charts, and the status plate">
+          <img src="images/overview.png" data-src-en="images/overview.png" data-src-zh="images/overview-zh.png" alt="构建统计总览：热力图、趋势和右侧状态牌" data-alt-en="Build Stats overview: heatmap, charts, and the status plate">
         </a>
         <figcaption>
           <span class="zh">总览。点开看完整一页。</span>
@@ -373,7 +371,7 @@
           </div>
           <figure class="shot">
             <a href="images/pipeline.png">
-              <img src="images/pipeline.png" alt="一条流水线的耗时、次数和成功率" data-alt-en="Duration, count, and success rate for one pipeline">
+              <img src="images/pipeline.png" data-src-en="images/pipeline.png" data-src-zh="images/pipeline-zh.png" alt="一条流水线的耗时、次数和成功率" data-alt-en="Duration, count, and success rate for one pipeline">
             </a>
             <figcaption>
               <span class="zh">点开看完整一页。</span>
@@ -387,7 +385,7 @@
         <div class="pair flip">
           <figure class="shot">
             <a href="images/host.png">
-              <img src="images/host.png" alt="本机的 CPU、内存、磁盘、显卡和网络" data-alt-en="This computer: CPU, memory, disk, GPU, and network">
+              <img src="images/host.png" data-src-en="images/host.png" data-src-zh="images/host-zh.png" alt="本机的 CPU、内存、磁盘、显卡和网络" data-alt-en="This computer: CPU, memory, disk, GPU, and network">
             </a>
             <figcaption>
               <span class="zh">点开看完整一页。</span>

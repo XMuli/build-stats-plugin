@@ -573,6 +573,7 @@ html.bv-summary-on .bv-lead {
   justify-content: center;
 }
 
+.bv-sign-link,
 .bv-home-picture,
 .bv-home-build {
   display: block;
@@ -580,6 +581,7 @@ html.bv-summary-on .bv-lead {
   text-decoration: none;
 }
 
+.bv-sign-link strong,
 .bv-home-build strong {
   text-decoration: underline;
   text-underline-offset: 2px;

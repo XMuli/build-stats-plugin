@@ -70,6 +70,28 @@
     return "en";
   }
 
+  function localize() {
+    var zh = lang() === "zh";
+    var states = {
+      Running: "构建中",
+      Success: "成功",
+      Failure: "失败",
+      Unstable: "不稳定",
+      Aborted: "中止",
+      "Not built": "未构建"
+    };
+    root.querySelectorAll("img[data-src-en]").forEach(function (img) {
+      img.src = zh ? img.getAttribute("data-src-zh") : img.getAttribute("data-src-en");
+    });
+    root.querySelectorAll(".bv-state").forEach(function (el) {
+      if (!el.getAttribute("data-en")) {
+        el.setAttribute("data-en", el.textContent);
+      }
+      var english = el.getAttribute("data-en");
+      el.textContent = zh && states[english] ? states[english] : english;
+    });
+  }
+
   function words() {
     return copy[lang()];
   }
@@ -201,6 +223,7 @@
 
   var state = read();
   label();
+  localize();
   apply(state);
   if (state.mode === "closed" && !seen(ACK)) {
     showGuide("closed");
@@ -243,7 +266,7 @@
     if (!root.classList.contains("is-peek")) {
       return;
     }
-    if (event.target.closest("button")) {
+    if (event.target.closest("button") || event.target.closest("a")) {
       return;
     }
     event.preventDefault();
@@ -274,7 +297,7 @@
     if (event.button != null && event.button !== 0) {
       return;
     }
-    if (event.target.closest("button") || root.classList.contains("is-peek") || root.classList.contains("is-closed")) {
+    if (event.target.closest("button") || event.target.closest("a") || root.classList.contains("is-peek") || root.classList.contains("is-closed")) {
       return;
     }
     var rect = root.getBoundingClientRect();

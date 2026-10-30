@@ -75,7 +75,7 @@ public final class PageHtml {
 
         html.append("<div class=\"bv-panel bv-panel-all\"><div class=\"bv-page-head\">");
         heat(html, dashboard.heatJson);
-        sign(html, dashboard.signImage, dashboard.signAlt, dashboard.signCaption, dashboard.signLive);
+        sign(html, dashboard.signImage, dashboard.signAlt, dashboard.signCaption, dashboard.signLive, dashboard.signUrl);
         html.append("</div><div class=\"bv-board\">");
         Dashboard.Kpi kpi = dashboard.kpi;
         chart(html, "累计机器小时", dashboard.hoursChart);
@@ -163,7 +163,7 @@ public final class PageHtml {
         card(html, "成功率", panel.success, Texts.both("Avg " + Texts.english(panel.average), "平均 " + averageZh), "");
         card(html, "失败次数", panel.failures, "", "");
         html.append("</section>");
-        sign(html, panel.signImage, panel.signAlt, panel.signCaption, panel.signLive);
+        sign(html, panel.signImage, panel.signAlt, panel.signCaption, panel.signLive, panel.signUrl);
         html.append("</div></section>");
         html.append("<div class=\"bv-board\">");
         chart(html, "耗时趋势", panel.durationChart);
@@ -291,7 +291,7 @@ public final class PageHtml {
         html.append("<p class=\"bv-entry-text\"></p><div class=\"bv-entry-actions\">");
         html.append("<button type=\"button\" class=\"bv-entry-show\" hidden></button>");
         html.append("<button type=\"button\" class=\"bv-entry-ok\"></button></div></div>");
-        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=5\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=6\"></script>");
         return html.toString();
     }
 
@@ -312,7 +312,7 @@ public final class PageHtml {
         return image.substring(0, dot) + "-en" + image.substring(dot);
     }
 
-    private static void sign(StringBuilder html, String image, String alt, String caption, boolean live) {
+    private static void sign(StringBuilder html, String image, String alt, String caption, boolean live, String url) {
         if (image == null || image.isEmpty()) {
             return;
         }
@@ -324,6 +324,9 @@ public final class PageHtml {
         String subject = split < 0 ? caption : caption.substring(0, split);
         String state = split < 0 ? "" : caption.substring(split + 1);
         plateImg(html, image, alt);
+        if (url != null && !url.isBlank()) {
+            html.append("<a class=\"bv-sign-link\" href=\"").append(Texts.escape(url)).append("\">");
+        }
         html.append("<figcaption><strong>")
                 .append(Texts.escape(subject)).append("</strong>");
         if (!state.isEmpty()) {
@@ -331,7 +334,11 @@ public final class PageHtml {
                     .append(stateKey(state)).append("\" data-zh=\"").append(Texts.escape(stateZh(state))).append("\">")
                     .append(Texts.escape(state)).append("</span>");
         }
-        html.append("</figcaption></figure>");
+        html.append("</figcaption>");
+        if (url != null && !url.isBlank()) {
+            html.append("</a>");
+        }
+        html.append("</figure>");
     }
 
     private static String stateClass(String state) {

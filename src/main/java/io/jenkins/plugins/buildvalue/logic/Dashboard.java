@@ -33,6 +33,7 @@ public final class Dashboard {
     public final String signAlt;
     public final String signCaption;
     public final boolean signLive;
+    public final String signUrl;
     public final String homeImage;
     public final String homeAlt;
     public final String homeCaption;
@@ -70,6 +71,7 @@ public final class Dashboard {
             String signAlt,
             String signCaption,
             boolean signLive,
+            String signUrl,
             String homeImage,
             String homeAlt,
             String homeCaption,
@@ -105,6 +107,7 @@ public final class Dashboard {
         this.signAlt = signAlt;
         this.signCaption = signCaption;
         this.signLive = signLive;
+        this.signUrl = signUrl == null ? "" : signUrl;
         this.homeImage = homeImage;
         this.homeAlt = homeAlt;
         this.homeCaption = homeCaption;
@@ -164,12 +167,13 @@ public final class Dashboard {
         public final String signAlt;
         public final String signCaption;
         public final boolean signLive;
+        public final String signUrl;
 
         JobPanel(String title, String mark, String jobName, String jobUrl, String builds, String average,
                 String success, String failures, String machineTime, String compare, String durationChart, String stageBars,
                 String stagePie, String failPie, boolean hasStages, List<BuildRow> recent, String hourChart,
                 String dailyCountsChart, String rateChart, String stageDots, String scriptChart, List<PersonRow> people,
-                String signImage, String signAlt, String signCaption, boolean signLive) {
+                String signImage, String signAlt, String signCaption, boolean signLive, String signUrl) {
             this.title = title;
             this.mark = mark;
             this.jobName = jobName;
@@ -196,6 +200,7 @@ public final class Dashboard {
             this.signAlt = signAlt;
             this.signCaption = signCaption;
             this.signLive = signLive;
+            this.signUrl = signUrl == null ? "" : signUrl;
         }
     }
 
