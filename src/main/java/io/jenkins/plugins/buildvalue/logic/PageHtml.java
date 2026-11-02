@@ -18,21 +18,25 @@ public final class PageHtml {
         String tab = scope.isEmpty() ? "bv-tab" : "bv-" + scope + "-tab";
         String radio = scope.isEmpty() ? "bv-tab" : "bv-tab-" + scope;
         StringBuilder html = new StringBuilder(12_000);
-        html.append("<div class=\"bv\" data-logo=\"").append(pluginAsset("images/logo.jpg")).append("\">");
+        html.append("<div class=\"bv\" data-jenkins-lang=\"").append(jenkinsLang()).append("\" data-logo=\"")
+                .append(pluginAsset("images/logo.jpg")).append("\">");
         if (dashboard.empty) {
             html.append("<header class=\"bv-nav\"><span class=\"bv-crumb\" data-i18n=\"nav.brand\">构建统计</span>");
             tools(html, host, dashboard.days);
             html.append("</header>");
             html.append("<p class=\"bv-empty\" data-i18n=\"empty.builds\" data-zh=\"无构建记录。\">No builds yet.</p>");
             note(html, dashboard);
-            html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("\"></script>");
+            html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=7\"></script>");
             html.append("</div>");
             return html.toString();
         }
 
+        boolean windows = MachineMetrics.supported();
         html.append("<div class=\"bv-tabs\">");
         html.append("<input type=\"radio\" name=\"").append(radio).append("\" id=\"").append(tab).append("-all\" checked>");
-        html.append("<input type=\"radio\" name=\"").append(radio).append("\" id=\"").append(tab).append("-host\">");
+        if (windows) {
+            html.append("<input type=\"radio\" name=\"").append(radio).append("\" id=\"").append(tab).append("-host\">");
+        }
         html.append("<input type=\"radio\" name=\"").append(radio).append("\" id=\"").append(tab).append("-about\">");
         for (int i = 0; i < dashboard.tabs.size(); i++) {
             html.append("<input type=\"radio\" name=\"").append(radio).append("\" id=\"").append(tab).append("-").append(i).append("\">");
@@ -40,10 +44,12 @@ public final class PageHtml {
         html.append("<style>");
         html.append(".bv-tabs:has(#").append(tab).append("-all:checked) .bv-panel-all{display:block}");
         html.append(".bv-tabs:has(#").append(tab).append("-all:checked) label[for=\"").append(tab).append("-all\"]{background:var(--accent-color,#3ca2ea);color:var(--text-color-on-accent,#fff)}");
-        html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-panel-host{display:block}");
-        html.append(".bv-tabs:has(#").append(tab).append("-host:checked) label[for=\"").append(tab).append("-host\"]{background:var(--accent-color,#3ca2ea);color:var(--text-color-on-accent,#fff)}");
-        html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-lead,.bv-tabs:has(#").append(tab).append("-host:checked) .bv-banner,.bv-tabs:has(#").append(tab).append("-host:checked) .bv-note{display:none}");
-        html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-home-sign{display:none}");
+        if (windows) {
+            html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-panel-host{display:block}");
+            html.append(".bv-tabs:has(#").append(tab).append("-host:checked) label[for=\"").append(tab).append("-host\"]{background:var(--accent-color,#3ca2ea);color:var(--text-color-on-accent,#fff)}");
+            html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-lead,.bv-tabs:has(#").append(tab).append("-host:checked) .bv-banner,.bv-tabs:has(#").append(tab).append("-host:checked) .bv-note{display:none}");
+            html.append(".bv-tabs:has(#").append(tab).append("-host:checked) .bv-home-sign{display:none}");
+        }
         html.append(".bv-tabs:has(#").append(tab).append("-about:checked) .bv-panel-about{display:block}");
         html.append(".bv-tabs:has(#").append(tab).append("-about:checked) label[for=\"").append(tab).append("-about\"]{background:var(--accent-color,#3ca2ea);color:var(--text-color-on-accent,#fff)}");
         html.append(".bv-tabs:has(#").append(tab).append("-about:checked) .bv-lead,.bv-tabs:has(#").append(tab).append("-about:checked) .bv-banner{display:none}");
@@ -54,19 +60,24 @@ public final class PageHtml {
                     .append("\"]{background:var(--accent-color,#3ca2ea);color:var(--text-color-on-accent,#fff)}");
         }
         html.append("</style><div class=\"bv-shell\"><aside class=\"bv-side\"><div class=\"bv-side-brand\" data-i18n=\"nav.brand\">构建统计</div><div class=\"bv-tabbar\"><label for=\"")
-                .append(tab).append("-all\" data-i18n=\"nav.overview\">总览</label><label for=\"").append(tab).append("-host\" data-i18n=\"nav.host\">本机</label></div><div class=\"bv-side-label\" data-i18n=\"nav.pipes\">流水线</div><div class=\"bv-tabbar\">");
+                .append(tab).append("-all\" data-i18n=\"nav.overview\">总览</label>");
+        if (windows) {
+            html.append("<label for=\"").append(tab).append("-host\" data-i18n=\"nav.host\">本机</label>");
+        }
+        html.append("<label for=\"").append(tab).append("-about\" data-i18n=\"nav.about\">关于</label></div><div class=\"bv-side-label\" data-i18n=\"nav.pipes\">流水线</div><div class=\"bv-tabbar\">");
         for (int i = 0; i < dashboard.tabs.size(); i++) {
-            html.append("<label for=\"").append(tab).append("-").append(i).append("\">")
+            html.append("<label for=\"").append(tab).append("-").append(i).append("\" title=\"")
+                    .append(Texts.escape(dashboard.tabs.get(i).jobName)).append("\">")
                     .append(Texts.escape(dashboard.tabs.get(i).jobName)).append("</label>");
         }
-        html.append("</div><div class=\"bv-side-foot\"><label for=\"").append(tab).append("-about\" data-i18n=\"nav.about\">关于</label></div></aside><div class=\"bv-main\"><header class=\"bv-nav\"><span class=\"bv-crumb\" data-i18n=\"nav.brand\">构建统计</span>");
+        html.append("</div></aside><div class=\"bv-main\"><header class=\"bv-nav\"><span class=\"bv-crumb\" data-i18n=\"nav.brand\">构建统计</span>");
         if (!host.isEmpty()) {
             html.append("<span class=\"bv-range-label\" data-i18n=\"nav.machine\">机器</span>");
         }
         tools(html, host, dashboard.days);
         html.append("</header>");
         html.append("<div class=\"bv-lang-guide\" hidden>");
-        html.append("<p data-i18n=\"guide.lang\" data-zh=\"语言在右上角的地球图标里切换。没有选择时使用英文。\">The language control is the globe at the top right. English is used unless you choose otherwise.</p>");
+        html.append("<p data-i18n=\"guide.lang\" data-zh=\"右上角地球图标可以改这一页的语言。没选过时跟 Jenkins 界面语言，其次是浏览器首选语言，其它情况用英文。\">The globe at the top right overrides this page. Otherwise it follows the Jenkins language, then the browser language, then English.</p>");
         html.append("<button type=\"button\" class=\"bv-lang-guide-ok\" data-i18n=\"guide.ok\" data-zh=\"知道了\">Got it</button></div>");
         if (dashboard.banner != null && !dashboard.banner.isEmpty()) {
             prose(html, "p", "bv-banner", dashboard.banner);
@@ -86,7 +97,7 @@ public final class PageHtml {
         chart(html, "结果", dashboard.resultPie);
         chart(html, "机器时间", dashboard.timePie);
         chart(html, "触发方式", dashboard.triggerPie);
-        html.append("<article class=\"bv-tile bv-score\"><h3 data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</h3><strong>")
+        html.append("<article class=\"bv-tile jenkins-card bv-score\"><h3 data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</h3><strong>")
                 .append(Texts.escape(kpi.success)).append("</strong><ul class=\"bv-score-list\">");
         scoreRow(html, "成功次数", dashboard.deliveryText);
         scoreRow(html, "执行耗时", kpi.duration);
@@ -96,12 +107,12 @@ public final class PageHtml {
         prose(html, "p", "bv-score-note", dashboard.wasteLine);
         html.append("</article>");
 
-        html.append("<article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h3>");
+        html.append("<article class=\"bv-tile jenkins-card bv-span-3\"><h3 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h3>");
         peopleTable(html, dashboard.people, true);
-        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.pipes\" data-zh=\"各流水线\">Pipelines</h3>");
+        html.append("</article><article class=\"bv-tile jenkins-card bv-span-3\"><h3 data-i18n=\"h.pipes\" data-zh=\"各流水线\">Pipelines</h3>");
         prose(html, "p", "bv-muted", dashboard.otherSummary);
         if (!dashboard.others.isEmpty()) {
-            html.append("<div class=\"bv-table-card\"><table class=\"bv-table\"><thead><tr>");
+            html.append("<div class=\"bv-table-card jenkins-card\"><table class=\"bv-table\"><thead><tr>");
             html.append("<th data-i18n=\"col.pipeline\" data-zh=\"流水线\">Pipeline</th><th class=\"bv-num\" data-i18n=\"col.count\" data-zh=\"次数\">Count</th><th class=\"bv-num\" data-i18n=\"col.total\" data-zh=\"总耗时\">Total time</th><th class=\"bv-num\" data-i18n=\"col.avg\" data-zh=\"平均\">Average</th>");
             html.append("<th class=\"bv-num\" data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</th><th class=\"bv-num\" data-i18n=\"col.fail\" data-zh=\"失败\">Failed</th><th data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</th></tr></thead><tbody>");
             for (Dashboard.JobRow row : dashboard.others) {
@@ -117,7 +128,7 @@ public final class PageHtml {
             }
             html.append("</tbody></table></div>");
         }
-        html.append("</article><article class=\"bv-tile bv-span-3\"><h3 data-i18n=\"h.ledger\" data-zh=\"累计时间明细\">Cumulative time</h3>");
+        html.append("</article><article class=\"bv-tile jenkins-card bv-span-3\"><h3 data-i18n=\"h.ledger\" data-zh=\"累计时间明细\">Cumulative time</h3>");
         html.append("<div class=\"bv-table-card bv-table-scroll\"><table class=\"bv-table\"><thead><tr>");
         html.append("<th data-i18n=\"col.when\" data-zh=\"时间\">When</th><th class=\"bv-num\" data-i18n=\"col.period\" data-zh=\"本期耗时\">This period</th><th class=\"bv-num\" data-i18n=\"col.cum\" data-zh=\"累计耗时\">Cumulative</th>");
         html.append("<th class=\"bv-num\" data-i18n=\"col.cumOk\" data-zh=\"累计成功\">Cumulative success</th><th class=\"bv-num\" data-i18n=\"col.cumBad\" data-zh=\"累计失败和中止\">Cumulative failure and abort</th></tr></thead><tbody>");
@@ -138,11 +149,13 @@ public final class PageHtml {
             renderPanel(html, dashboard.tabs.get(i));
             html.append("</div>");
         }
-        hostPanel(html);
+        if (windows) {
+            hostPanel(html);
+        }
         aboutPanel(html);
         html.append("</div></div></div>");
         html.append("<div class=\"bv-float\" hidden></div>");
-        html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=7\"></script>");
         html.append("</div>");
         return html.toString();
     }
@@ -185,13 +198,13 @@ public final class PageHtml {
             chart(html, "失败落在哪个阶段", panel.failPie);
         }
         html.append("</div>");
-        html.append("<div class=\"bv-pair\"><section><h2 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h2>");
+        html.append("<div class=\"bv-pair\"><section class=\"jenkins-card\"><h2 data-i18n=\"h.accounts\" data-zh=\"触发账号\">Accounts</h2>");
         peopleTable(html, panel.people, false);
-        html.append("</section><section><h2 data-i18n=\"h.recent\" data-zh=\"最近的构建\">Recent builds</h2>");
+        html.append("</section><section class=\"jenkins-card\"><h2 data-i18n=\"h.recent\" data-zh=\"最近的构建\">Recent builds</h2>");
         if (panel.recent.isEmpty()) {
             html.append("<p class=\"bv-muted\" data-i18n=\"empty.none\" data-zh=\"无记录。\">No records.</p>");
         } else {
-            html.append("<div class=\"bv-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
+            html.append("<div class=\"bv-card jenkins-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
             html.append("<th data-i18n=\"col.build\" data-zh=\"构建\">Build</th><th data-i18n=\"col.result\" data-zh=\"结果\">Result</th><th class=\"bv-num\" data-i18n=\"col.duration\" data-zh=\"耗时\">Duration</th><th data-i18n=\"col.who\" data-zh=\"触发人\">Who</th><th data-i18n=\"col.start\" data-zh=\"开始\">Started</th>");
             html.append("</tr></thead><tbody>");
             for (Dashboard.BuildRow row : panel.recent) {
@@ -226,7 +239,7 @@ public final class PageHtml {
             html.append("<p class=\"bv-muted\" data-i18n=\"empty.none\" data-zh=\"无记录。\">No records.</p>");
             return;
         }
-        html.append("<div class=\"bv-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
+        html.append("<div class=\"bv-card jenkins-card bv-table-card\"><table class=\"bv-table\"><thead><tr>");
         html.append("<th data-i18n=\"col.account\" data-zh=\"账号\">Account</th><th class=\"bv-num\" data-i18n=\"col.count\" data-zh=\"次数\">Count</th><th class=\"bv-num\" data-i18n=\"col.ok\" data-zh=\"成功\">Success</th><th class=\"bv-num\" data-i18n=\"col.fail\" data-zh=\"失败\">Failed</th>");
         html.append("<th class=\"bv-num\" data-i18n=\"col.abort\" data-zh=\"中止\">Aborted</th><th class=\"bv-num\" data-i18n=\"kpi.rate\" data-zh=\"成功率\">Success rate</th><th class=\"bv-num\" data-i18n=\"kpi.time\" data-zh=\"执行耗时\">Duration</th><th data-i18n=\"col.last\" data-zh=\"最近\">Latest</th>");
         if (withJobs) {
@@ -260,7 +273,8 @@ public final class PageHtml {
         }
         String place = "job".equals(page) ? "job" : "home";
         StringBuilder html = new StringBuilder();
-        html.append("<div class=\"bv-home-sign\" data-bv-home data-bv-page=\"").append(place).append("\">");
+        html.append("<div class=\"bv-home-sign\" data-bv-home data-jenkins-lang=\"").append(jenkinsLang())
+                .append("\" data-bv-page=\"").append(place).append("\">");
         html.append("<div class=\"bv-home-card\"><div class=\"bv-home-tools\">");
         html.append("<button type=\"button\" class=\"bv-home-peek\" aria-label=\"Dock right\">⟩</button>");
         html.append("<button type=\"button\" class=\"bv-home-close\" aria-label=\"Close\">×</button>");
@@ -291,7 +305,7 @@ public final class PageHtml {
         html.append("<p class=\"bv-entry-text\"></p><div class=\"bv-entry-actions\">");
         html.append("<button type=\"button\" class=\"bv-entry-show\" hidden></button>");
         html.append("<button type=\"button\" class=\"bv-entry-ok\"></button></div></div>");
-        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=6\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=8\"></script>");
         return html.toString();
     }
 
@@ -352,9 +366,9 @@ public final class PageHtml {
     }
 
     private static void heat(StringBuilder html, String json) {
-        html.append("<section class=\"bv-heat\"><div class=\"bv-heat-row\">");
+        html.append("<section class=\"bv-heat jenkins-card\"><div class=\"bv-heat-row\">");
         html.append("<div class=\"bv-heat-plot\"></div>");
-        html.append("<aside class=\"bv-heat-side\"><div class=\"bv-heat-side-top\">");
+        html.append("<aside class=\"bv-heat-side jenkins-card\"><div class=\"bv-heat-side-top\">");
         html.append("<span class=\"bv-heat-size\"><button type=\"button\" data-size=\"s\" data-i18n=\"heat.s\">小</button><button type=\"button\" data-size=\"m\" data-i18n=\"heat.m\">中</button><button type=\"button\" data-size=\"l\" class=\"is-on\" data-i18n=\"heat.l\">大</button></span>");
         html.append("<div class=\"bv-heat-stats\"></div></div>");
         html.append("<label class=\"bv-heat-year-label\"><span data-i18n=\"heat.year\">年份</span><select class=\"bv-heat-year\"></select></label>");
@@ -363,7 +377,7 @@ public final class PageHtml {
     }
 
     private static void card(StringBuilder html, String label, String value, String delta, String deltaClass) {
-        html.append("<article class=\"bv-kpi\"><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><strong")
+        html.append("<article class=\"bv-kpi jenkins-card\"><span").append(i18nAttr(label)).append(">").append(Texts.escape(label)).append("</span><strong")
                 .append(Texts.bilingualAttrs(value)).append(">").append(Texts.escape(Texts.english(value))).append("</strong>");
         if (delta != null && !delta.isEmpty()) {
             html.append("<em class=\"").append(deltaClass).append('"').append(Texts.bilingualAttrs(delta)).append(">")
@@ -373,7 +387,7 @@ public final class PageHtml {
     }
 
     private static void chartCaption(StringBuilder html, String title, String svg, String caption, boolean wide) {
-        html.append("<article class=\"bv-card");
+        html.append("<article class=\"bv-card jenkins-card");
         if (wide) {
             html.append(" bv-span-3");
         }
@@ -384,7 +398,7 @@ public final class PageHtml {
     }
 
     private static void chart(StringBuilder html, String title, String svg) {
-        html.append("<article class=\"bv-card").append(svg.contains("bv-wide") ? " bv-scroll" : "").append("\"><h3").append(i18nAttr(title)).append(">")
+        html.append("<article class=\"bv-card jenkins-card").append(svg.contains("bv-wide") ? " bv-scroll" : "").append("\"><h3").append(i18nAttr(title)).append(">")
                 .append(Texts.escape(title)).append("</h3>");
         html.append(svg);
         html.append("</article>");
@@ -465,12 +479,12 @@ public final class PageHtml {
         liveCard(html, "read", "磁盘读", "Per second", "#3C74A3");
         liveCard(html, "write", "磁盘写", "Per second", "#F08048");
         html.append("</div>");
-        html.append("<article class=\"bv-tile bv-host-jenkins\"><h3 data-i18n=\"host.now\">Jenkins 当前</h3><div class=\"bv-jenkins\"></div></article>");
+        html.append("<article class=\"bv-tile jenkins-card bv-host-jenkins\"><h3 data-i18n=\"host.now\">Jenkins 当前</h3><div class=\"bv-jenkins\"></div></article>");
         html.append("<p class=\"bv-live-status\">Sampling</p></div>");
     }
 
     private static void liveCard(StringBuilder html, String key, String title, String sub, String color) {
-        html.append("<article class=\"bv-tile bv-live\" data-live=\"").append(key).append("\">");
+        html.append("<article class=\"bv-tile jenkins-card bv-live\" data-live=\"").append(key).append("\">");
         if ("cpu".equals(key)) {
             html.append("<div class=\"bv-card-top\"><h3").append(i18nAttr(title)).append(">").append(title).append("</h3>");
             html.append("<div class=\"bv-core-switch\"><button type=\"button\" data-cpu=\"total\" class=\"is-on\" data-i18n=\"host.total\">总占用</button>");
@@ -584,7 +598,7 @@ public final class PageHtml {
 
 
     private static void note(StringBuilder html, Dashboard dashboard) {
-        html.append("<footer class=\"bv-note\"><strong data-i18n=\"note.title\" data-zh=\"统计\">Notes</strong>");
+        html.append("<footer class=\"bv-note jenkins-card\"><strong data-i18n=\"note.title\" data-zh=\"统计\">Notes</strong>");
         prose(html, "p", "", dashboard.methodNote);
         html.append("</footer>");
     }
@@ -595,6 +609,19 @@ public final class PageHtml {
             return "";
         }
         return request.getContextPath();
+    }
+
+    /** Jenkins locale is the user language, or the browser language when the user has not chosen one. */
+    private static String jenkinsLang() {
+        StaplerRequest2 request = Stapler.getCurrentRequest2();
+        if (request == null) {
+            return "";
+        }
+        String language = request.getLocale().getLanguage();
+        if ("zh".equals(language) || "en".equals(language)) {
+            return language;
+        }
+        return "";
     }
 
     private static String pluginAsset(String path) {

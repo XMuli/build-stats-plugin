@@ -201,8 +201,9 @@
   padding: 8px;
 }
 
-.bv-tabbar:last-child {
-  max-height: calc(100vh - 148px);
+.bv-side > .bv-tabbar:last-child {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -213,6 +214,9 @@
   color: var(--text-color, #17242c);
   cursor: pointer;
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bv-tabbar label:hover {
@@ -603,9 +607,9 @@ html.bv-summary-on .bv-lead {
   box-sizing: border-box;
   width: 300px;
   padding: 14px 14px 12px;
-  background: #fff;
-  color: #1e2b4b;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, #fff);
+  color: var(--text-color, #1e2b4b);
+  border: 1px solid var(--panel-border-color, #e4e9ee);
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(30, 43, 75, 0.16);
   font-size: 13px;
@@ -626,9 +630,9 @@ html.bv-summary-on .bv-lead {
   top: -7px;
   width: 12px;
   height: 12px;
-  background: #fff;
-  border-top: 1px solid #e4e9ee;
-  border-left: 1px solid #e4e9ee;
+  background: var(--card-background, #fff);
+  border-top: 1px solid var(--panel-border-color, #e4e9ee);
+  border-left: 1px solid var(--panel-border-color, #e4e9ee);
   transform: rotate(45deg);
 }
 
@@ -655,9 +659,9 @@ html.bv-summary-on .bv-lead {
 }
 
 .bv-entry-show {
-  background: #fff !important;
-  color: #1e2b4b !important;
-  box-shadow: inset 0 0 0 1px #d5dde6;
+  background: var(--card-background, #fff) !important;
+  color: var(--text-color, #1e2b4b) !important;
+  box-shadow: inset 0 0 0 1px var(--panel-border-color, #d5dde6);
 }
 
 a.bv-entry-target {
@@ -736,7 +740,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-range-label {
   flex: 0 0 auto;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   font-weight: 600;
 }
@@ -746,9 +750,9 @@ html.bv-sign-home .bv .bv-sign {
   flex: 0 0 auto;
   margin-left: auto;
   padding: 2px;
-  border: 1px solid #d7dee6;
+  border: 1px solid var(--panel-border-color, #d7dee6);
   border-radius: 4px;
-  background: #fff;
+  background: var(--card-background, #fff);
 }
 
 .bv-ranges a {
@@ -818,10 +822,10 @@ html.bv-sign-home .bv .bv-sign {
 .bv-card,
 .bv-table-card,
 .bv-note {
-  background: #fff;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
   border-radius: 2px;
-  box-shadow: none;
+  color: var(--text-color, #17242c);
 }
 
 .bv-tile {
@@ -834,7 +838,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-card h3 {
   margin: 0 0 6px;
   overflow: hidden;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 13px;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -857,7 +861,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-score strong {
   display: block;
   padding: 18px 0 6px;
-  color: #1c2b3a;
+  color: var(--text-color, #1c2b3a);
   font-size: 56px;
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -876,27 +880,27 @@ html.bv-sign-home .bv .bv-sign {
   justify-content: space-between;
   gap: 12px;
   padding: 7px 0;
-  border-top: 1px solid #eef2f5;
-  color: #5c6b7a;
+  border-top: 1px solid var(--panel-border-color, #eef2f5);
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
 }
 
 .bv-score-list b {
-  color: #1c2b3a;
+  color: var(--text-color, #1c2b3a);
   font-weight: 600;
 }
 
 .bv-score-note,
 .bv-live-sub,
 .bv-live-status {
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   line-height: 1.45;
 }
 
 .bv-live-value {
   margin-left: auto;
-  color: #1c2b3a;
+  color: var(--text-color, #1c2b3a);
   font-size: 12px;
   font-weight: 600;
 }
@@ -906,7 +910,7 @@ html.bv-sign-home .bv .bv-sign {
   align-items: center;
   gap: 6px;
   margin-top: 8px;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 11px;
 }
 
@@ -931,7 +935,7 @@ html.bv-sign-home .bv .bv-sign {
   gap: 8px;
   align-items: center;
   margin-top: 6px;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
 }
 
@@ -939,7 +943,7 @@ html.bv-sign-home .bv .bv-sign {
   height: 8px;
   overflow: hidden;
   border-radius: 99px;
-  background: #e7eef5;
+  background: var(--panel-border-color, #e7eef5);
 }
 
 .bv-disk-bar i {
@@ -950,7 +954,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-jenkins h4 {
   margin: 10px 0 4px;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
   font-weight: 600;
 }
@@ -958,8 +962,8 @@ html.bv-sign-home .bv .bv-sign {
 .bv-jenkins p {
   margin: 0;
   padding: 4px 0;
-  border-bottom: 1px solid #e8edf2;
-  color: #1c2b3a;
+  border-bottom: 1px solid var(--panel-border-color, #e8edf2);
+  color: var(--text-color, #1c2b3a);
   font-size: 12px;
 }
 
@@ -971,10 +975,10 @@ html.bv-sign-home .bv .bv-sign {
 .bv-card,
 .bv-table-card,
 .bv-note {
-  background: #fff;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
   border-radius: 2px;
-  box-shadow: none;
+  color: var(--text-color, #17242c);
 }
 
 .bv-kpi {
@@ -984,7 +988,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-kpi span,
 .bv-card h3 {
   display: block;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1001,7 +1005,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-kpi em {
   display: block;
   margin-top: 8px;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   font-style: normal;
   line-height: 1.4;
@@ -1019,7 +1023,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-muted,
 .bv-empty {
   margin: 10px 16px 0;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -1034,16 +1038,17 @@ html.bv-sign-home .bv .bv-sign {
 }
 
 .bv-pair > section {
-  background: #fff;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
   border-radius: 2px;
   padding: 10px 12px 12px;
+  color: var(--text-color, #17242c);
 }
 
 .bv-pair h2 {
   margin: 0;
   padding: 0 0 6px;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 13px;
   font-weight: 600;
 }
@@ -1104,7 +1109,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-chart-note {
   margin: 0 0 8px;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -1112,9 +1117,10 @@ html.bv-sign-home .bv .bv-sign {
 .bv-heat {
   margin: 12px 12px 0;
   padding: 12px;
-  background: #fff;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
   border-radius: 2px;
+  color: var(--text-color, #17242c);
 }
 
 .bv-heat-row {
@@ -1141,9 +1147,10 @@ html.bv-sign-home .bv .bv-sign {
   flex-direction: column;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid #d7e8dc;
+  border: 1px solid var(--panel-border-color, #d7e8dc);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card-background, var(--background, #fff));
+  color: var(--text-color, #17242c);
 }
 
 .bv-heat-side-top,
@@ -1165,16 +1172,17 @@ html.bv-sign-home .bv .bv-sign {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #3d4e58;
+  color: var(--text-color-secondary, #3d4e58);
   font-size: 12px;
 }
 
 .bv-heat-year {
   height: 28px;
   padding: 0 8px;
-  border: 1px solid #d7dee6;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
   border-radius: 4px;
-  background: #fff;
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #17242c);
   font: inherit;
   font-size: 12px;
 }
@@ -1182,10 +1190,10 @@ html.bv-sign-home .bv .bv-sign {
 .bv-heat-size button {
   height: 28px;
   padding: 0 10px;
-  border: 1px solid #d7dee6;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
   border-radius: 14px;
-  background: #fff;
-  color: #1c2b3a;
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #1c2b3a);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -1204,10 +1212,10 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-heat-stats span {
   padding: 2px 8px;
-  border: 1px solid #d7e8dc;
+  border: 1px solid var(--panel-border-color, #d7e8dc);
   border-radius: 12px;
-  background: #fff;
-  color: #3d4e58;
+  background: var(--background, transparent);
+  color: var(--text-color-secondary, #3d4e58);
   font-size: 12px;
 }
 
@@ -1226,7 +1234,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-heat-months span {
   height: 16px;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -1240,7 +1248,7 @@ html.bv-sign-home .bv .bv-sign {
   display: grid;
   grid-template-rows: repeat(7, var(--cell));
   gap: 3px;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 11px;
 }
 
@@ -1270,7 +1278,7 @@ html.bv-sign-home .bv .bv-sign {
   justify-content: flex-end;
   gap: 4px;
   margin-top: 8px;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 11px;
 }
 
@@ -1291,13 +1299,14 @@ html.bv-sign-home .bv .bv-sign {
   height: auto;
 }
 
-.bv-card svg text {
+.bv-card svg text,
+.bv-tile svg text {
   font-family: inherit;
-  fill: #8b97a3;
+  fill: var(--text-color-secondary, #8b97a3);
 }
 
 .bv-card svg text.bv-pie-center {
-  fill: #1c2b3a;
+  fill: var(--text-color, #1c2b3a);
 }
 
 .bv-match {
@@ -1436,14 +1445,14 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-note p {
   margin-top: 6px;
-  color: #6b7c86;
+  color: var(--text-color-secondary, #6b7c86);
   font-size: 12px;
   line-height: 1.6;
 }
 
 .bv-jenkins h4 {
   margin: 10px 0 4px;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1451,17 +1460,17 @@ html.bv-sign-home .bv .bv-sign {
 .bv-jenkins p {
   margin: 0;
   padding: 4px 0;
-  border-bottom: 1px solid #e8edf2;
-  color: #1c2b3a;
+  border-bottom: 1px solid var(--panel-border-color, #e8edf2);
+  color: var(--text-color, #1c2b3a);
   font-size: 12px;
 }
 
 .bv-sources {
   display: flex;
   padding: 2px;
-  border: 1px solid #d7dee6;
+  border: 1px solid var(--panel-border-color, #d7dee6);
   border-radius: 4px;
-  background: #fff;
+  background: var(--card-background, #fff);
 }
 
 .bv-sources a {
@@ -1491,16 +1500,16 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-pace span {
   margin-right: 8px;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
 }
 
 .bv-pace button {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #d7dee6;
-  background: #fff;
-  color: #1c2b3a;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #1c2b3a);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -1515,20 +1524,6 @@ html.bv-sign-home .bv .bv-sign {
   border-color: #3CA2EA;
   color: #fff;
   position: relative;
-}
-
-.bv-side-foot {
-  margin-top: auto;
-  padding: 8px;
-}
-
-.bv-side-foot label {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 6px;
-  color: #d5deea;
-  cursor: pointer;
-  font-size: 13px;
 }
 
 .bv-card-top {
@@ -1550,9 +1545,9 @@ html.bv-sign-home .bv .bv-sign {
 .bv-core-switch button {
   height: 26px;
   padding: 0 8px;
-  border: 1px solid #d7dee6;
-  background: #fff;
-  color: #1c2b3a;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #1c2b3a);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -1570,7 +1565,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-cpu-meta {
   margin: 6px 0 0;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 12px;
 }
 
@@ -1597,13 +1592,13 @@ html.bv-sign-home .bv .bv-sign {
 .bv-core {
   min-width: 0;
   padding: 4px;
-  border: 1px solid #e4e9ee;
-  background: #f7f9fb;
+  border: 1px solid var(--panel-border-color, #e4e9ee);
+  background: var(--background, #f7f9fb);
 }
 
 .bv-core b {
   display: block;
-  color: #5c6b7a;
+  color: var(--text-color-secondary, #5c6b7a);
   font-size: 11px;
   font-weight: 600;
 }
@@ -1618,8 +1613,9 @@ html.bv-sign-home .bv .bv-sign {
   width: min(760px, calc(100% - 48px));
   margin: 48px auto 56px;
   padding: 28px 28px 8px;
-  background: #fff;
-  border: 1px solid #e4e9ee;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
+  color: var(--text-color, #17242c);
 }
 
 .bv-about-hero {
@@ -1630,7 +1626,7 @@ html.bv-sign-home .bv .bv-sign {
 
 .bv-about-kicker {
   margin: 0 0 4px;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 12px;
 }
 
@@ -1678,16 +1674,16 @@ html.bv-sign-home .bv .bv-sign {
   align-items: center;
   gap: 12px;
   min-height: 52px;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid var(--panel-border-color, #eef2f6);
 }
 
 .bv-about-row > span {
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 13px;
 }
 
 .bv-about-row strong {
-  color: #1e2b4b;
+  color: var(--text-color, #1e2b4b);
   font-size: 15px;
   font-weight: 650;
 }
@@ -1697,10 +1693,10 @@ html.bv-sign-home .bv .bv-sign {
   max-width: 100%;
   height: 34px;
   padding: 0 8px;
-  border: 1px solid #d7dee6;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
   border-radius: 8px;
-  background: #fff;
-  color: #1c2b3a;
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #1c2b3a);
   font: inherit;
   font-size: 14px;
 }
@@ -1709,9 +1705,9 @@ html.bv-sign-home .bv .bv-sign {
 .bv-logo-clear {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #d7dee6;
-  background: #fff;
-  color: #1c2b3a;
+  border: 1px solid var(--input-border, var(--panel-border-color, #d7dee6));
+  background: var(--input-color, var(--card-background, #fff));
+  color: var(--text-color, #1c2b3a);
   font: inherit;
   font-size: 12px;
   line-height: 28px;
@@ -1754,10 +1750,10 @@ html.bv-sign-home .bv .bv-sign {
   align-items: center;
   height: 32px;
   padding: 0 12px;
-  border: 1px solid #e4d3c0;
+  border: 1px solid var(--panel-border-color, #e4d3c0);
   border-radius: 8px;
-  background: #fff;
-  color: #3d4e58;
+  background: var(--card-background, #fff);
+  color: var(--text-color, #3d4e58);
   font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
@@ -1766,7 +1762,7 @@ html.bv-sign-home .bv .bv-sign {
 .bv-star-close {
   border: 0;
   background: transparent;
-  color: #8b97a3;
+  color: var(--text-color-secondary, #8b97a3);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;

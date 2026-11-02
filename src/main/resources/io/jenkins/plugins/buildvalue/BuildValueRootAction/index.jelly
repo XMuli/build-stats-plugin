@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
   <l:layout title="Build Stats" norefresh="true">
     <l:main-panel>
-      <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css" type="text/css"/>
+      <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css?v=7" type="text/css"/>
       <j:out value="${it.body}"/>
     </l:main-panel>
   </l:layout>

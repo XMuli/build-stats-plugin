@@ -26,7 +26,7 @@ public class BuildValueRootAction implements RootAction {
 
     @Override
     public String getDisplayName() {
-        return "Build Stats";
+        return Messages.BuildValueRootAction_DisplayName();
     }
 
     @Override
@@ -77,6 +77,9 @@ public class BuildValueRootAction implements RootAction {
 
     public HttpResponse doMachine() {
         Jenkins.get().checkPermission(Jenkins.READ);
+        if (!MachineMetrics.supported()) {
+            return json("{\"ok\":false,\"supported\":false}");
+        }
         StaplerRequest2 request = Stapler.getCurrentRequest2();
         if (request != null) {
             MachineMetrics.pace(request.getParameter("pace"));

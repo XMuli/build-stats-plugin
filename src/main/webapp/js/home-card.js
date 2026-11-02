@@ -60,6 +60,20 @@
     return true;
   }
 
+  function code(raw) {
+    if (!raw) {
+      return "";
+    }
+    raw = String(raw).toLowerCase();
+    if (raw.indexOf("zh") === 0) {
+      return "zh";
+    }
+    if (raw.indexOf("en") === 0) {
+      return "en";
+    }
+    return "";
+  }
+
   function lang() {
     try {
       var saved = localStorage.getItem("bv-lang");
@@ -67,6 +81,21 @@
         return saved;
       }
     } catch (e) {}
+    var fromPage = code(root.getAttribute("data-jenkins-lang"));
+    if (fromPage) {
+      return fromPage;
+    }
+    var fromHtml = code(document.documentElement.lang);
+    if (fromHtml) {
+      return fromHtml;
+    }
+    var list = navigator.languages || [navigator.language || ""];
+    for (var i = 0; i < list.length; i++) {
+      var picked = code(list[i]);
+      if (picked) {
+        return picked;
+      }
+    }
     return "en";
   }
 
@@ -297,7 +326,7 @@
     if (event.button != null && event.button !== 0) {
       return;
     }
-    if (event.target.closest("button") || event.target.closest("a") || root.classList.contains("is-peek") || root.classList.contains("is-closed")) {
+    if (event.target.closest("button") || root.classList.contains("is-peek") || root.classList.contains("is-closed")) {
       return;
     }
     var rect = root.getBoundingClientRect();

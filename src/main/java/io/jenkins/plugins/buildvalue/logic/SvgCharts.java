@@ -289,10 +289,10 @@ final class SvgCharts {
         svg.append("</g>");
         svg.append(hits);
         svg.append("<text class=\"bv-pie-center\" pointer-events=\"none\" x=\"").append(fmt(cx)).append("\" y=\"").append(fmt(cy + 2))
-                .append("\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#1c2b3a\">")
+                .append("\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"currentColor\">")
                 .append(Texts.escape(center)).append("</text>");
         svg.append("<text pointer-events=\"none\" x=\"").append(fmt(cx)).append("\" y=\"").append(fmt(cy + 18))
-                .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"#8b97a3\">")
+                .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\">")
                 .append(Texts.escape(sub)).append("</text>");
         int cursor = 12;
         int row = 214;
@@ -307,7 +307,7 @@ final class SvgCharts {
             svg.append("<rect pointer-events=\"none\" x=\"").append(cursor).append("\" y=\"").append(row - 8)
                     .append("\" width=\"8\" height=\"8\" fill=\"").append(colors.get(i)).append("\"/>");
             svg.append("<text pointer-events=\"none\" x=\"").append(cursor + 12).append("\" y=\"").append(row)
-                    .append("\" font-size=\"11\" fill=\"#8b97a3\">").append(Texts.escape(name)).append("</text>");
+                    .append("\" font-size=\"11\" fill=\"currentColor\">").append(Texts.escape(name)).append("</text>");
             svg.append("<rect class=\"bv-hit\" fill=\"transparent\" x=\"").append(cursor - 2).append("\" y=\"").append(row - 12)
                     .append("\" width=\"").append(need).append("\" height=\"16\"")
                     .append(pointerAttrs(tips.get(i), colors.get(i), pointers.get(i)))
@@ -384,7 +384,7 @@ final class SvgCharts {
         for (int i = 0; i < n; i += step) {
             double x = left + i * slot + slot / 2;
             svg.append("<text x=\"").append(fmt(x)).append("\" y=\"").append(top + innerH + 16)
-                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"#8b97a3\">")
+                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(labels.get(i))).append("</text>");
         }
         legend(svg, List.of(new Series("Count", color, List.of())), 12, height - 12, width - 16);
@@ -425,7 +425,7 @@ final class SvgCharts {
             svg.append("<text x=\"0\" y=\"").append(y + 16).append("\" font-size=\"12\" fill=\"currentColor\">")
                     .append(Texts.escape(Texts.clip(bar.label, 24))).append("</text>");
             svg.append("<rect x=\"").append(barX).append("\" y=\"").append(y + 6)
-                    .append("\" width=\"").append(barW).append("\" height=\"8\" fill=\"#e8eef3\"/>");
+                    .append("\" width=\"").append(barW).append("\" height=\"8\" fill=\"var(--panel-border-color,#e4e9ee)\"/>");
             svg.append("<rect x=\"").append(barX).append("\" y=\"").append(y + 6)
                     .append("\" width=\"").append(Math.max(w, bar.value > 0 ? 2 : 0))
                     .append("\" height=\"8\" fill=\"#5dade2\"/>");
@@ -440,7 +440,7 @@ final class SvgCharts {
 
     private static void crosshair(StringBuilder svg) {
         svg.append("<g class=\"bv-cross\" visibility=\"hidden\" pointer-events=\"none\">");
-        svg.append("<line class=\"bv-cross-line\" stroke=\"#8b97a3\" stroke-opacity=\"0.9\" stroke-width=\"1\"/>");
+        svg.append("<line class=\"bv-cross-line\" stroke=\"currentColor\" stroke-opacity=\"0.9\" stroke-width=\"1\"/>");
         svg.append("<g class=\"bv-cross-dots\"></g></g>");
     }
 
@@ -506,7 +506,7 @@ final class SvgCharts {
             svg.append("<rect x=\"").append(cursor).append("\" y=\"").append(row - 8)
                     .append("\" width=\"8\" height=\"8\" fill=\"").append(seriesItem.color).append("\"/>");
             svg.append("<text x=\"").append(cursor + 12).append("\" y=\"").append(row)
-                    .append("\" font-size=\"11\" fill=\"#8b97a3\">")
+                    .append("\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(seriesItem.name)).append("</text>");
             cursor += need;
         }
@@ -518,9 +518,9 @@ final class SvgCharts {
             double y = top + innerH - (innerH * tick / 4.0);
             svg.append("<line x1=\"").append(left).append("\" y1=\"").append(fmt(y))
                     .append("\" x2=\"").append(left + innerW).append("\" y2=\"").append(fmt(y))
-                    .append("\" stroke=\"#e8edf2\"/>");
+                    .append("\" stroke=\"var(--panel-border-color,#e4e9ee)\"/>");
             svg.append("<text x=\"").append(left - 8).append("\" y=\"").append(fmt(y + 3))
-                    .append("\" text-anchor=\"end\" font-size=\"11\" fill=\"#8b97a3\">")
+                    .append("\" text-anchor=\"end\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(Texts.num(value))).append(Texts.escape(unit)).append("</text>");
         }
     }
@@ -533,13 +533,13 @@ final class SvgCharts {
         for (int i = 0; i < n; i += step) {
             double x = n == 1 ? left + innerW / 2.0 : left + (innerW * (double) i) / (n - 1);
             svg.append("<text x=\"").append(fmt(x)).append("\" y=\"").append(y)
-                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"#8b97a3\">")
+                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(labels.get(i))).append("</text>");
         }
         if ((n - 1) % step != 0) {
             double x = left + innerW;
             svg.append("<text x=\"").append(fmt(x)).append("\" y=\"").append(y)
-                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"#8b97a3\">")
+                    .append("\" text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(labels.get(n - 1))).append("</text>");
         }
     }
@@ -558,7 +558,7 @@ final class SvgCharts {
         int width = left + perRow * (nodeW + gapX);
         int height = top + rows * rowH + 8;
         StringBuilder svg = start(width, height, buildLabel);
-        svg.append("<text x=\"").append(left).append("\" y=\"16\" font-size=\"12\" fill=\"#5c6b7a\">")
+        svg.append("<text x=\"").append(left).append("\" y=\"16\" font-size=\"12\" fill=\"currentColor\">")
                 .append(Texts.escape(buildLabel)).append("</text>");
         for (int i = 0; i < stages.size(); i++) {
             StageSample stage = stages.get(i);
@@ -569,18 +569,18 @@ final class SvgCharts {
             if (col > 0) {
                 svg.append("<line x1=\"").append(x - gapX).append("\" y1=\"").append(y + 16)
                         .append("\" x2=\"").append(x).append("\" y2=\"").append(y + 16)
-                        .append("\" stroke=\"#c5ced6\" stroke-width=\"1.5\"/>");
+                        .append("\" stroke=\"var(--panel-border-color,#e4e9ee)\" stroke-width=\"1.5\"/>");
             }
             String color = stage.failed() ? "#F08048" : "SUCCESS".equals(stage.status) ? "#50A040" : "#9DA0A5";
             String mark = stage.failed() ? "×" : "SUCCESS".equals(stage.status) ? "✓" : "·";
             String tip = stage.name + "  " + stage.status + "  " + Texts.duration(stage.durationMs);
             svg.append("<rect class=\"bv-hit\" rx=\"16\" x=\"").append(x).append("\" y=\"").append(y)
-                    .append("\" width=\"").append(nodeW).append("\" height=\"32\" fill=\"#fff\" stroke=\"")
+                    .append("\" width=\"").append(nodeW).append("\" height=\"32\" fill=\"var(--card-background,#fff)\" stroke=\"")
                     .append(color).append("\" stroke-width=\"1.5\" data-tip=\"").append(Texts.escape(tip)).append("\"/>");
             svg.append("<text pointer-events=\"none\" x=\"").append(x + 10).append("\" y=\"").append(y + 21)
                     .append("\" font-size=\"12\" fill=\"").append(color).append("\">").append(mark).append("</text>");
             svg.append("<text pointer-events=\"none\" x=\"").append(x + 26).append("\" y=\"").append(y + 21)
-                    .append("\" font-size=\"11\" fill=\"#1c2b3a\">")
+                    .append("\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(Texts.clip(stage.name, 10))).append("</text>");
         }
         svg.append("</svg>");
@@ -617,7 +617,7 @@ final class SvgCharts {
                 .append(width).append(' ').append(height).append("\" role=\"img\">");
         for (int r = 0; r < rows; r++) {
             int y = top + r * pitch;
-            svg.append("<text x=\"0\" y=\"").append(y + 10).append("\" font-size=\"11\" fill=\"#5c6b7a\">")
+            svg.append("<text x=\"0\" y=\"").append(y + 10).append("\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(stages.get(r))).append("</text>");
             for (int c = 0; c < cols; c++) {
                 String status = c < cells.get(r).size() ? cells.get(r).get(c) : "";
@@ -630,11 +630,11 @@ final class SvgCharts {
             }
         }
         svg.append("<rect x=\"").append(left).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#50A040\"/>");
-        svg.append("<text x=\"").append(left + 12).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Success</text>");
+        svg.append("<text x=\"").append(left + 12).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Success</text>");
         svg.append("<rect x=\"").append(left + 70).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#F08048\"/>");
-        svg.append("<text x=\"").append(left + 82).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Failure</text>");
+        svg.append("<text x=\"").append(left + 82).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Failure</text>");
         svg.append("<rect x=\"").append(left + 140).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#9DA0A5\"/>");
-        svg.append("<text x=\"").append(left + 152).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"#8b97a3\">Other</text>");
+        svg.append("<text x=\"").append(left + 152).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Other</text>");
         svg.append("</svg>");
         return svg.toString();
     }

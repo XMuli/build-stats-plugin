@@ -50,7 +50,7 @@
   </a>
 </p>
 
-运行 Jenkins 的这台机器：CPU、内存、磁盘、显卡、网速，以及磁盘读写。[在官网查看这一节](https://build-stats-plugin.xmuli.tech/#machine)。
+运行 Jenkins 的这台机器：CPU、内存、磁盘、显卡、网速，以及磁盘读写。控制器不是 Windows 时不显示这一页。[在官网查看这一节](https://build-stats-plugin.xmuli.tech/#machine)。
 
 ### 状态牌
 

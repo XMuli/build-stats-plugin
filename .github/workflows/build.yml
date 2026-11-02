@@ -22,9 +22,18 @@ jobs:
           cache: maven
       - name: Package the plugin
         run: mvn -B -DskipTests package
+      - name: Include the tag version in the package name
+        if: startsWith(github.ref, 'refs/tags/')
+        id: package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          for file in target/*.hpi; do
+            mv "$file" "target/build-stats-${version}.hpi"
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: build-stats-hpi
+          name: build-stats-${{ steps.package.outputs.version || 'hpi' }}
           path: target/*.hpi
           if-no-files-found: error
 
@@ -43,6 +52,12 @@ jobs:
           cache: maven
       - name: Package the release
         run: mvn -B -DskipTests package
+      - name: Include the tag version in the package name
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for file in target/*.hpi; do
+            mv "$file" "target/build-stats-${version}.hpi"
+          done
       - uses: softprops/action-gh-release@v2
         with:
           files: target/*.hpi

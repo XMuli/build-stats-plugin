@@ -456,7 +456,7 @@ public final class BuildValueComputer {
         return new Dashboard.JobPanel(
                 title,
                 mark,
-                BuildSample.shortName(jobName),
+                jobName,
                 jobUrl,
                 Integer.toString(cur.builds),
                 cur.completed == 0 ? "—" : Texts.durations(cur.duration / cur.completed),

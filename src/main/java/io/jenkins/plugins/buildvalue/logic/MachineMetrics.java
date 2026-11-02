@@ -37,7 +37,15 @@ public final class MachineMetrics {
 
     private MachineMetrics() {}
 
+    /** Host counters use Windows performance counters. Other controllers omit this page. */
+    public static boolean supported() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
+    }
+
     public static void start() {
+        if (!supported()) {
+            return;
+        }
         synchronized (MachineMetrics.class) {
             if (started) {
                 return;
@@ -61,6 +69,9 @@ public final class MachineMetrics {
     }
 
     public static String json() {
+        if (!supported()) {
+            return "{\"ok\":false,\"supported\":false}";
+        }
         start();
         return JSON.get();
     }

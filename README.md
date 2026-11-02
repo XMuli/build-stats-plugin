@@ -50,7 +50,7 @@ Each pipeline has its own page. Stage duration is included when Pipeline: Stage 
   </a>
 </p>
 
-The machine running Jenkins: CPU, memory, disk, GPU, network, and disk throughput. [Open this section on the website](https://build-stats-plugin.xmuli.tech/#machine).
+The machine running Jenkins: CPU, memory, disk, GPU, network, and disk throughput. The page is shown only when the controller runs on Windows. [Open this section on the website](https://build-stats-plugin.xmuli.tech/#machine).
 
 ### Status plates
 
