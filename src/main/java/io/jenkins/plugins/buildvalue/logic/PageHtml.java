@@ -1,5 +1,6 @@
 package io.jenkins.plugins.buildvalue.logic;
 
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest2;
 
@@ -26,7 +27,7 @@ public final class PageHtml {
             html.append("</header>");
             html.append("<p class=\"bv-empty\" data-i18n=\"empty.builds\" data-zh=\"无构建记录。\">No builds yet.</p>");
             note(html, dashboard);
-            html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=7\"></script>");
+            html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=8\"></script>");
             html.append("</div>");
             return html.toString();
         }
@@ -155,7 +156,7 @@ public final class PageHtml {
         aboutPanel(html);
         html.append("</div></div></div>");
         html.append("<div class=\"bv-float\" hidden></div>");
-        html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=7\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/build-stats.js")).append("?v=8\"></script>");
         html.append("</div>");
         return html.toString();
     }
@@ -305,7 +306,7 @@ public final class PageHtml {
         html.append("<p class=\"bv-entry-text\"></p><div class=\"bv-entry-actions\">");
         html.append("<button type=\"button\" class=\"bv-entry-show\" hidden></button>");
         html.append("<button type=\"button\" class=\"bv-entry-ok\"></button></div></div>");
-        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=8\"></script>");
+        html.append("<script src=\"").append(pluginAsset("js/home-card.js")).append("?v=9\"></script>");
         return html.toString();
     }
 
@@ -519,6 +520,8 @@ public final class PageHtml {
         html.append("<a class=\"bv-star-go\" href=\"https://github.com/XMuli/build-stats-plugin\" target=\"_blank\" rel=\"noopener noreferrer\"><span data-i18n=\"about.starGo\">去点 Star</span></a>");
         html.append("<button type=\"button\" class=\"bv-star-close\" aria-label=\"Close\">×</button></div>");
         html.append("<div class=\"bv-about-meta\">");
+        html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.version\">版本</span><strong>")
+                .append(Texts.escape(pluginVersion())).append("</strong></div>");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.author\">作者</span><strong>XMuli</strong></div>");
         html.append("<div class=\"bv-about-row\"><span data-i18n=\"about.repo\">GitHub</span><a href=\"https://github.com/XMuli/build-stats-plugin\" target=\"_blank\" rel=\"noopener noreferrer\">github.com/XMuli/build-stats-plugin</a></div>");
         html.append("</div></section></div>");
@@ -612,6 +615,20 @@ public final class PageHtml {
     }
 
     /** Jenkins locale is the user language, or the browser language when the user has not chosen one. */
+    private static String pluginVersion() {
+        try {
+            Jenkins jenkins = Jenkins.get();
+            hudson.Plugin plugin = jenkins.getPlugin("build-stats");
+            if (plugin == null || plugin.getWrapper() == null) {
+                return "";
+            }
+            String version = plugin.getWrapper().getVersion();
+            return version == null ? "" : version;
+        } catch (RuntimeException ex) {
+            return "";
+        }
+    }
+
     private static String jenkinsLang() {
         StaplerRequest2 request = Stapler.getCurrentRequest2();
         if (request == null) {

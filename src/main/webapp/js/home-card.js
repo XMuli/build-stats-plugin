@@ -336,9 +336,10 @@
       y: event.clientY,
       dx: event.clientX - rect.left,
       dy: event.clientY - rect.top,
-      moved: false
+      moved: false,
+      captured: false,
+      link: event.target.closest("a.bv-home-build")
     };
-    card.setPointerCapture(event.pointerId);
   });
 
   card.addEventListener("dragstart", function (event) {
@@ -351,6 +352,10 @@
     }
     if (Math.abs(event.clientX - drag.x) > 4 || Math.abs(event.clientY - drag.y) > 4) {
       drag.moved = true;
+      if (!drag.captured) {
+        card.setPointerCapture(event.pointerId);
+        drag.captured = true;
+      }
     }
     if (!drag.moved) {
       return;
@@ -371,11 +376,16 @@
       return;
     }
     var didMove = drag.moved;
+    var link = drag.link;
     drag = null;
     root.classList.remove("is-dragging");
     if (didMove) {
       save(state);
       card.dataset.dragged = "1";
+      return;
+    }
+    if (link && link.href) {
+      window.location.href = link.href;
     }
   }
 
