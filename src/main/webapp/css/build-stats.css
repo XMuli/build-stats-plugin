@@ -14,6 +14,19 @@
  * pager stay put; only the job list scrolls. The main column keeps normal page scrolling.
  * --header-height is Jenkins' own (4.125rem in 2.555.3).
  */
+/*
+ * Jenkins only gives #side-panel a width through "body.two-column", which this page does not set,
+ * and the panel is flex-shrink:0. Without a width of its own it grows to its widest job name and
+ * squeezes the main column until its app bar wraps one character per line. Fixing the width here
+ * keeps both columns predictable and is what makes the long paths below safe to show in full.
+ */
+#side-panel:has(.bv-side) {
+  box-sizing: border-box;
+  max-width: 20rem;
+  min-width: 0;
+  width: var(--side-panel-width, 18rem);
+}
+
 .bv-side {
   display: flex;
   flex-direction: column;
@@ -21,6 +34,7 @@
   /* No border-right: the two columns are separated by the layout's own gap. */
   max-height: calc(100vh - var(--header-height, 4.125rem) - 2rem);
   min-height: 0;
+  min-width: 0;
 }
 
 .bv-side-nav {
@@ -255,7 +269,12 @@
   width: 11px;
 }
 
-.bv-heat__cell {
+/*
+ * The legend swatches are <i> elements, which are inline by default and need a box to show their
+ * size. The grid's own cells are <td> and must keep table-cell display, or every row collapses
+ * into a single column.
+ */
+.bv-heat__legend .bv-heat__cell {
   display: inline-block;
 }
 

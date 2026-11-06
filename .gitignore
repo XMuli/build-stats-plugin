@@ -17,3 +17,5 @@ mvnenv.sh
 runjenkins.sh
 runhpi.sh
 probe.ps1
+HANDOFF.md
+notes/
