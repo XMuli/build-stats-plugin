@@ -2,7 +2,7 @@ package io.jenkins.plugins.buildvalue.preview;
 
 import io.jenkins.plugins.buildvalue.logic.BuildSample;
 import io.jenkins.plugins.buildvalue.logic.BuildValueComputer;
-import io.jenkins.plugins.buildvalue.logic.PageHtml;
+import io.jenkins.plugins.buildvalue.logic.Dashboard;
 import io.jenkins.plugins.buildvalue.logic.StageSample;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +19,11 @@ import java.util.Map;
  * {@code preview/out/sources.tsv}. Each line is {@code id}, address, banner, and tsv path.
  * Job and account names can be renamed by {@code preview/out/job-aliases.tsv} and
  * {@code preview/out/actor-aliases.tsv}. None of those files belong in the repository.
+ *
+ * <p>What it writes is a chart-only sheet, not the plugin's page: the page is Jelly now and needs a
+ * Stapler request. Reading the exports and feeding them to the computer is still worth doing out
+ * here, so that part is unchanged and only the rendering moved to {@link ChartPage}. The host and
+ * range switcher went with the page shell; every host and range is simply written out in order now.
  */
 public final class RealPreview {
     private static String hostBase = "http://127.0.0.1:8080";
@@ -46,47 +51,11 @@ public final class RealPreview {
             }
             pages.append(source(part[0], part[1], part[2], Path.of(part[3]), ranges, zone));
         }
-        String css = Files.readString(Path.of("src/main/webapp/css/build-stats.css"), StandardCharsets.UTF_8);
-        String html = """
-                <!DOCTYPE html>
-                <html lang="zh-CN">
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1">
-                  <title>构建统计</title>
-                  <style>
-                %s
-                  body { margin: 0; background: #f4f6f8; }
-                  main { margin: 0; padding: 0; max-width: none; }
-                  .bv-range[hidden] { display: none !important; }
-                  </style>
-                </head>
-                <body><main>
-                %s
-                </main>
-                <script>
-                (function () {
-                  var q = new URLSearchParams(location.search);
-                  var sources = Array.prototype.slice.call(document.querySelectorAll('.bv-source'));
-                  var known = sources.map(function (el) { return el.getAttribute('data-host'); });
-                  var host = q.get('host');
-                  if (known.indexOf(host) < 0) host = known[0] || '';
-                  var days = q.get('days');
-                  if (days !== '7' && days !== '30' && days !== '90' && days !== '0') days = '0';
-                  document.querySelectorAll('.bv-source').forEach(function (el) {
-                    el.hidden = el.getAttribute('data-host') !== host;
-                  });
-                  document.querySelectorAll('.bv-source:not([hidden]) .bv-range').forEach(function (el) {
-                    el.hidden = el.getAttribute('data-days') !== days;
-                  });
-                })();
-                </script>
-                </body></html>
-                """.formatted(css, pages);
-        html = html.replace("/plugin/build-stats/images/", "signs/");
+        String css = Files.readString(Path.of(ChartPage.CSS_FILE), StandardCharsets.UTF_8);
         Path out = Path.of("preview/index.html");
-        Files.writeString(out, html, StandardCharsets.UTF_8);
-        System.out.println("wrote " + out.toAbsolutePath());
+        Files.writeString(
+                out, ChartPage.document("Build Stats charts", css, pages.toString()), StandardCharsets.UTF_8);
+        System.out.println("wrote " + out.toAbsolutePath() + " (charts only, not the plugin's page)");
     }
 
     private static String source(String host, String address, String banner, Path file, int[] ranges, ZoneId zone) throws Exception {
@@ -109,15 +78,13 @@ public final class RealPreview {
                     + "  " + newest.jobFullName + " #" + newest.number;
         }
         StringBuilder pages = new StringBuilder();
-        pages.append("<div class=\"bv-source\" data-host=\"").append(host).append("\" data-last=\"")
-                .append(escape(last)).append("\">");
         for (int days : ranges) {
-            var dashboard = BuildValueComputer.compute(samples, now, days, zone, 15, banner + " 地址 " + address + "。");
-            pages.append("<div class=\"bv-range\" data-days=\"").append(days).append("\">")
-                    .append(PageHtml.body(dashboard, host + "-" + days, host))
-                    .append("</div>");
+            Dashboard dashboard =
+                    BuildValueComputer.compute(samples, now, days, zone, 15, banner + " 地址 " + address + "。");
+            String heading = host + " · " + (days == 0 ? "all time" : "last " + days + " days");
+            String note = last.isEmpty() ? address : address + " · " + last;
+            pages.append(ChartPage.section(heading, note, ChartPage.overviewCharts(dashboard)));
         }
-        pages.append("</div>");
         System.out.println(host + " builds " + samples.size());
         return pages.toString();
     }
@@ -134,10 +101,6 @@ public final class RealPreview {
             return minutes == 0 ? hours + " 小时" : hours + " 小时 " + minutes + " 分";
         }
         return Math.max(0, minutes) + " 分";
-    }
-
-    private static String escape(String raw) {
-        return raw.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
     }
 
     private static List<BuildSample> read(Path file) throws Exception {

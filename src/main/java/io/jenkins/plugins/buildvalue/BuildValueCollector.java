@@ -50,7 +50,8 @@ final class BuildValueCollector {
             if (start > 0 && enqueued < start && when < start) {
                 continue;
             }
-            boolean running = run.isBuilding() || run.getResult() == null;
+            hudson.model.Result outcome = run.getResult();
+            boolean running = run.isBuilding() || outcome == null;
             long queue = started > enqueued && enqueued > 0 ? started - enqueued : 0L;
             long duration = running ? 0L : Math.max(0L, run.getDuration());
             List<StageSample> stages = stagesWanted ? StageReader.read(run) : List.of();
@@ -63,7 +64,7 @@ final class BuildValueCollector {
                     when,
                     duration,
                     queue,
-                    running ? "RUNNING" : run.getResult().toString(),
+                    running ? "RUNNING" : outcome.toString(),
                     triggerOf(run.getCauses()),
                     actorOf(run.getCauses()),
                     stages));

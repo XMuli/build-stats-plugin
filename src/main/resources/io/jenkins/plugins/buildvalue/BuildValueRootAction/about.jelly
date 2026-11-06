@@ -1,0 +1,74 @@
+<?jelly escape-by-default='true'?>
+<!--
+  About: what this plugin is, which version is installed, and where the source is.
+
+  The version comes from the plugin wrapper Jenkins loaded, so it is the real installed version
+  rather than anything written in here. The logo a user uploads stays in their own browser; nothing
+  is sent to the controller.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:set var="repo" value="https://github.com/XMuli/build-stats-plugin"/>
+
+  <l:app-bar title="${it.msg('about.title')}">
+    <a class="jenkins-button" href="${repo}" target="_blank" rel="noopener noreferrer">
+      ${it.msg('about.view')}<span aria-hidden="true"> ↗</span>
+    </a>
+  </l:app-bar>
+
+  <section class="jenkins-card bv-about__id">
+    <div class="jenkins-card__content">
+      <img class="bv-about__logo" data-bv-logo="" src="${it.assets}images/logo.jpg"
+           alt="" width="72" height="72"/>
+      <div>
+        <h2 class="bv-about__name">${it.msg('BuildValueRootAction.DisplayName')}</h2>
+        <p class="bv-muted">${it.msg('about.summary')}</p>
+      </div>
+    </div>
+  </section>
+
+  <l:card title="${it.msg('about.info')}">
+    <dl class="bv-about__meta">
+      <dt>${it.msg('about.version')}</dt>
+      <dd>${it.pluginVersion}</dd>
+      <dt>${it.msg('about.author')}</dt>
+      <dd>XMuli</dd>
+      <dt>${it.msg('about.repo')}</dt>
+      <dd>
+        <a href="${repo}" target="_blank" rel="noopener noreferrer">
+          XMuli/build-stats-plugin<span aria-hidden="true"> ↗</span>
+        </a>
+      </dd>
+    </dl>
+  </l:card>
+
+  <l:card title="${it.msg('about.logo')}">
+    <!-- The script swaps this line as the logo changes. The alternatives travel with the element
+         so they are localized by the same bundle as everything else on the page. -->
+    <p class="bv-muted" data-bv-logo-note=""
+       data-note-custom="${it.msg('about.logoCustom')}"
+       data-note-too-big="${it.msg('about.logoTooBig')}"
+       data-note-no-room="${it.msg('about.logoNoRoom')}">${it.msg('about.logoDefault')}</p>
+    <div class="jenkins-buttons-row jenkins-buttons-row--invert">
+      <!-- A labelled file input rather than a button that proxies a hidden one, so the control
+           reports its own name and reaches focus in the normal order. -->
+      <label class="jenkins-button" for="bv-logo-file">${it.msg('about.upload')}</label>
+      <input class="bv-logo-file" id="bv-logo-file" type="file"
+             accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"/>
+      <button class="jenkins-button jenkins-button--tertiary" type="button" data-bv-logo-clear="">
+        ${it.msg('about.restore')}
+      </button>
+    </div>
+  </l:card>
+
+  <l:card title="${it.msg('about.support')}" id="bv-star">
+    <p class="bv-muted">${it.msg('about.star')}</p>
+    <div class="jenkins-buttons-row jenkins-buttons-row--invert">
+      <a class="jenkins-button" href="${repo}" target="_blank" rel="noopener noreferrer">
+        ${it.msg('about.starGo')}<span aria-hidden="true"> ↗</span>
+      </a>
+      <button class="jenkins-button jenkins-button--tertiary" type="button" data-bv-star-dismiss="">
+        ${it.msg('about.dismiss')}
+      </button>
+    </div>
+  </l:card>
+</j:jelly>

@@ -1,8 +1,38 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core">
-  <j:set var="card" value="${it.markup}"/>
-  <j:if test="${card != null and card != ''}">
-    <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css?v=7" type="text/css"/>
-    <j:out value="${card}"/>
+<!--
+  The status card on the Jenkins home page and on a job page.
+
+  The plate markup comes from the same file the Build Stats page includes, so the two cannot drift
+  apart. The close, dock and reopen controls and the "show on all pages / home only" preference are
+  unchanged; the script reads them from this browser's storage.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:set var="sign" value="${it.sign}"/>
+  <j:if test="${sign.present()}">
+    <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css?v=9" type="text/css"/>
+    <div class="bv-home" data-bv-home="" data-bv-page="${it.place}">
+      <!-- One copy of the plate markup, kept with the page's views and borrowed here by naming
+           that class, so this card and the page can never drift apart. -->
+      <st:include page="plate.jelly" class="io.jenkins.plugins.buildvalue.BuildValueRootAction" it="${it}"/>
+      <div class="bv-home__tools">
+        <button class="jenkins-button jenkins-button--tertiary bv-home__dock" type="button"
+                data-bv-home-dock="" tooltip="${it.dockLabel}">
+          <span aria-hidden="true">⟩</span>
+          <span class="jenkins-visually-hidden">${it.dockLabel}</span>
+        </button>
+        <button class="jenkins-button jenkins-button--tertiary bv-home__close" type="button"
+                data-bv-home-close="" tooltip="${it.closeLabel}">
+          <span aria-hidden="true">×</span>
+          <span class="jenkins-visually-hidden">${it.closeLabel}</span>
+        </button>
+      </div>
+      <button class="jenkins-button bv-home__reopen" type="button" data-bv-home-reopen="" hidden="hidden">
+        ${it.reopenLabel}
+      </button>
+      <a class="bv-home__open" href="${it.statsUrl}">${it.pageTitle}</a>
+    </div>
+    <!-- Placement and dragging for this card. The page's own script is not loaded here: outside
+         Build Stats there is nothing else for it to drive. -->
+    <script src="${rootURL}/plugin/build-stats/js/home-card.js?v=9" type="text/javascript"/>
   </j:if>
 </j:jelly>

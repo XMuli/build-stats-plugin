@@ -1,15 +1,100 @@
 package io.jenkins.plugins.buildvalue.logic;
 
+import io.jenkins.plugins.buildvalue.Messages;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest2;
 
-final class Texts {
+public final class Texts {
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("MM-dd");
     private static final DateTimeFormatter WHEN = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
     private Texts() {}
+
+    /**
+     * True when the current request asks for Chinese.
+     *
+     * <p>Jenkins resolves the locale from the user's own choice, falling back to the browser's
+     * {@code Accept-Language}. Reading it here means text and artwork are picked before the
+     * response is written, so nothing swaps after the page loads.
+     */
+    static boolean chineseRequest() {
+        StaplerRequest2 request = Stapler.getCurrentRequest2();
+        if (request == null || request.getLocale() == null) {
+            return false;
+        }
+        return "zh".equals(request.getLocale().getLanguage());
+    }
+
+    /**
+     * Localized result word. Accepts either a Jenkins result key ({@code SUCCESS}) or the English
+     * label an older row may carry ({@code Success}), so both call sites behave the same.
+     */
+    public static String stateText(String result) {
+        return switch (key(result)) {
+            case "RUNNING" -> Messages.state_run();
+            case "SUCCESS" -> Messages.state_ok();
+            case "FAILURE" -> Messages.state_fail();
+            case "UNSTABLE" -> Messages.state_unstable();
+            case "ABORTED" -> Messages.state_abort();
+            case "NOT_BUILT" -> Messages.state_none();
+            default -> "";
+        };
+    }
+
+    /** Badge modifier: ok, run, bad, warn, stop or muted. */
+    public static String stateClass(String result) {
+        return switch (key(result)) {
+            case "RUNNING" -> "run";
+            case "SUCCESS" -> "ok";
+            case "FAILURE" -> "bad";
+            case "UNSTABLE" -> "warn";
+            case "ABORTED", "NOT_BUILT" -> "stop";
+            default -> "muted";
+        };
+    }
+
+    /** Normalize a result key or its English label to the key form. */
+    private static String key(String result) {
+        if (result == null || result.isEmpty()) {
+            return "";
+        }
+        return result.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
+    }
+
+    /**
+     * One string from the plugin's bundle, for the locale Jenkins resolved for this request.
+     *
+     * <p>{@code Messages} is generated from {@code Messages.properties} and picks the locale from
+     * Stapler's current request, so this is the same lookup the generated accessors do, by key.
+     * An unknown key returns the key itself rather than throwing: a missing translation should
+     * show up as an odd label on the page, not as a 500.
+     */
+    public static String message(String key, Object... arguments) {
+        if (key == null || key.isBlank()) {
+            return "";
+        }
+        try {
+            return org.jvnet.localizer.ResourceBundleHolder.get(Messages.class).format(key, arguments);
+        } catch (RuntimeException ex) {
+            return key;
+        }
+    }
+
+    /** One value in the request's language, picking from a packed English/Chinese pair. */
+    public static String localized(String packed) {
+        if (packed == null) {
+            return "";
+        }
+        int split = packed.indexOf(LANG_SPLIT);
+        if (split < 0) {
+            return packed;
+        }
+        return chineseRequest() ? packed.substring(split + 1) : packed.substring(0, split);
+    }
 
     static final char LANG_SPLIT = '\u001f';
 

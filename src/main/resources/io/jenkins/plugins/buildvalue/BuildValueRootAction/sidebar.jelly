@@ -1,0 +1,105 @@
+<?jelly escape-by-default='true'?>
+<!--
+  Jobs sidebar: nav links, a search form and one page of jobs.
+
+  Only the jobs on the current page reach the DOM, so a controller with tens of thousands of jobs
+  renders the same amount of markup as one with thirty. Search and paging are plain GET links and a
+  GET form, so every state has a URL that can be copied, bookmarked and walked with the browser's
+  back and forward buttons, and the whole sidebar works with JavaScript disabled.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <div class="bv-side">
+    <nav class="bv-side-nav" aria-label="${it.msg('nav.jobs')}">
+      <a href="${it.pageUrl('overview')}" class="bv-side-link ${page == 'overview' ? 'bv-side-link--active' : ''}"
+         aria-current="${page == 'overview' ? 'page' : null}">${it.msg('nav.overview')}</a>
+      <j:if test="${it.machineSupported}">
+        <a href="${it.pageUrl('computer')}" class="bv-side-link ${page == 'computer' ? 'bv-side-link--active' : ''}"
+           aria-current="${page == 'computer' ? 'page' : null}">${it.msg('nav.host')}</a>
+      </j:if>
+      <a href="${it.pageUrl('about')}" class="bv-side-link ${page == 'about' ? 'bv-side-link--active' : ''}"
+         aria-current="${page == 'about' ? 'page' : null}">${it.msg('nav.about')}</a>
+    </nav>
+
+    <h2 class="bv-side-heading" id="bv-jobs-heading">${it.msg('nav.jobs')}</h2>
+
+    <!-- GET so the resulting page has a copyable URL. The time window and heatmap period ride
+         along as hidden fields, so searching does not silently reset them. Submitting returns to
+         page 1 because no page field is sent. -->
+    <form class="bv-side-search" method="get" action="${it.searchAction}" role="search">
+      <label class="jenkins-visually-hidden" for="bv-job-search">${it.msg('search.placeholder')}</label>
+      <input id="bv-job-search" class="jenkins-input bv-side-search__input" type="search" name="q"
+             value="${view.query}" placeholder="${it.msg('search.placeholder')}" autocomplete="off"
+             spellcheck="false" aria-describedby="bv-job-count"/>
+      <j:if test="${view.days != 0}">
+        <input type="hidden" name="days" value="${view.days}"/>
+      </j:if>
+      <j:if test="${it.periodParameter != null}">
+        <input type="hidden" name="period" value="${it.periodParameter}"/>
+      </j:if>
+      <button class="jenkins-button bv-side-search__go" type="submit">${it.msg('search.submit')}</button>
+    </form>
+
+    <!-- aria-live so a screen reader hears the new count after a search without the focus moving. -->
+    <p class="bv-side-count" id="bv-job-count" aria-live="polite">
+      <j:choose>
+        <j:when test="${view.jobPage.matches == 0}"/>
+        <j:when test="${view.jobPage.matches == 1}">
+          ${it.msg3('search.countOne', view.jobPage.firstShown, view.jobPage.lastShown, view.jobPage.matches)}
+        </j:when>
+        <j:otherwise>
+          ${it.msg3('search.count', view.jobPage.firstShown, view.jobPage.lastShown, view.jobPage.matches)}
+        </j:otherwise>
+      </j:choose>
+    </p>
+
+    <!-- The one scrolling region: search above and the pager below stay put. -->
+    <div class="bv-side-list" tabindex="-1">
+      <j:choose>
+        <j:when test="${view.jobPage.noMatches}">
+          <p class="bv-side-none">${it.msg1('search.none', view.query)}</p>
+          <j:if test="${!view.query.isEmpty()}">
+            <a class="jenkins-button jenkins-button--tertiary" href="${it.clearSearchUrl}">${it.msg('search.clear')}</a>
+          </j:if>
+        </j:when>
+        <j:otherwise>
+          <ul class="bv-job-list" aria-labelledby="bv-jobs-heading">
+            <j:forEach var="job" items="${view.jobPage.entries}">
+              <j:set var="current" value="${job.fullName == view.selectedName}"/>
+              <li>
+                <!-- The full Jenkins path is the link text, wrapped over as many lines as it needs
+                     rather than truncated, so a long organization-folder path stays readable and no
+                     tooltip is required to read it. -->
+                <a class="bv-job-link ${current ? 'bv-job-link--active' : ''}"
+                   href="${it.jobUrl(job.fullName)}"
+                   aria-current="${current ? 'page' : null}">${job.fullName}</a>
+              </li>
+            </j:forEach>
+          </ul>
+        </j:otherwise>
+      </j:choose>
+    </div>
+
+    <nav class="bv-side-pager" aria-label="${it.msg3('page.status', view.jobPage.page, view.jobPage.pages, view.jobPage.matches)}">
+      <j:choose>
+        <j:when test="${view.jobPage.hasPrevious()}">
+          <a class="jenkins-button jenkins-button--tertiary" rel="prev"
+             href="${it.pagerUrl(view.jobPage.page - 1)}">${it.msg('page.previous')}</a>
+        </j:when>
+        <j:otherwise>
+          <!-- A real disabled button rather than a dead link, so Tab skips it. -->
+          <button class="jenkins-button jenkins-button--tertiary" type="button" disabled="disabled">${it.msg('page.previous')}</button>
+        </j:otherwise>
+      </j:choose>
+      <span class="bv-side-pager__at">${it.msg2('page.position', view.jobPage.page, view.jobPage.pages)}</span>
+      <j:choose>
+        <j:when test="${view.jobPage.hasNext()}">
+          <a class="jenkins-button jenkins-button--tertiary" rel="next"
+             href="${it.pagerUrl(view.jobPage.page + 1)}">${it.msg('page.next')}</a>
+        </j:when>
+        <j:otherwise>
+          <button class="jenkins-button jenkins-button--tertiary" type="button" disabled="disabled">${it.msg('page.next')}</button>
+        </j:otherwise>
+      </j:choose>
+    </nav>
+  </div>
+</j:jelly>

@@ -3,7 +3,6 @@ package io.jenkins.plugins.buildvalue.preview;
 import io.jenkins.plugins.buildvalue.logic.BuildSample;
 import io.jenkins.plugins.buildvalue.logic.BuildValueComputer;
 import io.jenkins.plugins.buildvalue.logic.Dashboard;
-import io.jenkins.plugins.buildvalue.logic.PageHtml;
 import io.jenkins.plugins.buildvalue.logic.StageSample;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,7 +14,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/** Builds preview/index.html and checks the totals against a tiny fixed history. */
+/**
+ * Checks the totals against a tiny fixed history, then writes a chart-only sheet from a staged
+ * history to {@code preview/index.html}.
+ *
+ * <p>This used to render the whole page. It cannot any more: the page is Jelly now, and Jelly needs
+ * a Stapler request. The staged history and the arithmetic checks were the parts worth keeping, so
+ * the checks moved from the generated markup onto the {@link Dashboard} the computer returns, which
+ * is where those numbers actually come from. See {@link ChartPage} for what the sheet is and is not.
+ */
 public final class Generate {
     private static final ZoneId ZONE = ZoneId.of("Asia/Shanghai");
     private static final String HOST = "http://127.0.0.1:8080";
@@ -60,28 +67,16 @@ public final class Generate {
         long now = ZonedDateTime.of(2026, 10, 21, 16, 40, 0, 0, ZONE).toInstant().toEpochMilli();
         String banner = "这是编排出来的画面预览。任务名和阶段名是示例。安装到 Jenkins 后，同一页改从真实构建记录现算。";
         Dashboard dashboard = BuildValueComputer.compute(story(), now, 30, ZONE, 15, banner);
-        String css = Files.readString(Path.of("src/main/webapp/css/build-stats.css"), StandardCharsets.UTF_8);
-        String html = """
-                <!DOCTYPE html>
-                <html lang="zh-CN">
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1">
-                  <title>构建统计</title>
-                  <style>
-                %s
-                  body { margin: 0; background: #eef2f4; }
-                  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 48px; }
-                  </style>
-                </head>
-                <body><main>
-                %s
-                </main></body></html>
-                """.formatted(css, PageHtml.body(dashboard));
+        StringBuilder body = new StringBuilder();
+        body.append(ChartPage.section("Last 30 days", banner, ChartPage.overviewCharts(dashboard)));
+        for (Dashboard.JobPanel panel : dashboard.tabs) {
+            body.append(ChartPage.section(panel.getJobName(), null, ChartPage.jobCharts(panel)));
+        }
+        String css = Files.readString(Path.of(ChartPage.CSS_FILE), StandardCharsets.UTF_8);
         Path out = Path.of("preview/index.html");
         Files.createDirectories(out.getParent());
-        Files.writeString(out, html, StandardCharsets.UTF_8);
-        System.out.println("wrote " + out.toAbsolutePath());
+        Files.writeString(out, ChartPage.document("Build Stats charts", css, body.toString()), StandardCharsets.UTF_8);
+        System.out.println("wrote " + out.toAbsolutePath() + " (charts only, not the plugin's page)");
     }
 
     private static void check() {
@@ -110,22 +105,56 @@ public final class Generate {
                 sample("sample-other", 3, "", now - 5_000_000, 7 * 60_000L, "SUCCESS", "timer", List.of()),
                 sample("sample-ladm", 10, "", now - 40 * 86_400_000L, 20 * 60_000L, "FAILURE", "timer", List.of()));
         Dashboard dashboard = BuildValueComputer.compute(samples, now, 30, ZONE, 15, null);
-        String html = PageHtml.body(dashboard);
-        require(html.contains("共 5 次"), html);
-        require(html.contains("机器执行 56 分"), html);
-        require(html.contains("失败构建占用 12 分"), html);
-        require(html.contains("sample-&lt;ladm&gt;"), html);
-        require(html.contains("&lt;script&gt;"), html);
-        require(!html.contains("<script>"), html);
-        require(!html.contains("<ladm>"), html);
-        require(html.contains("sample-other"), html);
-        require(html.contains("10-21 · 5"), html);
-        require(html.contains("Build"), html);
+
+        // The window drops the 40-day-old build, and the totals come straight off the headline and
+        // the waste line rather than off rendered markup.
+        require(dashboard.headline.contains("共 5 次"), dashboard.headline);
+        require(dashboard.headline.contains("机器执行 56 分"), dashboard.headline);
+        require(dashboard.wasteLine.contains("失败耗时 12 分"), dashboard.wasteLine);
+
+        // Job names reach the view as data, not markup: the Jelly escapes them. The one exception
+        // is the chart SVG, which is written out raw, so it is the only thing left to check here.
+        String svg = String.join("\n", svgOf(dashboard));
+        require(svg.contains("sample-&lt;ladm&gt;"), svg);
+        require(!svg.contains("<ladm>"), svg);
+        require(!svg.contains("<script>"), svg);
+        require(svg.contains("sample-other"), svg);
+        require(svg.contains("Build"), svg);
+
+        // Names stay unescaped on the view model. Escaping is the view's job, and doing it twice
+        // would show the entities to the reader.
+        require(names(dashboard).contains("sample-<ladm>"), names(dashboard).toString());
     }
 
-    private static void require(boolean ok, String html) {
+    /** Every SVG on the dashboard: the window's charts and each job panel's. */
+    private static List<String> svgOf(Dashboard dashboard) {
+        List<String> all = new ArrayList<>();
+        for (ChartPage.Chart chart : ChartPage.overviewCharts(dashboard)) {
+            all.add(chart.svg());
+        }
+        for (Dashboard.JobPanel panel : dashboard.tabs) {
+            for (ChartPage.Chart chart : ChartPage.jobCharts(panel)) {
+                all.add(chart.svg());
+            }
+        }
+        return all;
+    }
+
+    /** Job names as the view model carries them, before any escaping. */
+    private static List<String> names(Dashboard dashboard) {
+        List<String> all = new ArrayList<>();
+        for (Dashboard.JobPanel panel : dashboard.tabs) {
+            all.add(panel.getJobName());
+        }
+        for (Dashboard.JobRow row : dashboard.getOthers()) {
+            all.add(row.getName());
+        }
+        return all;
+    }
+
+    private static void require(boolean ok, String detail) {
         if (!ok) {
-            throw new AssertionError(html.substring(0, Math.min(html.length(), 1500)));
+            throw new AssertionError(detail.substring(0, Math.min(detail.length(), 1500)));
         }
     }
 

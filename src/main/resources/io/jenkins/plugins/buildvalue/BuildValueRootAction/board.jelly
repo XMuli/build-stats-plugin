@@ -1,0 +1,47 @@
+<?jelly escape-by-default='true'?>
+<!--
+  A row of metric tiles and a grid of charts, both driven by a list from the view model.
+
+  Expects "metrics" (a list of Metric) and "charts" (a list of Chart) in the context; either may be
+  empty. Looping over structured data rather than repeating markup per chart means a chart added in
+  Java appears here without this file changing.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:if test="${metrics != null and !metrics.isEmpty()}">
+    <div class="bv-kpis">
+      <j:forEach var="metric" items="${metrics}">
+        <div class="jenkins-card bv-metric">
+          <div class="jenkins-card__content">
+            <span class="bv-metric__label">${metric.label}</span>
+            <strong class="bv-metric__value">${metric.value}</strong>
+            <j:if test="${metric.note != ''}">
+              <em class="bv-metric__note">${metric.note}</em>
+            </j:if>
+          </div>
+        </div>
+      </j:forEach>
+    </div>
+  </j:if>
+
+  <j:if test="${charts != null and !charts.isEmpty()}">
+    <h2 class="bv-h2">${it.msg('h.trends')}</h2>
+    <div class="bv-board">
+      <j:forEach var="chart" items="${charts}">
+        <div class="jenkins-card bv-chart">
+          <div class="jenkins-card__title">${chart.title}</div>
+          <div class="jenkins-card__content">
+            <j:if test="${chart.note != ''}">
+              <p class="bv-chart__note">${chart.note}</p>
+            </j:if>
+            <!--
+              The one place this page writes markup it did not escape itself. The SVG is built in
+              Java, where every label is escaped as it is appended, and no request parameter
+              reaches it, so there is nothing unescaped to inject.
+            -->
+            <div class="bv-chart__plot"><j:out value="${chart.svg}"/></div>
+          </div>
+        </div>
+      </j:forEach>
+    </div>
+  </j:if>
+</j:jelly>

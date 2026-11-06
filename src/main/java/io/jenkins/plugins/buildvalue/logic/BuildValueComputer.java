@@ -71,8 +71,8 @@ public final class BuildValueComputer {
         String effort = Texts.both(
                 headline(days, all, pack, test, prev, false) + " Triggered by " + people.size() + " accounts.",
                 headline(days, all, pack, test, prev, true) + "这些构建由 " + people.size() + " 个账号触发。");
-        Sign sign = signOf(current);
-        Sign home = signOf(samples);
+        StatusSign sign = signOf(current);
+        StatusSign home = signOf(samples);
 
         return new Dashboard(
                 days,
@@ -100,38 +100,13 @@ public final class BuildValueComputer {
                 ledger.chart,
                 ledger.rows,
                 methodNote(days, safeMinutes),
-                heatJson(samples, zone),
-                sign.image,
-                sign.alt,
-                sign.caption,
-                sign.live,
-                sign.url,
-                home.image,
-                home.alt,
-                home.caption,
-                home.live,
+                sign,
+                home,
                 empty);
     }
 
-    private static final class Sign {
-        final String image;
-        final String alt;
-        final String caption;
-        final boolean live;
-
-        final String url;
-
-        Sign(StatusSign status) {
-            this.image = status.image;
-            this.alt = status.alt;
-            this.caption = status.caption;
-            this.live = status.live;
-            this.url = status.buildUrl;
-        }
-    }
-
     /** Newest build in the window. A running build wins over a newer finished one. */
-    private static Sign signOf(List<BuildSample> samples) {
+    private static StatusSign signOf(List<BuildSample> samples) {
         BuildSample running = null;
         BuildSample newest = null;
         for (BuildSample sample : samples) {
@@ -144,32 +119,10 @@ public final class BuildValueComputer {
         }
         BuildSample sample = running != null ? running : newest;
         if (sample == null) {
-            return new Sign(StatusSign.none());
+            return StatusSign.none();
         }
         String result = sample.running() ? "RUNNING" : sample.result;
-        return new Sign(StatusSign.of(result, sample.jobFullName, sample.number, sample.buildUrl));
-    }
-
-    private static String heatJson(List<BuildSample> samples, ZoneId zone) {
-        Map<LocalDate, Integer> counts = new TreeMap<>();
-        for (BuildSample sample : samples) {
-            if (sample.startMs <= 0) {
-                continue;
-            }
-            LocalDate day = Instant.ofEpochMilli(sample.startMs).atZone(zone).toLocalDate();
-            counts.merge(day, 1, Integer::sum);
-        }
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<LocalDate, Integer> entry : counts.entrySet()) {
-            if (!first) {
-                json.append(',');
-            }
-            first = false;
-            json.append('"').append(entry.getKey()).append("\":").append(entry.getValue());
-        }
-        json.append('}');
-        return json.toString();
+        return StatusSign.of(result, sample.jobFullName, sample.number, sample.buildUrl);
     }
 
     private static void fillTrend(
@@ -452,7 +405,7 @@ public final class BuildValueComputer {
         String jobUrl = builds.isEmpty() ? "" : builds.get(0).jobUrl;
         String compareText = jobCompare(days, cur, prev, compare);
         String center = stageTotal == 0 ? "0" : Texts.num(stageTotal / 3_600_000d);
-        Sign sign = signOf(builds);
+        StatusSign sign = signOf(builds);
         return new Dashboard.JobPanel(
                 title,
                 mark,
@@ -476,11 +429,7 @@ public final class BuildValueComputer {
                 stageDots(builds),
                 scriptChanges(builds, zone),
                 peopleOf(builds, zone, false),
-                sign.image,
-                sign.alt,
-                sign.caption,
-                sign.live,
-                sign.url);
+                sign);
     }
 
     private static String rateSeries(List<BuildSample> finished, ZoneId zone) {
@@ -616,7 +565,7 @@ public final class BuildValueComputer {
             BuildSample last = builds.get(builds.size() - 1);
             rows.add(new Dashboard.JobRow(
                     last.jobUrl,
-                    BuildSample.shortName(entry.getKey()),
+                    entry.getKey(),
                     cur.builds,
                     Texts.durations(cur.duration),
                     cur.completed == 0 ? "—" : Texts.durations(cur.duration / cur.completed),
@@ -798,7 +747,8 @@ public final class BuildValueComputer {
             }
             row[5] = Math.max(row[5], sample.startMs);
             if (withJobs) {
-                jobs.computeIfAbsent(name, key -> new LinkedHashSet<>()).add(BuildSample.shortName(sample.jobFullName));
+                // Keep the full path. The view links each entry on its own row.
+                jobs.computeIfAbsent(name, key -> new LinkedHashSet<>()).add(sample.jobFullName);
             }
         }
         List<String> names = new ArrayList<>(agg.keySet());
@@ -807,9 +757,11 @@ public final class BuildValueComputer {
         for (String name : names) {
             long[] row = agg.get(name);
             int finished = (int) (row[1] + row[2] + row[3]);
-            String touched = "";
+            List<Dashboard.JobLink> touched = new ArrayList<>();
             if (withJobs && jobs.get(name) != null) {
-                touched = String.join("、", jobs.get(name));
+                for (String fullName : jobs.get(name)) {
+                    touched.add(new Dashboard.JobLink(fullName));
+                }
             }
             rows.add(new Dashboard.PersonRow(
                     name,
@@ -820,7 +772,7 @@ public final class BuildValueComputer {
                     Texts.durations(row[4]),
                     Texts.percent((int) row[1], finished),
                     Texts.when(row[5], zone),
-                    touched));
+                    List.copyOf(touched)));
         }
         return List.copyOf(rows);
     }

@@ -1,4 +1,902 @@
-if(!window.__bvHeat){window.__bvHeat=true;var colors=(function(){function dark(){var bg=getComputedStyle(document.documentElement).getPropertyValue('--background').trim();var hex=bg.charAt(0)==='#'?bg.slice(1):'';if(hex.length===3)hex=hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];if(hex.length===6){var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return (r*299+g*587+b*114)/1000<140;}var theme=document.documentElement.getAttribute('data-theme');if(theme==='dark')return true;if(theme==='light')return false;return window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;}return dark()?['#3d444c','#1e4d28','#2d7a3a','#239a3b','#7bc96f']:['#ebedf0','#c6e48b','#7bc96f','#239a3b','#196127'];})();function parseDay(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}function dayKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}function align(d,startDow){var x=new Date(d.getTime());var delta=(x.getDay()-startDow+7)%7;x.setDate(x.getDate()-delta);return x;}function level(n,max){if(!n)return 0;if(max<=1)return 4;return Math.min(4,Math.max(1,Math.ceil(n/max*4)));}function workAverage(data,dates){var first=parseDay(dates[0]);var today=new Date();today.setHours(0,0,0,0);var days=0,sum=0;for(var d=new Date(first.getTime());d<=today;d.setDate(d.getDate()+1)){var dow=d.getDay();if(dow===0||dow===6)continue;days++;sum+=data[dayKey(d)]||0;}return days?(sum/days).toFixed(2):'0';}function fit(root){var plot=root.querySelector('.bv-heat-plot');var grid=plot&&plot.querySelector('.bv-heat-grid');if(!grid||!grid.children.length)return;var cols=grid.children.length;var head=root.closest('.bv-page-head')||root;var width=head.clientWidth;if(width<80)return;var side=root.querySelector('.bv-heat-side');var sideH=side?side.offsetHeight:0;var sign=head.querySelector('.bv-sign');var signH=sign&&sign.offsetHeight>40?sign.offsetHeight:0;var innerW=Math.max(80,width-240);var innerH=signH>40?signH-sideH-36:0;var cellW=Math.floor((innerW-22-(cols-1)*3)/cols);var cellH=innerH>28?Math.floor((innerH-18)/7):cellW;var cell=Math.min(cellW,cellH,18);var scale=root.__size==='s'?0.72:root.__size==='m'?0.86:1;cell=Math.max(4,Math.floor(cell*scale));if(plot.__cell===cell)return;plot.__cell=cell;plot.style.setProperty('--cell',cell+'px');}function paint(root){var data=root.__data;var dates=Object.keys(data).sort();if(!dates.length)return;var end,start;if(root.__year==='last'){end=parseDay(dates[dates.length-1]);start=new Date(end.getTime());start.setDate(start.getDate()-364);}else{start=new Date(+root.__year,0,1);end=new Date(+root.__year,11,31);}var cursor=align(start,root.__start);var weeks=[];var max=0,sum=0,blank=0,totalDays=0;while(cursor<=end){var col=[];for(var i=0;i<7;i++){var d=new Date(cursor.getTime());d.setDate(cursor.getDate()+i);var k=dayKey(d);var inRange=d>=start&&d<=end;var n=inRange?(data[k]||0):null;if(inRange){totalDays++;sum+=n;if(!n)blank++;if(n>max)max=n;}col.push({d:d,n:n,k:k});}weeks.push(col);cursor.setDate(cursor.getDate()+7);}var stats=root.querySelector('.bv-heat-stats');stats.textContent='';[['heat.days','总天数',totalDays],['heat.blank','空白天',blank+' ('+(totalDays?Math.round(blank*100/totalDays):0)+'%)'],['heat.max','最大值',max],['heat.avg','工作日平均次数',workAverage(data,dates)]].forEach(function(pair){var s=document.createElement('span');s.setAttribute('data-i18n',pair[0]);s.setAttribute('data-zh',pair[1]);s.setAttribute('data-value',String(pair[2]));var label=(window.__bvLang==='en'&&window.__bvEn&&window.__bvEn[pair[0]])||pair[1];s.textContent=label+' '+pair[2];stats.appendChild(s);});var plot=root.querySelector('.bv-heat-plot');plot.textContent='';plot.className='bv-heat-plot is-'+root.__size;var months=document.createElement('div');months.className='bv-heat-months';if(!root.__month)months.hidden=true;var body=document.createElement('div');body.className='bv-heat-body';var labels=document.createElement('div');labels.className='bv-heat-wdays';if(!root.__week)labels.hidden=true;['M','T','W','T','F','S','S'].forEach(function(name,i){var t=document.createElement('span');t.textContent=(i%2===1)?name:'';labels.appendChild(t);});var grid=document.createElement('div');grid.className='bv-heat-grid';weeks.forEach(function(col){var month='';col.forEach(function(cell){if(cell.n!=null&&cell.d.getDate()===1)month=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][cell.d.getMonth()];});var m=document.createElement('span');m.textContent=month;months.appendChild(m);var column=document.createElement('div');column.className='bv-heat-col';col.forEach(function(cell){var b=document.createElement('i');var lv=cell.n==null?0:level(cell.n,max);b.style.background=colors[lv];if(cell.n!=null)b.setAttribute('data-tip',dayKey(cell.d)+'  '+cell.n+' builds');column.appendChild(b);});grid.appendChild(column);});body.appendChild(labels);body.appendChild(grid);plot.appendChild(months);plot.appendChild(body);if(root.__legend){var legend=document.createElement('div');legend.className='bv-heat-legend';legend.innerHTML='<span>Less</span>';colors.forEach(function(c){var i=document.createElement('i');i.style.background=c;legend.appendChild(i);});var more=document.createElement('span');more.textContent='More';legend.appendChild(more);plot.appendChild(legend);}fit(root);}function boot(){document.querySelectorAll('.bv-heat').forEach(function(root){root.__data=JSON.parse(root.querySelector('.bv-heat-data').textContent||'{}');root.__week=true;root.__month=true;root.__legend=true;root.__size='l';root.__year='last';root.__start=1;var years={};Object.keys(root.__data).forEach(function(d){years[d.slice(0,4)]=1;});var sel=root.querySelector('.bv-heat-year');function yearOpt(id,label){var o=document.createElement('option');o.value=id;o.textContent=label;sel.appendChild(o);}yearOpt('last','Last year');Object.keys(years).sort().reverse().forEach(function(y){yearOpt(y,y);});var lastOpt=sel.querySelector('option[value="last"]');if(lastOpt){lastOpt.setAttribute('data-i18n','heat.lastYear');lastOpt.setAttribute('data-zh','最近一年');}sel.value='last';root.addEventListener('click',function(e){var t=e.target.closest('button');if(!t||!root.contains(t))return;if(t.getAttribute('data-size')){root.__size=t.getAttribute('data-size');root.querySelectorAll('[data-size]').forEach(function(b){b.classList.toggle('is-on',b===t);});paint(root);}});sel.addEventListener('change',function(){root.__year=sel.value;paint(root);});paint(root);});if(window.ResizeObserver){var ro=new ResizeObserver(function(list){list.forEach(function(en){fit(en.target);});});document.querySelectorAll('.bv-heat').forEach(function(el){ro.observe(el);});}window.addEventListener('resize',function(){document.querySelectorAll('.bv-heat').forEach(fit);});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();}
-if(!window.__bvSign){window.__bvSign=true;function applyOn(on){document.documentElement.classList.toggle('bv-sign-off',!on);document.querySelectorAll('.bv-sign-switch input').forEach(function(el){el.checked=on;});document.querySelectorAll('.bv-sign-where').forEach(function(sel){sel.disabled=!on;});}function applyWhere(where){document.documentElement.classList.toggle('bv-sign-home',where==='home');document.querySelectorAll('.bv-sign-where').forEach(function(sel){sel.value=where==='home'?'home':'all';});}function applySummary(on){document.documentElement.classList.toggle('bv-summary-on',on);document.querySelectorAll('.bv-summary-switch input').forEach(function(el){el.checked=on;});}function boot(){var on=true,where='all',summary=false;try{on=localStorage.getItem('bv-sign-show')!=='0';where=localStorage.getItem('bv-sign-where')==='home'?'home':'all';summary=localStorage.getItem('bv-summary-show')==='1';}catch(e){}applyOn(on);applyWhere(where);applySummary(summary);document.querySelectorAll('.bv-sign-switch input').forEach(function(el){el.addEventListener('change',function(){try{localStorage.setItem('bv-sign-show',el.checked?'1':'0');}catch(e){}applyOn(el.checked);});});document.querySelectorAll('.bv-sign-where').forEach(function(sel){sel.addEventListener('change',function(){try{localStorage.setItem('bv-sign-where',sel.value);}catch(e){}applyWhere(sel.value);});});document.querySelectorAll('.bv-summary-switch input').forEach(function(el){el.addEventListener('change',function(){try{localStorage.setItem('bv-summary-show',el.checked?'1':'0');}catch(e){}applySummary(el.checked);});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();}
-if(!window.__bvLive){window.__bvLive=true;var pace=1,timer=0;var hist={cpu:[],mem:[],disk:[],down:[],up:[],read:[],write:[]};var coreHist=[];var gpuHist=[];function push(k,v){if(v==null||isNaN(v))return;hist[k].push(v);if(hist[k].length>60)hist[k].shift();}function spark(card,key,color,fill,rate){var svg=card.querySelector('.bv-spark');if(!svg)return;var a=hist[key],n=a.length,d='',w=320,h=150,max=100,grid='';if(rate){max=1;for(var k=0;k<n;k++)if(a[k]>max)max=a[k];}for(var gy=0;gy<=4;gy++){var y1=(h/4)*gy;grid+='<line x1="0" y1="'+y1+'" x2="'+w+'" y2="'+y1+'" stroke="var(--panel-border-color,#e4e9ee)"/>';}for(var i=0;i<n;i++){var x=n<2?0:(i/(n-1))*w;var y=h-((Math.max(0,a[i])/max)*(h-6))-3;d+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}var area='';if(fill&&n){area='<path d="'+d+' L'+(n<2?0:w)+' '+h+' L0 '+h+' Z" fill="'+color+'" opacity="0.16"/>';}svg.innerHTML=grid+area+'<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';}function drawCores(values){if(!values||!values.length)return;if(coreHist.length!==values.length){coreHist=values.map(function(){return [];});}values.forEach(function(v,i){coreHist[i].push(v);if(coreHist[i].length>60)coreHist[i].shift();});document.querySelectorAll('.bv-core-grid').forEach(function(grid){if(grid.childElementCount!==values.length){grid.textContent='';values.forEach(function(){var cell=document.createElement('div');cell.className='bv-core';cell.innerHTML='<b></b><svg viewBox="0 0 80 36" preserveAspectRatio="none"></svg>';grid.appendChild(cell);});}values.forEach(function(v,i){var cell=grid.children[i];if(!cell)return;cell.querySelector('b').textContent=Math.round(v)+'%';var a=coreHist[i],n=a.length,d='',w=80,h=36;for(var k=0;k<n;k++){var x=n<2?0:(k/(n-1))*w;var y=h-(Math.max(0,Math.min(100,a[k]))/100)*(h-4)-2;d+=(k?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}cell.querySelector('svg').innerHTML='<path d="'+d+' L'+(n<2?0:w)+' '+h+' L0 '+h+' Z" fill="#3479B0" opacity="0.2"/><path d="'+d+'" fill="none" stroke="#3479B0" stroke-width="1.2"/>';});});}function drawGpus(list){if(!list||!list.length)return;if(gpuHist.length!==list.length){gpuHist=list.map(function(){return [];});}list.forEach(function(g,i){var v=g.util==null?0:g.util;gpuHist[i].push(v);if(gpuHist[i].length>60)gpuHist[i].shift();});document.querySelectorAll('.bv-gpu-slot').forEach(function(slot){var key=list.map(function(g){return g.name;}).join('|');if(slot.getAttribute('data-key')!==key){slot.textContent='';slot.setAttribute('data-key',key);list.forEach(function(g){var art=document.createElement('article');art.className='bv-tile';art.innerHTML='<h3></h3><svg class="bv-spark" viewBox="0 0 320 150" preserveAspectRatio="none"></svg><div class="bv-series"><i style="background:#50A040"></i><span class="bv-live-sub"></span><b class="bv-live-value">--</b></div>';art.querySelector('h3').textContent=g.name||'GPU';slot.appendChild(art);});}list.forEach(function(g,i){var art=slot.children[i];if(!art)return;var sub=art.querySelector('.bv-live-sub');sub.textContent=g.memoryText||'Usage';art.querySelector('.bv-live-value').textContent=(g.util==null?'--':Math.round(g.util)+'%');var svg=art.querySelector('svg');var a=gpuHist[i],n=a.length,d='',w=320,h=150,max=100;for(var k=0;k<n;k++)if(a[k]>max)max=a[k];var grid='';for(var gy=0;gy<=4;gy++){var y1=(h/4)*gy;grid+='<line x1="0" y1="'+y1+'" x2="'+w+'" y2="'+y1+'" stroke="var(--panel-border-color,#e4e9ee)"/>';}for(var k=0;k<n;k++){var x=n<2?0:(k/(n-1))*w;var y=h-(Math.max(0,a[k])/max)*(h-6)-3;d+=(k?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}svg.innerHTML=grid+'<path d="'+d+' L'+(n<2?0:w)+' '+h+' L0 '+h+' Z" fill="#50A040" opacity="0.16"/><path d="'+d+'" fill="none" stroke="#50A040" stroke-width="1.6"/>';});});}function cpuMeta(j){var parts=[];if(j.cpuName)parts.push(j.cpuName);if(j.cpuCores)parts.push(j.cpuCores+' cores');if(j.cpuLogical)parts.push(j.cpuLogical+' logical processors');if(j.cpuMhz)parts.push((j.cpuMhz/1000).toFixed(2)+' GHz');if(!parts.length)return;document.querySelectorAll('.bv-cpu-meta').forEach(function(el){el.textContent=parts.join(' · ');});}function gb(n){if(n==null||n<0)return'';var v=n/1073741824;return (v>=10?v.toFixed(1):v.toFixed(2))+' GB';}function rate(n){if(n==null||isNaN(n))return '--';var u=['B/s','KB/s','MB/s','GB/s'],v=n,i=0;while(v>=1024&&i<3){v/=1024;i++;}return (i===0?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+' '+u[i];}function setCards(key,value,sub){document.querySelectorAll('[data-live="'+key+'"]').forEach(function(card){card.querySelector('.bv-live-value').textContent=value;if(sub)card.querySelector('.bv-live-sub').textContent=sub;});}function disks(list){document.querySelectorAll('[data-live="disk"] .bv-disk-list').forEach(function(box){box.textContent='';(list||[]).forEach(function(d){var row=document.createElement('div');row.className='bv-disk';var name=document.createElement('span');name.textContent=d.name||'';var bar=document.createElement('div');bar.className='bv-disk-bar';var i=document.createElement('i');i.style.width=Math.max(0,Math.min(100,d.percent||0))+'%';bar.appendChild(i);var meta=document.createElement('span');meta.textContent=(d.usedText||'')+' / '+(d.totalText||'');row.appendChild(name);row.appendChild(bar);row.appendChild(meta);box.appendChild(row);});});}async function load(){var q='?pace='+pace;var urls=['machine'+q,'http://127.0.0.1:8765/machine'+q];if(location.protocol==='file:')urls=['http://127.0.0.1:8765/machine'];for(var i=0;i<urls.length;i++){try{var r=await fetch(urls[i],{cache:'no-store'});if(r.ok)return await r.json();}catch(e){}}throw new Error('off');}async function loadActivity(){var urls=['activity','http://127.0.0.1:8765/activity'];if(location.protocol==='file:')urls=['http://127.0.0.1:8765/activity'];for(var i=0;i<urls.length;i++){try{var r=await fetch(urls[i],{cache:'no-store'});if(r.ok)return await r.json();}catch(e){}}return null;}function fillJenkins(box,j){box.textContent='';var src=document.querySelector('.bv-source:not([hidden])');var preset=src?src.getAttribute('data-last'):'';var last=document.createElement('p');if(preset){last.textContent=preset;}else if(j.lastRun&&j.lastRun.ago){last.textContent='Last build '+j.lastRun.ago+(j.lastRun.building?' running':'')+'  '+(j.lastRun.job||'')+(j.lastRun.number?' #'+j.lastRun.number:'');}else{last.textContent='Last build: none';}box.appendChild(last);if(j.uptime){var up=document.createElement('p');up.textContent='Up for '+j.uptime;box.appendChild(up);}function block(title,rows,empty){var h=document.createElement('h4');h.textContent=title;box.appendChild(h);if(!rows||!rows.length){var p=document.createElement('p');p.textContent=empty;box.appendChild(p);return;}rows.forEach(function(text){var p=document.createElement('p');p.textContent=text;box.appendChild(p);});}block('Logins',(j.users||[]).map(function(u){return u.name+(u.since?'  '+u.since:'');}), j.preview?'Preview cannot read login sessions':'None');block('Building',(j.builds||[]).map(function(b){return b.job+' #'+b.number+'  '+b.user;}),'None');block('Artifact requests',(j.downloads||[]).map(function(d){return d.user+'  '+d.path+'  '+d.ago;}), j.preview?'Preview cannot read artifact requests':'None');}async function tick(){var status=document.querySelectorAll('.bv-live-status');try{var j=await load();push('cpu',j.cpu);push('mem',j.memoryPercent);push('disk',j.diskActive);push('down',j.netDown);push('up',j.netUp);push('read',j.diskRead);push('write',j.diskWrite);setCards('cpu',(j.cpu==null?'--':Math.round(j.cpu)+'%'),'Usage');cpuMeta(j);drawCores(j.cores);setCards('mem',(j.memoryPercent==null?'--':Math.round(j.memoryPercent)+'%'),(gb(j.memoryUsed)||'--')+' / '+(gb(j.memoryTotal)||'--'));setCards('disk',(j.diskActive==null?'--':Math.round(j.diskActive)+'%'),'Active time');drawGpus(j.gpus);setCards('down',rate(j.netDown),'Per second');setCards('up',rate(j.netUp),'Per second');setCards('read',rate(j.diskRead),'Per second');setCards('write',rate(j.diskWrite),'Per second');document.querySelectorAll('[data-live="cpu"]').forEach(function(c){spark(c,'cpu','#3479B0',true);});document.querySelectorAll('[data-live="mem"]').forEach(function(c){spark(c,'mem','#3C74A3',true);});document.querySelectorAll('[data-live="disk"]').forEach(function(c){spark(c,'disk','#F08048',true);});document.querySelectorAll('[data-live="down"]').forEach(function(c){spark(c,'down','#3479B0',true,true);});document.querySelectorAll('[data-live="up"]').forEach(function(c){spark(c,'up','#3C74A3',true,true);});document.querySelectorAll('[data-live="read"]').forEach(function(c){spark(c,'read','#F08048',true,true);});document.querySelectorAll('[data-live="write"]').forEach(function(c){spark(c,'write','#50A040',true,true);});disks(j.disks);var act=await loadActivity();document.querySelectorAll('.bv-jenkins').forEach(function(box){if(act)fillJenkins(box,act);});status.forEach(function(el){el.textContent='Refresh '+pace+'s';});}catch(e){status.forEach(function(el){el.textContent='Sampler offline';});}}function arm(){if(timer)clearInterval(timer);timer=setInterval(tick,pace*1000);}document.addEventListener('click',function(e){var cpu=e.target.closest('[data-cpu]');if(cpu){var mode=cpu.getAttribute('data-cpu');document.querySelectorAll('[data-live="cpu"]').forEach(function(card){card.classList.toggle('is-cores',mode==='cores');});document.querySelectorAll('[data-cpu]').forEach(function(el){el.classList.toggle('is-on',el.getAttribute('data-cpu')===mode);});return;}var b=e.target.closest('[data-pace]');if(!b)return;pace=b.getAttribute('data-pace')==='1'?1:5;document.querySelectorAll('[data-pace]').forEach(function(el){el.classList.toggle('is-on',el.getAttribute('data-pace')===String(pace));});arm();tick();});if(document.querySelector('.bv-panel-host')){tick();arm();}}if(!window.__bvLogo){window.__bvLogo=true;var logoDefault=(document.querySelector('.bv')&&document.querySelector('.bv').getAttribute('data-logo'))||'';function showLogo(url){document.querySelectorAll('.bv-about-logo img').forEach(function(img){img.src=url||logoDefault;});}function bootAbout(){try{var saved=localStorage.getItem('bv-about-logo');if(saved)showLogo(saved);}catch(e){}document.querySelectorAll('.bv-star').forEach(function(bar){try{if(localStorage.getItem('bv-star-hide')==='1')bar.hidden=true;}catch(e){}var close=bar.querySelector('.bv-star-close');if(!close)return;close.addEventListener('click',function(){bar.hidden=true;try{localStorage.setItem('bv-star-hide','1');}catch(err){}});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootAbout);else bootAbout();document.addEventListener('change',function(e){var input=e.target.closest('.bv-logo-file');if(!input||!input.files||!input.files[0])return;var file=input.files[0];var note=document.querySelector('.bv-about-note');if(file.size>2*1024*1024){if(note)note.textContent='Image is over 2 MB. Choose a smaller one.';return;}var reader=new FileReader();reader.onload=function(){var url=String(reader.result||'');try{localStorage.setItem('bv-about-logo',url);}catch(err){if(note)note.textContent='This image is too large for the browser to store.';return;}showLogo(url);if(note)note.textContent='Using the logo uploaded in this browser.';};reader.readAsDataURL(file);});document.addEventListener('click',function(e){if(!e.target.closest('.bv-logo-clear'))return;try{localStorage.removeItem('bv-about-logo');}catch(err){}showLogo('');var note=document.querySelector('.bv-about-note');if(note)note.textContent='Default logo restored.';});}
-if(!window.__bvI18n){window.__bvI18n=true;window.__bvEn={'nav.brand':'Build Stats','nav.overview':'Overview','nav.host':'This computer','nav.about':'About','nav.pipes':'Pipelines','nav.machine':'Host','nav.time':'Time','range.7':'7 days','range.30':'30 days','range.90':'90 days','range.all':'All','sign.toggle':'Status plate','summary.toggle':'Summary','sign.all':'All pages','sign.home':'Home only','heat.s':'S','heat.m':'M','heat.l':'L','heat.year':'Year','heat.lastYear':'Last year','heat.days':'Days','heat.blank':'Empty days','heat.max':'Max','heat.avg':'Weekday average','chart.hours':'Machine hours','chart.split':'Success, failure, and abort','chart.count':'Build count','chart.hour':'Time of day','chart.rate':'Success rate','chart.result':'Result','chart.mtime':'Machine time','chart.trigger':'Trigger','chart.trend':'Duration','chart.stage':'Stage status','chart.names':'Stage name changes','chart.stageTime':'Average stage time','chart.failStage':'Failed stage','kpi.rate':'Success rate','kpi.ok':'Successes','kpi.time':'Duration','kpi.count':'Triggers','kpi.failTime':'Failure and abort time','kpi.fail':'Failures','host.cpu':'CPU','host.mem':'Memory','host.disk':'Disk','host.down':'Download','host.up':'Upload','host.read':'Disk read','host.write':'Disk write','host.now':'Jenkins now','host.pace':'Refresh','host.total':'Total','host.cores':'Cores','about.lang':'Language','about.version':'Version','about.author':'Author','about.repo':'GitHub','about.upload':'Upload logo','about.restore':'Restore logo','about.star':'If Build Stats helps you, please star it on GitHub.','about.starGo':'Star on GitHub','about.note':'The author and repository link are fixed. English is used unless you change the language here. A replacement logo stays in this browser only.','state.run':'Running','state.ok':'Success','state.fail':'Failure','state.unstable':'Unstable','state.abort':'Aborted','state.none':'Not built','guide.lang':'The globe at the top right overrides this page. Otherwise it follows the Jenkins language, then the browser language, then English.','guide.open':'Open About','guide.ok':'Got it','empty.builds':'No builds yet.','empty.none':'No records.','h.accounts':'Accounts','h.pipes':'Pipelines','h.ledger':'Cumulative time','h.recent':'Recent builds','note.title':'Notes','col.pipeline':'Pipeline','col.count':'Count','col.total':'Total time','col.avg':'Average','col.fail':'Failed','col.when':'When','col.period':'This period','col.cum':'Cumulative','col.cumOk':'Cumulative success','col.cumBad':'Cumulative failure and abort','col.build':'Build','col.result':'Result','col.duration':'Duration','col.who':'Who','col.start':'Started','col.account':'Account','col.ok':'Success','col.abort':'Aborted','col.last':'Latest'};function bvCode(raw){if(!raw)return '';raw=String(raw).toLowerCase();if(raw.indexOf('zh')===0)return 'zh';if(raw.indexOf('en')===0)return 'en';return '';}function bvLang(){try{var saved=localStorage.getItem('bv-lang');if(saved==='zh'||saved==='en')return saved;}catch(e){}var node=document.querySelector('[data-jenkins-lang]');var fromPage=bvCode(node&&node.getAttribute('data-jenkins-lang'));if(fromPage)return fromPage;var fromHtml=bvCode(document.documentElement.lang);if(fromHtml)return fromHtml;var list=navigator.languages||[navigator.language||''];for(var i=0;i<list.length;i++){var code=bvCode(list[i]);if(code)return code;}return 'en';}function applyLang(lang){window.__bvLang=lang;document.querySelectorAll('[data-i18n]').forEach(function(el){var key=el.getAttribute('data-i18n');var zh=el.getAttribute('data-zh');if(!zh){zh=el.textContent;el.setAttribute('data-zh',zh);}var text=lang==='en'&&window.__bvEn[key]?window.__bvEn[key]:zh;var extra=el.getAttribute('data-value');el.textContent=extra!=null&&extra!==''?text+' '+extra:text;});document.querySelectorAll('[data-en]').forEach(function(el){el.textContent=lang==='zh'&&el.getAttribute('data-zh')?el.getAttribute('data-zh'):el.getAttribute('data-en');});document.querySelectorAll('.bv-lang').forEach(function(sel){sel.value=lang;});var code=document.querySelector('.bv-lang-code');if(code)code.textContent=lang==='zh'?'中文':'EN';document.querySelectorAll('.bv-lang-pop [data-lang]').forEach(function(btn){btn.classList.toggle('is-on',btn.getAttribute('data-lang')===lang);});var name=lang==='zh'?'构建统计':'Build Stats';document.querySelectorAll('#breadcrumbs [aria-current="page"] span, [data-type="action-label"]').forEach(function(el){var t=(el.textContent||'').replace(/\s+/g,' ').trim();if(t==='构建统计'||t==='Build Stats')el.textContent=name;});if(/构建统计|Build Stats/.test(document.title))document.title=document.title.replace(/构建统计|Build Stats/g,name);document.querySelectorAll('img[data-src-en]').forEach(function(img){var next=lang==='en'?img.getAttribute('data-src-en'):img.getAttribute('data-src-zh');if(next)img.src=next;});}function chooseLang(lang){try{localStorage.setItem('bv-lang',lang);}catch(e){}applyLang(lang);}window.__bvLang=bvLang();function bootLang(){applyLang(window.__bvLang);bootGuide();document.querySelectorAll('.bv-range').forEach(function(sel){sel.addEventListener('change',function(){location.href=(sel.getAttribute('data-base')||'?')+'days='+sel.value;});});document.querySelectorAll('.bv-lang').forEach(function(sel){sel.addEventListener('change',function(){chooseLang(sel.value);});});var menu=document.querySelector('.bv-lang-menu');if(!menu)return;var btn=menu.querySelector('.bv-lang-btn');var pop=menu.querySelector('.bv-lang-pop');btn.addEventListener('click',function(e){e.stopPropagation();var open=pop.hidden;pop.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false');});pop.querySelectorAll('[data-lang]').forEach(function(item){item.addEventListener('click',function(){chooseLang(item.getAttribute('data-lang'));pop.hidden=true;btn.setAttribute('aria-expanded','false');});});document.addEventListener('click',function(){if(!pop.hidden){pop.hidden=true;btn.setAttribute('aria-expanded','false');}});pop.addEventListener('click',function(e){e.stopPropagation();});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootLang);else bootLang();}function bootGuide(){var box=document.querySelector('.bv-lang-guide');if(!box)return;try{if(localStorage.getItem('bv-lang-guide')==='1'){box.hidden=true;return;}}catch(e){}box.hidden=false;function hide(){box.hidden=true;try{localStorage.setItem('bv-lang-guide','1');}catch(err){}}var open=box.querySelector('.bv-lang-guide-open');if(open)open.addEventListener('click',function(){var about=document.querySelector('label[for$="-about"]');if(about)about.click();hide();});var ok=box.querySelector('.bv-lang-guide-ok');if(ok)ok.addEventListener('click',hide);}
+/*
+ * Behaviour for the Build Stats pages and for the status card the page decorator adds elsewhere.
+ *
+ * The pages are rendered on the server, so this file never produces visible text and never
+ * translates anything: every string a reader sees comes from the resource bundle for the request's
+ * locale and is already in the first HTML response. What is left here is the part a server cannot
+ * do: browser-local preferences, navigating from a <select>, and the live sampler on the "this
+ * computer" page.
+ *
+ * Loaded as one external file with no inline handlers, no eval and no new Function, so a strict
+ * Content-Security-Policy accepts the page as it is.
+ */
+(function () {
+  "use strict";
+
+  // The page and the decorator's footer can both pull this file into one document. Initialise
+  // once so no listener is attached twice.
+  if (window.__bvStats) {
+    return;
+  }
+  window.__bvStats = true;
+
+  var root = document.documentElement;
+
+  /* ------------------------------------------------------------------ browser storage
+   *
+   * localStorage throws outright in some privacy modes rather than returning null, so every
+   * access is wrapped. A browser that refuses to remember a preference should still show a
+   * working page with that preference at its default.
+   */
+
+  function readStore(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeStore(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function dropStore(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {}
+  }
+
+  /* ------------------------------------------------------------------ small DOM helpers */
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  function all(selector, within) {
+    return Array.prototype.slice.call((within || document).querySelectorAll(selector));
+  }
+
+  function clear(node) {
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  }
+
+  /** An SVG element with attributes. Used instead of innerHTML so no value is ever parsed as markup. */
+  function svg(name, attrs) {
+    var node = document.createElementNS(SVG_NS, name);
+    Object.keys(attrs || {}).forEach(function (key) {
+      node.setAttribute(key, String(attrs[key]));
+    });
+    return node;
+  }
+
+  function el(name, className, text) {
+    var node = document.createElement(name);
+    if (className) {
+      node.className = className;
+    }
+    if (text != null) {
+      node.textContent = text;
+    }
+    return node;
+  }
+
+  /* ------------------------------------------------------------------ 1. preference toggles
+   *
+   * Three browser-local preferences, each a class on <html> that the stylesheet acts on. Doing it
+   * with a class rather than by touching the elements keeps the rule in the stylesheet, where the
+   * rest of the layout lives, and means the preference also reaches the decorator's card on pages
+   * this script otherwise has nothing to do with.
+   *
+   * The storage keys predate the "status" wording and are shared with the home-page card, so they
+   * keep their original names: renaming them would silently reset everyone's preference.
+   */
+
+  var PREFS = {
+    summary: { key: "bv-summary-show", on: "1", off: "0", fallback: false },
+    status: { key: "bv-sign-show", on: "1", off: "0", fallback: true }
+  };
+  var WHERE_KEY = "bv-sign-where";
+
+  function prefOn(name) {
+    var spec = PREFS[name];
+    var saved = readStore(spec.key);
+    return saved === null ? spec.fallback : saved === spec.on;
+  }
+
+  function homeOnly() {
+    return readStore(WHERE_KEY) === "home";
+  }
+
+  /*
+   * Called while the document is still parsing, so the stored choice is in place before the
+   * browser paints the affected elements and nothing visibly flips afterwards.
+   */
+  function applyPrefClasses() {
+    root.classList.toggle("bv-summary-on", prefOn("summary"));
+    root.classList.toggle("bv-status-off", !prefOn("status"));
+    root.classList.toggle("bv-status-home", homeOnly());
+  }
+
+  /** Put the controls themselves in step with storage, once they exist. */
+  function reflectPrefControls() {
+    all("input.bv-pref[data-pref]").forEach(function (box) {
+      var name = box.getAttribute("data-pref");
+      if (PREFS[name]) {
+        box.checked = prefOn(name);
+      }
+    });
+    all('select.bv-pref-select[data-pref="statusWhere"]').forEach(function (select) {
+      select.value = homeOnly() ? "home" : "all";
+      // With the plate switched off this select governs nothing, so it is not offered.
+      select.disabled = !prefOn("status");
+    });
+    applyHomeCard();
+  }
+
+  function choosePref(name, on) {
+    var spec = PREFS[name];
+    if (!spec) {
+      return;
+    }
+    writeStore(spec.key, on ? spec.on : spec.off);
+    applyPrefClasses();
+    reflectPrefControls();
+  }
+
+  function chooseWhere(value) {
+    writeStore(WHERE_KEY, value === "home" ? "home" : "all");
+    applyPrefClasses();
+    reflectPrefControls();
+  }
+
+  /* ------------------------------------------------------------------ 2. select as navigation
+   *
+   * Each option of a .bv-go select carries its own URL, so the server renders a working control
+   * and this only saves a click. "change" rather than "input" is what makes it safe for the
+   * keyboard: on an unopened select, arrow keys move through the options and every browser fires
+   * input for each step, while change waits for the choice to be committed (Enter, Tab, blur, or
+   * picking from the open list). Listening to input would navigate away mid-selection.
+   */
+
+  function navigateFrom(select) {
+    var url = select.value;
+    if (url) {
+      window.location.assign(url);
+    }
+  }
+
+  /* ------------------------------------------------------------------ 3. machine sampling
+   *
+   * The "this computer" page renders empty cards and this fills them from two endpoints that hang
+   * off the page's own URL. Nothing starts unless those cards are in the document, so the overview
+   * and About pages never open a request, and the timer is dropped whenever the tab is hidden —
+   * a background tab that keeps a controller sampling its own CPU every second is pure waste.
+   */
+
+  var SPARK_W = 320;
+  var SPARK_H = 120; // Matches the viewBox computer.jelly renders on every .bv-spark.
+  var CORE_W = 80;
+  var CORE_H = 24; // Matches the height the stylesheet gives .bv-core svg.
+  var SAMPLES = 60;
+
+  // One colour per series so neighbouring cards stay distinguishable. These are literals in this
+  // file, never values from a sample, so they are safe to put in a stroke attribute.
+  var SERIES = {
+    cpu: { colour: "#3479b0", rate: false },
+    mem: { colour: "#3c74a3", rate: false },
+    disk: { colour: "#f08048", rate: false },
+    down: { colour: "#3479b0", rate: true },
+    up: { colour: "#3c74a3", rate: true },
+    read: { colour: "#f08048", rate: true },
+    write: { colour: "#50a040", rate: true }
+  };
+  var GPU_COLOUR = "#50a040";
+
+  var history = {};
+  Object.keys(SERIES).forEach(function (key) {
+    history[key] = [];
+  });
+  var coreHistory = [];
+  var gpuHistory = [];
+  var pace = 5;
+  var timer = 0;
+  var sampling = false;
+  var activityDefaults = null;
+
+  function record(series, value) {
+    if (value == null || typeof value !== "number" || isNaN(value)) {
+      return;
+    }
+    series.push(value);
+    if (series.length > SAMPLES) {
+      series.shift();
+    }
+  }
+
+  function percentText(value) {
+    return value == null || isNaN(value) ? "--" : Math.round(value) + "%";
+  }
+
+  /** "GB" and "B/s" are unit symbols, not words, so composing them here needs no translation. */
+  function gigabytes(bytes) {
+    if (bytes == null || bytes < 0) {
+      return "";
+    }
+    var value = bytes / 1073741824;
+    return (value >= 10 ? value.toFixed(1) : value.toFixed(2)) + " GB";
+  }
+
+  function rateText(bytesPerSecond) {
+    if (bytesPerSecond == null || isNaN(bytesPerSecond)) {
+      return "--";
+    }
+    var units = ["B/s", "KB/s", "MB/s", "GB/s"];
+    var value = bytesPerSecond;
+    var step = 0;
+    while (value >= 1024 && step < units.length - 1) {
+      value /= 1024;
+      step++;
+    }
+    var shown = step === 0 ? value.toFixed(0) : value >= 10 ? value.toFixed(1) : value.toFixed(2);
+    return shown + " " + units[step];
+  }
+
+  /** The polyline through one history, as an SVG path built from numbers this file computed. */
+  function trace(values, top, width, height, pad) {
+    var d = "";
+    for (var i = 0; i < values.length; i++) {
+      var x = values.length < 2 ? 0 : (i / (values.length - 1)) * width;
+      var raw = Math.max(0, values[i]);
+      var y = height - (raw / top) * (height - pad * 2) - pad;
+      d += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    return d;
+  }
+
+  function ceiling(values, floor) {
+    var top = floor;
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] > top) {
+        top = values[i];
+      }
+    }
+    return top;
+  }
+
+  /*
+   * A sparkline: four gridlines, a filled area and the line itself. Percentage series are drawn
+   * against a fixed 0-100 so the shape means the same thing from one refresh to the next; byte
+   * rates have no natural ceiling, so those scale to the tallest sample held.
+   */
+  function drawSpark(target, values, colour, rate) {
+    if (!target) {
+      return;
+    }
+    clear(target);
+    for (var line = 0; line <= 4; line++) {
+      var y = (SPARK_H / 4) * line;
+      target.appendChild(svg("line", {
+        x1: 0,
+        y1: y,
+        x2: SPARK_W,
+        y2: y,
+        stroke: "var(--panel-border-color, #e4e9ee)"
+      }));
+    }
+    if (!values.length) {
+      return;
+    }
+    var top = rate ? ceiling(values, 1) : 100;
+    var d = trace(values, top, SPARK_W, SPARK_H, 3);
+    var close = (values.length < 2 ? 0 : SPARK_W) + " " + SPARK_H;
+    target.appendChild(svg("path", {
+      d: d + " L" + close + " L0 " + SPARK_H + " Z",
+      fill: colour,
+      opacity: "0.16"
+    }));
+    target.appendChild(svg("path", { d: d, fill: "none", stroke: colour, "stroke-width": "1.6" }));
+  }
+
+  /** One tiny chart per logical processor, rebuilt only when the core count itself changes. */
+  function drawCores(values) {
+    if (!values || !values.length) {
+      return;
+    }
+    if (coreHistory.length !== values.length) {
+      coreHistory = values.map(function () {
+        return [];
+      });
+    }
+    values.forEach(function (value, index) {
+      record(coreHistory[index], value);
+    });
+    all(".bv-core-grid").forEach(function (grid) {
+      if (grid.childElementCount !== values.length) {
+        clear(grid);
+        values.forEach(function () {
+          var cell = el("div", "bv-core");
+          cell.appendChild(el("b"));
+          cell.appendChild(svg("svg", {
+            viewBox: "0 0 " + CORE_W + " " + CORE_H,
+            preserveAspectRatio: "none",
+            "aria-hidden": "true"
+          }));
+          grid.appendChild(cell);
+        });
+      }
+      values.forEach(function (value, index) {
+        var cell = grid.children[index];
+        if (!cell) {
+          return;
+        }
+        cell.querySelector("b").textContent = percentText(value);
+        var plot = cell.querySelector("svg");
+        clear(plot);
+        var series = coreHistory[index];
+        if (!series.length) {
+          return;
+        }
+        var d = trace(series, 100, CORE_W, CORE_H, 2);
+        var close = (series.length < 2 ? 0 : CORE_W) + " " + CORE_H;
+        plot.appendChild(svg("path", {
+          d: d + " L" + close + " L0 " + CORE_H + " Z",
+          fill: SERIES.cpu.colour,
+          opacity: "0.2"
+        }));
+        plot.appendChild(svg("path", {
+          d: d,
+          fill: "none",
+          stroke: SERIES.cpu.colour,
+          "stroke-width": "1.2"
+        }));
+      });
+    });
+  }
+
+  /*
+   * GPU cards exist only when the controller reports a GPU, so computer.jelly leaves an empty slot
+   * and they are built here, in the same shape as the cards next to them so they inherit the same
+   * styling. The device name and its memory line come from the sample and are set as text, never
+   * as markup: a driver that reports an odd name must not be able to put nodes in this page.
+   */
+  function drawGpus(list) {
+    var gpus = list || [];
+    all(".bv-gpu-slot").forEach(function (slot) {
+      var signature = gpus.map(function (gpu) {
+        return gpu.name || "";
+      }).join("|");
+      if (slot.getAttribute("data-bv-gpu-key") !== signature) {
+        clear(slot);
+        slot.setAttribute("data-bv-gpu-key", signature);
+        gpus.forEach(function (gpu) {
+          var card = el("article", "jenkins-card bv-live");
+          card.appendChild(el("div", "jenkins-card__title", gpu.name || "GPU"));
+          var content = el("div", "jenkins-card__content");
+          content.appendChild(el("strong", "bv-live__value", "--"));
+          content.appendChild(el("p", "bv-live__sub"));
+          content.appendChild(svg("svg", {
+            class: "bv-spark",
+            viewBox: "0 0 " + SPARK_W + " " + SPARK_H,
+            preserveAspectRatio: "none",
+            "aria-hidden": "true"
+          }));
+          card.appendChild(content);
+          slot.appendChild(card);
+        });
+      }
+    });
+    if (!gpus.length) {
+      gpuHistory = [];
+      return;
+    }
+    if (gpuHistory.length !== gpus.length) {
+      gpuHistory = gpus.map(function () {
+        return [];
+      });
+    }
+    gpus.forEach(function (gpu, index) {
+      record(gpuHistory[index], gpu.util == null ? 0 : gpu.util);
+    });
+    all(".bv-gpu-slot").forEach(function (slot) {
+      gpus.forEach(function (gpu, index) {
+        var card = slot.children[index];
+        if (!card) {
+          return;
+        }
+        card.querySelector(".bv-live__value").textContent = percentText(gpu.util);
+        card.querySelector(".bv-live__sub").textContent = gpu.memoryText || "";
+        drawSpark(card.querySelector(".bv-spark"), gpuHistory[index], GPU_COLOUR, false);
+      });
+    });
+  }
+
+  /** Per-volume usage inside the disk card. Volume names come from the sample, so again: text. */
+  function fillDisks(list) {
+    all('[data-live="disk"] .bv-disk-list').forEach(function (box) {
+      clear(box);
+      (list || []).forEach(function (volume) {
+        var row = el("div", "bv-disk");
+        row.appendChild(el("span", null, volume.name || ""));
+        var bar = el("div", "bv-disk-bar");
+        var fill = el("i");
+        fill.style.width = Math.max(0, Math.min(100, Number(volume.percent) || 0)) + "%";
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        var used = volume.usedText || "";
+        var total = volume.totalText || "";
+        row.appendChild(el("span", null, total ? used + " / " + total : used));
+        box.appendChild(row);
+      });
+    });
+  }
+
+  function joinParts(parts) {
+    return parts.filter(function (part) {
+      return part;
+    }).join(" · ");
+  }
+
+  /*
+   * The activity table's rows are rendered by the server with a placeholder in each cell. Those
+   * placeholders are remembered on the first pass and put back whenever a list is empty, so an
+   * empty state stays in the page's own language instead of being replaced by a string from here.
+   */
+  function activityRows(data) {
+    var last = data.lastRun || {};
+    return {
+      lastBuild: last.ago ? joinParts([last.job, last.number ? "#" + last.number : "", last.ago]) : "",
+      uptime: data.uptime || "",
+      users: (data.users || []).map(function (user) {
+        return joinParts([user.name, user.since]);
+      }).join(", "),
+      builds: (data.builds || []).map(function (build) {
+        return joinParts([build.job, build.number ? "#" + build.number : "", build.user]);
+      }).join(", "),
+      downloads: (data.downloads || []).map(function (item) {
+        return joinParts([item.path, item.user, item.ago]);
+      }).join(", ")
+    };
+  }
+
+  function fillActivity(data) {
+    var cells = all("[data-bv-activity] [data-bv-row]");
+    if (!activityDefaults) {
+      activityDefaults = {};
+      cells.forEach(function (cell) {
+        activityDefaults[cell.getAttribute("data-bv-row")] = cell.textContent;
+      });
+    }
+    var rows = activityRows(data);
+    cells.forEach(function (cell) {
+      var key = cell.getAttribute("data-bv-row");
+      var text = rows[key];
+      cell.textContent = text ? text : activityDefaults[key] || "";
+    });
+  }
+
+  function setLive(key, value, sub) {
+    all('[data-live="' + key + '"]').forEach(function (card) {
+      var slot = card.querySelector(".bv-live__value");
+      if (slot) {
+        slot.textContent = value;
+      }
+      // The CPU card's sub line carries the processor description instead, so it is left alone
+      // unless a caller passes replacement text.
+      var note = sub == null ? null : card.querySelector(".bv-live__sub");
+      if (note) {
+        note.textContent = sub;
+      }
+    });
+  }
+
+  /** Processor make, core counts and clock, which only the sample knows. Units, not words. */
+  function setCpuMeta(sample) {
+    var parts = [];
+    if (sample.cpuName) {
+      parts.push(sample.cpuName);
+    }
+    if (sample.cpuCores) {
+      parts.push(sample.cpuCores + " × core");
+    }
+    if (sample.cpuLogical) {
+      parts.push(sample.cpuLogical + " × thread");
+    }
+    if (sample.cpuMhz) {
+      parts.push((sample.cpuMhz / 1000).toFixed(2) + " GHz");
+    }
+    if (!parts.length) {
+      return;
+    }
+    all("[data-bv-cpu-meta]").forEach(function (note) {
+      note.textContent = parts.join(" · ");
+    });
+  }
+
+  /*
+   * Both endpoints hang off this page's own URL, so they inherit the context path, the reverse
+   * proxy prefix and the session without any of that being written down here.
+   */
+  function endpoint(name) {
+    var base = window.location.pathname;
+    if (base.charAt(base.length - 1) !== "/") {
+      base += "/";
+    }
+    return base + name;
+  }
+
+  function fetchJson(url) {
+    return fetch(url, { cache: "no-store", credentials: "same-origin" }).then(function (response) {
+      if (!response.ok) {
+        throw new Error(String(response.status));
+      }
+      return response.json();
+    });
+  }
+
+  /*
+   * The sampler pill. Its offline wording is what the server already rendered into it, so it is
+   * read once and restored rather than written from here. While sampling, it shows the selected
+   * refresh interval, which is also server-rendered text — this file has no string of its own to
+   * put on screen. (host.live exists in the bundle but no element exposes it; see the report.)
+   */
+  var offlineLabel = null;
+
+  function setSamplerState(live) {
+    all("[data-bv-live-status]").forEach(function (pill) {
+      if (offlineLabel == null) {
+        offlineLabel = pill.textContent;
+      }
+      var paceSelect = document.querySelector("[data-bv-pace]");
+      var chosen = paceSelect && paceSelect.selectedOptions[0];
+      pill.textContent = live && chosen ? chosen.textContent.trim() : offlineLabel;
+    });
+  }
+
+  function paintSample(sample) {
+    record(history.cpu, sample.cpu);
+    record(history.mem, sample.memoryPercent);
+    record(history.disk, sample.diskActive);
+    record(history.down, sample.netDown);
+    record(history.up, sample.netUp);
+    record(history.read, sample.diskRead);
+    record(history.write, sample.diskWrite);
+
+    setLive("cpu", percentText(sample.cpu), null);
+    setCpuMeta(sample);
+    drawCores(sample.cores);
+
+    var used = gigabytes(sample.memoryUsed);
+    var total = gigabytes(sample.memoryTotal);
+    setLive("mem", percentText(sample.memoryPercent), used && total ? used + " / " + total : null);
+    setLive("disk", percentText(sample.diskActive), null);
+    setLive("down", rateText(sample.netDown), null);
+    setLive("up", rateText(sample.netUp), null);
+    setLive("read", rateText(sample.diskRead), null);
+    setLive("write", rateText(sample.diskWrite), null);
+
+    Object.keys(SERIES).forEach(function (key) {
+      var spec = SERIES[key];
+      all('[data-live="' + key + '"] .bv-spark').forEach(function (plot) {
+        drawSpark(plot, history[key], spec.colour, spec.rate);
+      });
+    });
+
+    fillDisks(sample.disks);
+    drawGpus(sample.gpus);
+  }
+
+  function tick() {
+    fetchJson(endpoint("machine") + "?pace=" + pace).then(function (sample) {
+      if (sample && sample.ok === false) {
+        throw new Error("sampler");
+      }
+      paintSample(sample);
+      setSamplerState(true);
+      // Activity is a second, cheaper read. A failure there leaves the resource cards alone.
+      return fetchJson(endpoint("activity")).then(fillActivity, function () {});
+    }).catch(function () {
+      setSamplerState(false);
+    });
+  }
+
+  function stopSampling() {
+    if (timer) {
+      clearInterval(timer);
+      timer = 0;
+    }
+  }
+
+  /** Sample now, then on the chosen interval. Called again whenever the interval changes. */
+  function startSampling() {
+    stopSampling();
+    if (!sampling || document.visibilityState === "hidden") {
+      return;
+    }
+    tick();
+    timer = window.setInterval(tick, pace * 1000);
+  }
+
+  function choosePace(raw) {
+    pace = String(raw) === "1" ? 1 : 5;
+    startSampling();
+  }
+
+  function setCpuCores(on) {
+    all("[data-bv-cpu-toggle]").forEach(function (button) {
+      // aria-pressed is the only thing telling a screen reader which view is showing, so it is
+      // kept in step with the grid rather than set once.
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    all(".bv-core-grid").forEach(function (grid) {
+      grid.hidden = !on;
+    });
+  }
+
+  /* ------------------------------------------------------------------ 4. About page logo
+   *
+   * A replacement logo is a per-browser decoration: it is kept as a data URL in this browser's
+   * storage and never sent to the controller, so one administrator's choice does not become
+   * everyone's. The note under the control is server-rendered text; the alternatives it can switch
+   * to are read from data attributes on it, and a state whose attribute is missing leaves the note
+   * as it stands rather than putting an untranslated string on the page.
+   */
+
+  var LOGO_KEY = "bv-about-logo";
+  var LOGO_LIMIT = 2 * 1024 * 1024;
+  var logoDefaults = null;
+
+  function logoNotes() {
+    var note = document.querySelector("[data-bv-logo-note]");
+    if (!note) {
+      return null;
+    }
+    if (!logoDefaults) {
+      logoDefaults = {
+        node: note,
+        standard: note.textContent,
+        custom: note.getAttribute("data-note-custom"),
+        tooBig: note.getAttribute("data-note-too-big"),
+        noRoom: note.getAttribute("data-note-no-room")
+      };
+    }
+    return logoDefaults;
+  }
+
+  function sayLogo(which) {
+    var notes = logoNotes();
+    if (!notes) {
+      return;
+    }
+    var text = which === "standard" ? notes.standard : notes[which];
+    if (text) {
+      notes.node.textContent = text;
+    }
+  }
+
+  function showLogo(url) {
+    all("[data-bv-logo]").forEach(function (img) {
+      if (!img.hasAttribute("data-bv-logo-default")) {
+        img.setAttribute("data-bv-logo-default", img.getAttribute("src") || "");
+      }
+      img.setAttribute("src", url || img.getAttribute("data-bv-logo-default"));
+    });
+  }
+
+  function restoreLogo() {
+    var saved = readStore(LOGO_KEY);
+    if (saved) {
+      logoNotes();
+      showLogo(saved);
+      sayLogo("custom");
+    }
+  }
+
+  function acceptLogo(input) {
+    var file = input.files && input.files[0];
+    if (!file) {
+      return;
+    }
+    logoNotes();
+    if (file.size > LOGO_LIMIT) {
+      sayLogo("tooBig");
+      input.value = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var url = String(reader.result || "");
+      // Storage quota is a few megabytes in total and a base64 data URL is a third larger than
+      // the file, so a file under the limit can still be refused. That is a report, not an error.
+      if (!writeStore(LOGO_KEY, url)) {
+        sayLogo("noRoom");
+        return;
+      }
+      showLogo(url);
+      sayLogo("custom");
+    };
+    reader.onerror = function () {
+      sayLogo("standard");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearLogo() {
+    logoNotes();
+    dropStore(LOGO_KEY);
+    showLogo("");
+    sayLogo("standard");
+    all(".bv-logo-file").forEach(function (input) {
+      input.value = "";
+    });
+  }
+
+  /* ------------------------------------------------------------------ 5. star bar
+   *
+   * The appeal for a GitHub star is dismissed for good once dismissed, per browser. The card
+   * carries the id, so the whole card goes rather than just the button.
+   */
+
+  var STAR_KEY = "bv-star-hide";
+
+  function starCard(from) {
+    return document.getElementById("bv-star") || (from && from.closest(".jenkins-card"));
+  }
+
+  function applyStar() {
+    var card = starCard(null);
+    if (card && readStore(STAR_KEY) === "1") {
+      card.hidden = true;
+    }
+  }
+
+  function dismissStar(button) {
+    var card = starCard(button);
+    if (card) {
+      card.hidden = true;
+    }
+    writeStore(STAR_KEY, "1");
+  }
+
+  /* ------------------------------------------------------------------ 6. home-page card
+   *
+   * The card the page decorator adds, on the Jenkins home page and on job pages. Its placement and
+   * its open / docked / closed state belong to home-card.js, which owns the drag, the clamping to
+   * the viewport and the "bv-home-card" entry in storage. This file only does the part that
+   * belongs to the preferences above, so neither script attaches a second handler to the dock,
+   * close and reopen buttons or writes the other's state.
+   *
+   * The two scripts meet at the preference keys: the card asks whether it is wanted when it loads,
+   * and these preferences live in the Build Stats app bar. So turning the plate off, or restricting
+   * it to the home page, is reflected here at once for a card already on screen; home-card.js
+   * applies the same two keys from scratch on the next page it loads on.
+   *
+   * Which pages the card may appear on is left to the stylesheet: it matches bv-status-home on
+   * <html> against the card's own data-bv-page, so nothing has to be measured from here.
+   */
+
+  function applyHomeCard() {
+    var card = document.querySelector("[data-bv-home]");
+    if (!card) {
+      return;
+    }
+    // Hidden rather than removed: this is a live preference, so unchecking and rechecking the box
+    // has to bring the same card back without a reload.
+    card.hidden = !prefOn("status");
+  }
+
+  /* ------------------------------------------------------------------ wiring
+   *
+   * Two delegated listeners on the document instead of one per control. Several of these regions
+   * are rebuilt while the page is open (the GPU slot, the core grid, the disk list), and a
+   * delegated listener keeps working across that without anything having to re-attach.
+   */
+
+  function onChange(event) {
+    var target = event.target;
+    if (!target || !target.closest) {
+      return;
+    }
+
+    var pref = target.closest("input.bv-pref[data-pref]");
+    if (pref) {
+      choosePref(pref.getAttribute("data-pref"), pref.checked);
+      return;
+    }
+
+    var where = target.closest('select.bv-pref-select[data-pref="statusWhere"]');
+    if (where) {
+      chooseWhere(where.value);
+      return;
+    }
+
+    var go = target.closest("select.bv-go");
+    if (go) {
+      navigateFrom(go);
+      return;
+    }
+
+    var paceSelect = target.closest("[data-bv-pace]");
+    if (paceSelect) {
+      choosePace(paceSelect.value);
+      return;
+    }
+
+    var logo = target.closest(".bv-logo-file");
+    if (logo) {
+      acceptLogo(logo);
+    }
+  }
+
+  function onClick(event) {
+    var target = event.target;
+    if (!target || !target.closest) {
+      return;
+    }
+
+    var cores = target.closest("[data-bv-cpu-toggle]");
+    if (cores) {
+      setCpuCores(cores.getAttribute("aria-pressed") !== "true");
+      return;
+    }
+
+    if (target.closest("[data-bv-logo-clear]")) {
+      clearLogo();
+      return;
+    }
+
+    var star = target.closest("[data-bv-star-dismiss]");
+    if (star) {
+      dismissStar(star);
+      return;
+    }
+
+    // The card's own dock, close and reopen buttons are home-card.js's: see section 6.
+  }
+
+  function ready() {
+    reflectPrefControls();
+    restoreLogo();
+    applyStar();
+
+    // Sampling happens only where the cards to fill actually exist, so the overview and About
+    // pages — and every page the decorator's card rides on — issue no requests at all.
+    if (document.querySelector("[data-live]")) {
+      var paceSelect = document.querySelector("[data-bv-pace]");
+      pace = paceSelect && String(paceSelect.value) === "1" ? 1 : 5;
+      setCpuCores(false);
+      setSamplerState(false);
+      sampling = true;
+      startSampling();
+    }
+  }
+
+  // The preference classes go on before anything else so the stored choice is already in force
+  // when the browser paints the elements the stylesheet hides.
+  applyPrefClasses();
+
+  document.addEventListener("change", onChange);
+  document.addEventListener("click", onClick);
+
+  // A hidden tab does not need a controller to keep measuring its own CPU. The timer is dropped on
+  // the way out and a fresh sample is taken on the way back, so the first thing a returning reader
+  // sees is current rather than minutes old.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") {
+      stopSampling();
+    } else {
+      startSampling();
+    }
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ready);
+  } else {
+    ready();
+  }
+})();

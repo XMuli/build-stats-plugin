@@ -1,133 +1,77 @@
+/*
+ * The status card that floats on the Jenkins home page and on a job page.
+ *
+ * Placement only: where the card sits, whether it is docked, closed or open, and remembering that
+ * in this browser. All of its text and artwork are rendered by footer.jelly for the request's
+ * locale, so nothing here reads or rewrites language — the older version carried its own
+ * translation table and an onboarding bubble, and both are gone.
+ */
 (function () {
-  if (window.__bvHome) {
+  "use strict";
+
+  // The page and the decorator can both pull this file in; only the first run wires anything up.
+  if (window.__bvHomeCard) {
     return;
   }
-  window.__bvHome = true;
+  window.__bvHomeCard = true;
+
+  var PLACE = "bv-home-card";
+  var SHOW = "bv-sign-show";
+  var WHERE = "bv-sign-where";
+  var EDGE = 8;
+
   var root = document.querySelector("[data-bv-home]");
-  var guide = document.querySelector(".bv-entry-guide");
-  if (!root || !guide) {
+  if (!root) {
     return;
   }
-  if (!allowed(root)) {
+
+  var plate = root.querySelector(".bv-plate");
+  if (!plate) {
+    return;
+  }
+
+  function stored(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      // Storage is unavailable in some privacy modes. Fall back to the default state.
+      return null;
+    }
+  }
+
+  function store(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // Nothing to do: the card still works, it just will not remember this.
+    }
+  }
+
+  /** The two preferences from the Build Stats app bar also govern this card. */
+  function wanted() {
+    if (stored(SHOW) === "0") {
+      return false;
+    }
+    var page = root.getAttribute("data-bv-page") || "home";
+    return !(stored(WHERE) === "home" && page !== "home");
+  }
+
+  if (!wanted()) {
     root.remove();
-    guide.remove();
     return;
   }
+
+  // Fixed positioning only behaves predictably from the body, not from wherever the page decorator
+  // happened to be inserted.
   document.body.appendChild(root);
-  document.body.appendChild(guide);
-  var card = root.querySelector(".bv-home-card");
-  card.querySelectorAll("img").forEach(function (img) {
-    img.draggable = false;
-  });
-  var text = guide.querySelector(".bv-entry-text");
-  var ok = guide.querySelector(".bv-entry-ok");
-  var again = guide.querySelector(".bv-entry-show");
-  var arrow = guide.querySelector(".bv-entry-arrow");
-  var KEY = "bv-home-card";
-  var INTRO = "bv-entry-intro";
-  var ACK = "bv-entry-closed-ack";
-  var copy = {
-    zh: {
-      peek: "收到右侧",
-      close: "关闭",
-      reopen: "显示状态牌",
-      intro: "右上角这个图标可以进入构建统计，也可以从插件页离开。",
-      closed: "首页卡片已关闭。之后用右上角这个图标进入或离开构建统计。",
-      ok: "知道了",
-      again: "重新显示卡片"
-    },
-      en: {
-      peek: "Dock right",
-      close: "Close",
-      reopen: "Card",
-      intro: "Use the icon at the top right to open Build Stats, and to leave it.",
-      closed: "The home card is closed. Use the icon at the top right to open or leave Build Stats.",
-      ok: "Got it",
-      again: "Show the card again"
-    }
-  };
 
-  function allowed(card) {
-    var page = card.getAttribute("data-bv-page") || "home";
+  var dock = root.querySelector("[data-bv-home-dock]");
+  var close = root.querySelector("[data-bv-home-close]");
+  var reopen = root.querySelector("[data-bv-home-reopen]");
+
+  function readPlace() {
     try {
-      if (localStorage.getItem("bv-sign-show") === "0") {
-        return false;
-      }
-      if (localStorage.getItem("bv-sign-where") === "home" && page !== "home") {
-        return false;
-      }
-    } catch (e) {}
-    return true;
-  }
-
-  function code(raw) {
-    if (!raw) {
-      return "";
-    }
-    raw = String(raw).toLowerCase();
-    if (raw.indexOf("zh") === 0) {
-      return "zh";
-    }
-    if (raw.indexOf("en") === 0) {
-      return "en";
-    }
-    return "";
-  }
-
-  function lang() {
-    try {
-      var saved = localStorage.getItem("bv-lang");
-      if (saved === "zh" || saved === "en") {
-        return saved;
-      }
-    } catch (e) {}
-    var fromPage = code(root.getAttribute("data-jenkins-lang"));
-    if (fromPage) {
-      return fromPage;
-    }
-    var fromHtml = code(document.documentElement.lang);
-    if (fromHtml) {
-      return fromHtml;
-    }
-    var list = navigator.languages || [navigator.language || ""];
-    for (var i = 0; i < list.length; i++) {
-      var picked = code(list[i]);
-      if (picked) {
-        return picked;
-      }
-    }
-    return "en";
-  }
-
-  function localize() {
-    var zh = lang() === "zh";
-    var states = {
-      Running: "构建中",
-      Success: "成功",
-      Failure: "失败",
-      Unstable: "不稳定",
-      Aborted: "中止",
-      "Not built": "未构建"
-    };
-    root.querySelectorAll("img[data-src-en]").forEach(function (img) {
-      img.src = zh ? img.getAttribute("data-src-zh") : img.getAttribute("data-src-en");
-    });
-    root.querySelectorAll(".bv-state").forEach(function (el) {
-      if (!el.getAttribute("data-en")) {
-        el.setAttribute("data-en", el.textContent);
-      }
-      var english = el.getAttribute("data-en");
-      el.textContent = zh && states[english] ? states[english] : english;
-    });
-  }
-
-  function words() {
-    return copy[lang()];
-  }
-
-  function read() {
-    try {
-      var raw = JSON.parse(localStorage.getItem(KEY) || "{}");
+      var raw = JSON.parse(stored(PLACE) || "{}");
       return {
         mode: raw.mode === "peek" || raw.mode === "closed" ? raw.mode : "open",
         left: typeof raw.left === "number" ? raw.left : null,
@@ -138,54 +82,30 @@
     }
   }
 
-  function save(state) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    } catch (e) {}
+  function savePlace() {
+    store(PLACE, JSON.stringify(state));
   }
 
-  function seen(key) {
-    try {
-      return localStorage.getItem(key) === "1";
-    } catch (e) {
-      return false;
+  /** Keep the card on screen whatever the window has done since it was placed. */
+  function clamp(left, top) {
+    var box = root.getBoundingClientRect();
+    return {
+      left: Math.max(EDGE, Math.min(Math.max(EDGE, window.innerWidth - box.width - EDGE), left)),
+      top: Math.max(EDGE, Math.min(Math.max(EDGE, window.innerHeight - box.height - EDGE), top))
+    };
+  }
+
+  function apply() {
+    root.classList.toggle("bv-home--peek", state.mode === "peek");
+    root.classList.toggle("bv-home--closed", state.mode === "closed");
+    if (reopen) {
+      reopen.hidden = state.mode !== "closed";
     }
-  }
-
-  function mark(key) {
-    try {
-      localStorage.setItem(key, "1");
-    } catch (e) {}
-  }
-
-  function clearMark(key) {
-    try {
-      localStorage.removeItem(key);
-    } catch (e) {}
-  }
-
-  function entryLink() {
-    return document.querySelector('a[href$="build-stats"]');
-  }
-
-  function apply(state) {
-    root.classList.remove("is-peek", "is-closed");
     root.style.left = "";
     root.style.top = "";
     root.style.right = "";
     root.style.bottom = "";
-    if (state.mode === "peek") {
-      root.classList.add("is-peek");
-      if (state.top != null) {
-        root.style.top = state.top + "px";
-      }
-      return;
-    }
-    if (state.mode === "closed") {
-      root.classList.add("is-closed");
-      return;
-    }
-    if (state.left != null && state.top != null) {
+    if (state.mode === "open" && state.left != null && state.top != null) {
       var spot = clamp(state.left, state.top);
       root.style.left = spot.left + "px";
       root.style.top = spot.top + "px";
@@ -194,213 +114,127 @@
     }
   }
 
-  function clamp(left, top) {
-    var rect = root.getBoundingClientRect();
-    var maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
-    var maxTop = Math.max(8, window.innerHeight - rect.height - 8);
-    return {
-      left: Math.max(8, Math.min(maxLeft, left)),
-      top: Math.max(8, Math.min(maxTop, top))
-    };
-  }
+  var state = readPlace();
+  apply();
 
-  function hideGuide() {
-    guide.hidden = true;
-    var link = entryLink();
-    if (link) {
-      link.classList.remove("bv-entry-target");
-    }
-  }
-
-  function showGuide(kind) {
-    var message = words();
-    text.textContent = message[kind];
-    ok.textContent = message.ok;
-    again.textContent = message.again;
-    again.hidden = kind !== "closed";
-    guide.hidden = false;
-    var link = entryLink();
-    if (link) {
-      link.classList.add("bv-entry-target");
-    }
-    requestAnimationFrame(function () {
-      var width = guide.offsetWidth;
-      if (!link) {
-        guide.style.top = "72px";
-        guide.style.right = "16px";
-        guide.style.left = "auto";
-        arrow.style.right = "22px";
-        arrow.style.left = "auto";
-        return;
-      }
-      var rect = link.getBoundingClientRect();
-      var left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.right - width + 8));
-      guide.style.left = left + "px";
-      guide.style.top = rect.bottom + 12 + "px";
-      guide.style.right = "auto";
-      arrow.style.left = Math.max(16, Math.min(width - 28, rect.left + rect.width / 2 - left - 6)) + "px";
-      arrow.style.right = "auto";
+  if (dock) {
+    dock.addEventListener("click", function () {
+      state.mode = "peek";
+      state.top = root.getBoundingClientRect().top;
+      savePlace();
+      apply();
     });
   }
 
-  function label() {
-    var message = words();
-    root.querySelector(".bv-home-peek").setAttribute("aria-label", message.peek);
-    root.querySelector(".bv-home-close").setAttribute("aria-label", message.close);
-    root.querySelector(".bv-home-reopen").textContent = message.reopen;
+  if (close) {
+    close.addEventListener("click", function () {
+      state.mode = "closed";
+      savePlace();
+      apply();
+      // Move focus somewhere real, so it does not vanish with the button that was pressed.
+      if (reopen) {
+        reopen.focus();
+      }
+    });
   }
 
-  var state = read();
-  label();
-  localize();
-  apply(state);
-  if (state.mode === "closed" && !seen(ACK)) {
-    showGuide("closed");
-  } else if (!seen(INTRO)) {
-    showGuide("intro");
+  if (reopen) {
+    reopen.addEventListener("click", function () {
+      state.mode = "open";
+      savePlace();
+      apply();
+      if (close) {
+        close.focus();
+      }
+    });
   }
 
-  root.querySelector(".bv-home-peek").addEventListener("click", function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    var rect = root.getBoundingClientRect();
-    state.mode = "peek";
-    state.top = rect.top;
-    save(state);
-    hideGuide();
-    apply(state);
-  });
-
-  root.querySelector(".bv-home-close").addEventListener("click", function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    state.mode = "closed";
-    save(state);
-    clearMark(ACK);
-    mark(INTRO);
-    apply(state);
-    showGuide("closed");
-  });
-
-  root.querySelector(".bv-home-reopen").addEventListener("click", function () {
-    state.mode = "open";
-    save(state);
-    mark(ACK);
-    mark(INTRO);
-    hideGuide();
-    apply(state);
-  });
-
+  // Clicking a docked card brings it back, without swallowing clicks on its own controls.
   root.addEventListener("click", function (event) {
-    if (!root.classList.contains("is-peek")) {
+    if (state.mode !== "peek") {
       return;
     }
     if (event.target.closest("button") || event.target.closest("a")) {
       return;
     }
-    event.preventDefault();
     state.mode = "open";
-    save(state);
-    apply(state);
+    savePlace();
+    apply();
   });
 
-  ok.addEventListener("click", function () {
-    if (state.mode === "closed") {
-      mark(ACK);
-    }
-    mark(INTRO);
-    hideGuide();
-  });
-
-  again.addEventListener("click", function () {
-    state.mode = "open";
-    save(state);
-    mark(ACK);
-    mark(INTRO);
-    hideGuide();
-    apply(state);
-  });
-
+  // Dragging. A press that never moves far is left alone so links still work; once it does move,
+  // the pointer is captured and the click is suppressed on release.
   var drag = null;
-  card.addEventListener("pointerdown", function (event) {
+
+  plate.addEventListener("dragstart", function (event) {
+    event.preventDefault();
+  });
+
+  plate.addEventListener("pointerdown", function (event) {
     if (event.button != null && event.button !== 0) {
       return;
     }
-    if (event.target.closest("button") || root.classList.contains("is-peek") || root.classList.contains("is-closed")) {
+    if (event.target.closest("button") || state.mode !== "open") {
       return;
     }
-    var rect = root.getBoundingClientRect();
+    var box = root.getBoundingClientRect();
     drag = {
       id: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      dx: event.clientX - rect.left,
-      dy: event.clientY - rect.top,
+      fromX: event.clientX,
+      fromY: event.clientY,
+      offsetX: event.clientX - box.left,
+      offsetY: event.clientY - box.top,
       moved: false,
-      captured: false,
-      link: event.target.closest("a.bv-home-build")
+      captured: false
     };
   });
 
-  card.addEventListener("dragstart", function (event) {
-    event.preventDefault();
-  });
-
-  card.addEventListener("pointermove", function (event) {
+  plate.addEventListener("pointermove", function (event) {
     if (!drag || drag.id !== event.pointerId) {
       return;
     }
-    if (Math.abs(event.clientX - drag.x) > 4 || Math.abs(event.clientY - drag.y) > 4) {
-      drag.moved = true;
-      if (!drag.captured) {
-        card.setPointerCapture(event.pointerId);
-        drag.captured = true;
-      }
-    }
-    if (!drag.moved) {
+    if (!drag.moved
+        && Math.abs(event.clientX - drag.fromX) < 4
+        && Math.abs(event.clientY - drag.fromY) < 4) {
       return;
     }
-    var spot = clamp(event.clientX - drag.dx, event.clientY - drag.dy);
-    root.classList.add("is-dragging");
+    if (!drag.captured) {
+      plate.setPointerCapture(event.pointerId);
+      drag.captured = true;
+    }
+    drag.moved = true;
+    var spot = clamp(event.clientX - drag.offsetX, event.clientY - drag.offsetY);
+    root.classList.add("bv-home--dragging");
     root.style.left = spot.left + "px";
     root.style.top = spot.top + "px";
     root.style.right = "auto";
     root.style.bottom = "auto";
     state.left = spot.left;
     state.top = spot.top;
-    state.mode = "open";
   });
 
   function endDrag(event) {
     if (!drag || drag.id !== event.pointerId) {
       return;
     }
-    var didMove = drag.moved;
-    var link = drag.link;
+    var moved = drag.moved;
     drag = null;
-    root.classList.remove("is-dragging");
-    if (didMove) {
-      save(state);
-      card.dataset.dragged = "1";
-      return;
-    }
-    if (link && link.href) {
-      window.location.href = link.href;
+    root.classList.remove("bv-home--dragging");
+    if (moved) {
+      savePlace();
+      plate.dataset.dragged = "1";
     }
   }
 
-  card.addEventListener("pointerup", endDrag);
-  card.addEventListener("pointercancel", endDrag);
-  card.querySelectorAll("a").forEach(function (link) {
-    link.addEventListener("click", function (event) {
-      if (card.dataset.dragged === "1") {
-        event.preventDefault();
-      }
-    });
-  });
-  card.addEventListener("click", function () {
-    delete card.dataset.dragged;
-  });
+  plate.addEventListener("pointerup", endDrag);
+  plate.addEventListener("pointercancel", endDrag);
+
+  plate.addEventListener("click", function (event) {
+    if (plate.dataset.dragged === "1") {
+      event.preventDefault();
+      delete plate.dataset.dragged;
+    }
+  }, true);
 
   window.addEventListener("resize", function () {
     if (state.mode !== "open" || state.left == null || state.top == null) {
@@ -409,7 +243,7 @@
     var spot = clamp(state.left, state.top);
     state.left = spot.left;
     state.top = spot.top;
-    save(state);
-    apply(state);
+    savePlace();
+    apply();
   });
 })();

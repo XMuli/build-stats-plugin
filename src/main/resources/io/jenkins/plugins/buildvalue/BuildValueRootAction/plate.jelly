@@ -1,0 +1,51 @@
+<?jelly escape-by-default='true'?>
+<!--
+  The vertical status plate: kicker, illustration, then job name, build link and state badge.
+
+  Included by the overview, the job detail and the home-page card, so all three stay identical.
+  Expects "sign" (a StatusSign) and "assets" in the context. The illustration keeps its own aspect
+  ratio and is never cropped; the card grows to it rather than the other way round.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:if test="${sign.present()}">
+    <figure class="jenkins-card bv-plate">
+      <div class="bv-plate__top">
+        <span class="bv-plate__kicker">${sign.kicker()}</span>
+      </div>
+
+      <div class="bv-plate__art">
+        <j:if test="${sign.live}">
+          <span class="bv-plate__live">${sign.stateText()}</span>
+        </j:if>
+        <!--
+          The server picks the Chinese or English artwork from the request locale, so the first
+          paint is already right and nothing swaps afterwards. The intrinsic size is the real
+          pixel size of the files, so the space is reserved before the image loads.
+        -->
+        <img class="bv-plate__img" src="${it.assets}images/${sign.localizedImage()}"
+             alt="${sign.alt}" width="1107" height="1491"/>
+      </div>
+
+      <figcaption class="bv-plate__foot">
+        <!-- Short name is shown; the full path is the tooltip, which Jenkins' own tooltip script
+             opens on hover and on keyboard focus, and it is also the accessible name of the build
+             link below, so a long organization-folder path is reachable either way. -->
+        <span class="bv-plate__job" tooltip="${sign.jobFullName}" tabindex="0">${sign.shortName()}</span>
+        <span class="bv-plate__line">
+          <j:choose>
+            <j:when test="${sign.buildUrl != ''}">
+              <a class="bv-plate__build" href="${sign.buildUrl}" aria-label="${sign.buildLinkLabel()}">
+                ${sign.buildLabel()}<span aria-hidden="true"> ↗</span>
+              </a>
+            </j:when>
+            <j:otherwise>
+              <span class="bv-plate__build">${sign.buildLabel()}</span>
+            </j:otherwise>
+          </j:choose>
+          <!-- Word and colour both carry the state, so colour is never the only cue. -->
+          <span class="bv-plate__state bv-state--${sign.stateClass()}">${sign.stateText()}</span>
+        </span>
+      </figcaption>
+    </figure>
+  </j:if>
+</j:jelly>

@@ -1,0 +1,10 @@
+<?jelly escape-by-default='true'?>
+<!-- How the figures on this page are counted. Hidden until the Summary checkbox is on. -->
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+  <footer class="jenkins-card bv-notes">
+    <div class="jenkins-card__title">${it.msg('note.title')}</div>
+    <div class="jenkins-card__content">
+      <p>${it.text(it.view.dashboard.methodNote)}</p>
+    </div>
+  </footer>
+</j:jelly>

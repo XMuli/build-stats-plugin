@@ -28,16 +28,10 @@ public final class Dashboard {
     public final String cumSplitChart;
     public final List<CumRow> cumRows;
     public final String methodNote;
-    public final String heatJson;
-    public final String signImage;
-    public final String signAlt;
-    public final String signCaption;
-    public final boolean signLive;
-    public final String signUrl;
-    public final String homeImage;
-    public final String homeAlt;
-    public final String homeCaption;
-    public final boolean homeLive;
+    /** Plate for the newest build in the window. */
+    public final StatusSign sign;
+    /** Plate for the newest build overall, used by the home card. */
+    public final StatusSign home;
     public final boolean empty;
 
     Dashboard(
@@ -66,16 +60,8 @@ public final class Dashboard {
             String cumSplitChart,
             List<CumRow> cumRows,
             String methodNote,
-            String heatJson,
-            String signImage,
-            String signAlt,
-            String signCaption,
-            boolean signLive,
-            String signUrl,
-            String homeImage,
-            String homeAlt,
-            String homeCaption,
-            boolean homeLive,
+            StatusSign sign,
+            StatusSign home,
             boolean empty) {
         this.days = days;
         this.banner = banner;
@@ -102,16 +88,8 @@ public final class Dashboard {
         this.cumSplitChart = cumSplitChart;
         this.cumRows = cumRows;
         this.methodNote = methodNote;
-        this.heatJson = heatJson;
-        this.signImage = signImage;
-        this.signAlt = signAlt;
-        this.signCaption = signCaption;
-        this.signLive = signLive;
-        this.signUrl = signUrl == null ? "" : signUrl;
-        this.homeImage = homeImage;
-        this.homeAlt = homeAlt;
-        this.homeCaption = homeCaption;
-        this.homeLive = homeLive;
+        this.sign = sign == null ? StatusSign.none() : sign;
+        this.home = home == null ? StatusSign.none() : home;
         this.empty = empty;
     }
 
@@ -163,17 +141,13 @@ public final class Dashboard {
         public final String stageDots;
         public final String scriptChart;
         public final List<PersonRow> people;
-        public final String signImage;
-        public final String signAlt;
-        public final String signCaption;
-        public final boolean signLive;
-        public final String signUrl;
+        public final StatusSign sign;
 
         JobPanel(String title, String mark, String jobName, String jobUrl, String builds, String average,
                 String success, String failures, String machineTime, String compare, String durationChart, String stageBars,
                 String stagePie, String failPie, boolean hasStages, List<BuildRow> recent, String hourChart,
                 String dailyCountsChart, String rateChart, String stageDots, String scriptChart, List<PersonRow> people,
-                String signImage, String signAlt, String signCaption, boolean signLive, String signUrl) {
+                StatusSign sign) {
             this.title = title;
             this.mark = mark;
             this.jobName = jobName;
@@ -196,11 +170,35 @@ public final class Dashboard {
             this.stageDots = stageDots;
             this.scriptChart = scriptChart;
             this.people = people;
-            this.signImage = signImage;
-            this.signAlt = signAlt;
-            this.signCaption = signCaption;
-            this.signLive = signLive;
-            this.signUrl = signUrl == null ? "" : signUrl;
+            this.sign = sign == null ? StatusSign.none() : sign;
+        }
+
+        public String getJobName() {
+            return jobName;
+        }
+
+        public String getShortName() {
+            return BuildSample.shortName(jobName);
+        }
+
+        public String getJobUrl() {
+            return jobUrl;
+        }
+
+        public StatusSign getSign() {
+            return sign;
+        }
+
+        public List<BuildRow> getRecent() {
+            return recent;
+        }
+
+        public List<PersonRow> getPeople() {
+            return people;
+        }
+
+        public boolean isHasStages() {
+            return hasStages;
         }
     }
 
@@ -224,6 +222,30 @@ public final class Dashboard {
             this.failStage = failStage;
             this.when = when;
             this.actor = actor == null || actor.isBlank() ? "—" : actor;
+        }
+
+        public String getHref() {
+            return href;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getResult() {
+            return result;
+        }
+
+        public String getResultClass() {
+            return resultClass;
+        }
+
+        public String getWhen() {
+            return when;
+        }
+
+        public String getActor() {
+            return actor;
         }
     }
 
@@ -258,6 +280,35 @@ public final class Dashboard {
             this.waste = waste;
             this.topPerson = topPerson == null || topPerson.isBlank() ? "—" : topPerson;
         }
+
+        public String getHref() {
+            return href;
+        }
+
+        /** Full Jenkins path, shown in full and used as the tooltip. */
+        public String getName() {
+            return name;
+        }
+
+        public String getShortName() {
+            return BuildSample.shortName(name);
+        }
+
+        public int getBuilds() {
+            return builds;
+        }
+
+        public String getSuccess() {
+            return success;
+        }
+
+        public int getFailures() {
+            return failures;
+        }
+
+        public String getTopPerson() {
+            return topPerson;
+        }
     }
 
     public static final class PersonRow {
@@ -269,10 +320,15 @@ public final class Dashboard {
         public final String duration;
         public final String successRate;
         public final String lastWhen;
-        public final String jobs;
+        /**
+         * Jobs this account triggered, one entry each, in first-seen order. A list rather than a
+         * joined string: the view renders one row per job and keeps the full path, and nothing has
+         * to split a separator back out of a name that may legitimately contain one.
+         */
+        public final List<JobLink> jobs;
 
         PersonRow(String name, int builds, int success, int failure, int aborted, String duration, String successRate,
-                String lastWhen, String jobs) {
+                String lastWhen, List<JobLink> jobs) {
             this.name = name;
             this.builds = builds;
             this.success = success;
@@ -281,7 +337,58 @@ public final class Dashboard {
             this.duration = duration;
             this.successRate = successRate;
             this.lastWhen = lastWhen;
-            this.jobs = jobs;
+            this.jobs = jobs == null ? List.of() : List.copyOf(jobs);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<JobLink> getJobs() {
+            return jobs;
+        }
+
+        public int getBuilds() {
+            return builds;
+        }
+
+        public int getSuccess() {
+            return success;
+        }
+
+        public int getFailure() {
+            return failure;
+        }
+
+        public int getAborted() {
+            return aborted;
+        }
+
+        public String getSuccessRate() {
+            return successRate;
+        }
+
+        public String getLastWhen() {
+            return lastWhen;
+        }
+    }
+
+    /** One job reference in a table cell: full path, short label, and where to open it. */
+    public static final class JobLink {
+        public final String fullName;
+        public final String shortName;
+
+        JobLink(String fullName) {
+            this.fullName = fullName == null ? "" : fullName;
+            this.shortName = BuildSample.shortName(this.fullName);
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public String getShortName() {
+            return shortName;
         }
     }
 
@@ -299,5 +406,46 @@ public final class Dashboard {
             this.success = success;
             this.waste = waste;
         }
+
+        public String getLabel() {
+            return label;
+        }
+    }
+
+    public List<JobRow> getOthers() {
+        return others;
+    }
+
+    public List<CumRow> getCumRows() {
+        return cumRows;
+    }
+
+    public List<PersonRow> getPeople() {
+        return people;
+    }
+
+    public List<JobPanel> getTabs() {
+        return tabs;
+    }
+
+    public Kpi getKpi() {
+        return kpi;
+    }
+
+    public StatusSign getSign() {
+        return sign;
+    }
+
+    public StatusSign getHome() {
+        return home;
+    }
+
+    /** Named for Jelly, where {@code empty} is a reserved word in expressions. */
+    public boolean isNoBuilds() {
+        return empty;
+    }
+
+    public int getDays() {
+        return days;
     }
 }

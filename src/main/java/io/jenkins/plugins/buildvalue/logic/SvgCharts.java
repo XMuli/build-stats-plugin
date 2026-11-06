@@ -7,6 +7,24 @@ import java.util.Locale;
 final class SvgCharts {
     private SvgCharts() {}
 
+    /**
+     * Jenkins theme custom properties with the previous hardcoded values as fallbacks, so the standalone
+     * {@code preview/} harness (which has no Jenkins stylesheet) renders exactly as it did before.
+     */
+    private static final String THEME_SUCCESS = "var(--success-color,#50A040)";
+
+    private static final String THEME_FAILURE = "var(--danger-color,#F08048)";
+
+    private static final String THEME_OTHER = "var(--text-color-secondary,#9DA0A5)";
+
+    private static final String THEME_NO_STATUS = "var(--panel-border-color,#eef2f5)";
+
+    private static final String THEME_BORDER = "var(--panel-border-color,#e4e9ee)";
+
+    private static final String THEME_ACCENT = "var(--accent-color,#5dade2)";
+
+    private static final String THEME_SURFACE = "var(--card-background,#fff)";
+
     static final class Slice {
         final String label;
         final double value;
@@ -425,10 +443,10 @@ final class SvgCharts {
             svg.append("<text x=\"0\" y=\"").append(y + 16).append("\" font-size=\"12\" fill=\"currentColor\">")
                     .append(Texts.escape(Texts.clip(bar.label, 24))).append("</text>");
             svg.append("<rect x=\"").append(barX).append("\" y=\"").append(y + 6)
-                    .append("\" width=\"").append(barW).append("\" height=\"8\" fill=\"var(--panel-border-color,#e4e9ee)\"/>");
+                    .append("\" width=\"").append(barW).append("\" height=\"8\" fill=\"").append(THEME_BORDER).append("\"/>");
             svg.append("<rect x=\"").append(barX).append("\" y=\"").append(y + 6)
                     .append("\" width=\"").append(Math.max(w, bar.value > 0 ? 2 : 0))
-                    .append("\" height=\"8\" fill=\"#5dade2\"/>");
+                    .append("\" height=\"8\" fill=\"").append(THEME_ACCENT).append("\"/>");
             svg.append("<text x=\"").append(barX + barW + 8).append("\" y=\"").append(y + 16)
                     .append("\" font-size=\"12\" fill=\"currentColor\">")
                     .append(Texts.escape(bar.valueText)).append("</text>");
@@ -518,7 +536,7 @@ final class SvgCharts {
             double y = top + innerH - (innerH * tick / 4.0);
             svg.append("<line x1=\"").append(left).append("\" y1=\"").append(fmt(y))
                     .append("\" x2=\"").append(left + innerW).append("\" y2=\"").append(fmt(y))
-                    .append("\" stroke=\"var(--panel-border-color,#e4e9ee)\"/>");
+                    .append("\" stroke=\"").append(THEME_BORDER).append("\"/>");
             svg.append("<text x=\"").append(left - 8).append("\" y=\"").append(fmt(y + 3))
                     .append("\" text-anchor=\"end\" font-size=\"11\" fill=\"currentColor\">")
                     .append(Texts.escape(Texts.num(value))).append(Texts.escape(unit)).append("</text>");
@@ -569,14 +587,15 @@ final class SvgCharts {
             if (col > 0) {
                 svg.append("<line x1=\"").append(x - gapX).append("\" y1=\"").append(y + 16)
                         .append("\" x2=\"").append(x).append("\" y2=\"").append(y + 16)
-                        .append("\" stroke=\"var(--panel-border-color,#e4e9ee)\" stroke-width=\"1.5\"/>");
+                        .append("\" stroke=\"").append(THEME_BORDER).append("\" stroke-width=\"1.5\"/>");
             }
-            String color = stage.failed() ? "#F08048" : "SUCCESS".equals(stage.status) ? "#50A040" : "#9DA0A5";
+            String color = stage.failed() ? THEME_FAILURE : "SUCCESS".equals(stage.status) ? THEME_SUCCESS : THEME_OTHER;
             String mark = stage.failed() ? "×" : "SUCCESS".equals(stage.status) ? "✓" : "·";
             String tip = stage.name + "  " + stage.status + "  " + Texts.duration(stage.durationMs);
             svg.append("<rect class=\"bv-hit\" rx=\"16\" x=\"").append(x).append("\" y=\"").append(y)
-                    .append("\" width=\"").append(nodeW).append("\" height=\"32\" fill=\"var(--card-background,#fff)\" stroke=\"")
-                    .append(color).append("\" stroke-width=\"1.5\" data-tip=\"").append(Texts.escape(tip)).append("\"/>");
+                    .append("\" width=\"").append(nodeW).append("\" height=\"32\" fill=\"").append(THEME_SURFACE)
+                    .append("\" stroke=\"").append(color)
+                    .append("\" stroke-width=\"1.5\" data-tip=\"").append(Texts.escape(tip)).append("\"/>");
             svg.append("<text pointer-events=\"none\" x=\"").append(x + 10).append("\" y=\"").append(y + 21)
                     .append("\" font-size=\"12\" fill=\"").append(color).append("\">").append(mark).append("</text>");
             svg.append("<text pointer-events=\"none\" x=\"").append(x + 26).append("\" y=\"").append(y + 21)
@@ -629,31 +648,37 @@ final class SvgCharts {
                         .append("\" fill=\"").append(color).append("\"/>");
             }
         }
-        svg.append("<rect x=\"").append(left).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#50A040\"/>");
-        svg.append("<text x=\"").append(left + 12).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Success</text>");
-        svg.append("<rect x=\"").append(left + 70).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#F08048\"/>");
-        svg.append("<text x=\"").append(left + 82).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Failure</text>");
-        svg.append("<rect x=\"").append(left + 140).append("\" y=\"").append(height - 16).append("\" width=\"8\" height=\"8\" fill=\"#9DA0A5\"/>");
-        svg.append("<text x=\"").append(left + 152).append("\" y=\"").append(height - 8).append("\" font-size=\"11\" fill=\"currentColor\">Other</text>");
+        statusKey(svg, left, height - 16, "SUCCESS", "Success");
+        statusKey(svg, left + 70, height - 16, "FAILURE", "Failure");
+        statusKey(svg, left + 140, height - 16, "OTHER", "Other");
         svg.append("</svg>");
         return svg.toString();
     }
 
+    /** Draws one legend swatch, taking its colour from {@link #statusColor} so the key cannot drift from the cells. */
+    private static void statusKey(StringBuilder svg, int x, int y, String status, String label) {
+        svg.append("<rect x=\"").append(x).append("\" y=\"").append(y)
+                .append("\" width=\"8\" height=\"8\" fill=\"").append(statusColor(status)).append("\"/>");
+        svg.append("<text x=\"").append(x + 12).append("\" y=\"").append(y + 8)
+                .append("\" font-size=\"11\" fill=\"currentColor\">").append(Texts.escape(label)).append("</text>");
+    }
+
     private static String statusColor(String status) {
         if ("SUCCESS".equals(status)) {
-            return "#50A040";
+            return THEME_SUCCESS;
         }
         if ("FAILED".equals(status) || "FAILURE".equals(status)) {
-            return "#F08048";
+            return THEME_FAILURE;
         }
         if (status == null || status.isEmpty()) {
-            return "#eef2f5";
+            return THEME_NO_STATUS;
         }
-        return "#9DA0A5";
+        return THEME_OTHER;
     }
 
     private static String empty(String title) {
-        return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 80\" role=\"img\"><text x=\"0\" y=\"36\" font-size=\"13\" fill=\"#9DA0A5\">No data</text></svg>";
+        return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 80\" role=\"img\"><text x=\"0\" y=\"36\" font-size=\"13\" fill=\""
+                + THEME_OTHER + "\">No data</text></svg>";
     }
 
     private static StringBuilder start(int width, int height, String title) {

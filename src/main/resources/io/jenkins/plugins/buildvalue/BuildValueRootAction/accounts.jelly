@@ -1,0 +1,66 @@
+<?jelly escape-by-default='true'?>
+<!--
+  Who triggered the builds.
+
+  On the overview the last column lists the pipelines each account touched. Each one is its own list
+  item linking to that job's detail, keeping the full path. The previous version joined them into
+  one string with a separator, which read as a stray comma and could not be taken apart again if a
+  job name happened to contain the separator.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+  <j:set var="view" value="${it.view}"/>
+  <j:set var="people" value="${view.jobSelected ? view.selected.people : view.dashboard.people}"/>
+  <j:set var="withJobs" value="${!view.jobSelected}"/>
+
+  <j:choose>
+    <j:when test="${people.isEmpty()}">
+      <p class="bv-muted">${it.msg('empty.none')}</p>
+    </j:when>
+    <j:otherwise>
+      <!-- The scroll container clips and carries the border, so the edge stays on the outside of
+           the card instead of appearing through the middle of a scrolled table. -->
+      <div class="bv-scroller bv-scroller--tall">
+        <table class="jenkins-table jenkins-table--small bv-sticky-head">
+          <thead>
+            <tr>
+              <th>${it.msg('col.account')}</th>
+              <th class="bv-num">${it.msg('col.count')}</th>
+              <th class="bv-num">${it.msg('col.ok')}</th>
+              <th class="bv-num">${it.msg('col.fail')}</th>
+              <th class="bv-num">${it.msg('col.abort')}</th>
+              <th class="bv-num">${it.msg('kpi.rate')}</th>
+              <th class="bv-num">${it.msg('kpi.time')}</th>
+              <th>${it.msg('col.last')}</th>
+              <j:if test="${withJobs}">
+                <th>${it.msg('col.jobs')}</th>
+              </j:if>
+            </tr>
+          </thead>
+          <tbody>
+            <j:forEach var="row" items="${people}">
+              <tr>
+                <td>${row.name}</td>
+                <td class="bv-num">${row.builds}</td>
+                <td class="bv-num">${row.success}</td>
+                <td class="bv-num">${row.failure}</td>
+                <td class="bv-num">${row.aborted}</td>
+                <td class="bv-num">${row.successRate}</td>
+                <td class="bv-num">${it.text(row.duration)}</td>
+                <td>${row.lastWhen}</td>
+                <j:if test="${withJobs}">
+                  <td class="bv-path-cell">
+                    <ul class="bv-joblist">
+                      <j:forEach var="job" items="${row.jobs}">
+                        <li><a href="${it.jobUrl(job.fullName)}">${job.fullName}</a></li>
+                      </j:forEach>
+                    </ul>
+                  </td>
+                </j:if>
+              </tr>
+            </j:forEach>
+          </tbody>
+        </table>
+      </div>
+    </j:otherwise>
+  </j:choose>
+</j:jelly>

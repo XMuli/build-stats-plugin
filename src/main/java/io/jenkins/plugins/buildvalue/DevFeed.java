@@ -72,7 +72,11 @@ final class DevFeed {
         if (home == null || home.isBlank()) {
             return null;
         }
-        Path besideHome = Path.of(home).getParent().resolve(Path.of("preview", "out", "samples-159.tsv"));
+        Path parent = Path.of(home).getParent();
+        if (parent == null) {
+            return null;
+        }
+        Path besideHome = parent.resolve(Path.of("preview", "out", "samples-159.tsv"));
         return Files.isRegularFile(besideHome) ? besideHome : null;
     }
 

@@ -1,0 +1,101 @@
+<?jelly escape-by-default='true'?>
+<!--
+  Build activity heatmap.
+
+  Every cell is rendered on the server for the chosen period, so the grid is correct before any
+  script runs and the month labels and per-day tooltips always match real dates. The period default
+  is the last 12 months ending today, computed in the zone the statistics use; calendar years stay
+  selectable for history. The window selector in the app bar and this period are independent: the
+  heatmap always reads every build the user may see.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:set var="view" value="${it.view}"/>
+  <j:set var="heat" value="${view.heat}"/>
+
+  <section class="jenkins-card bv-heat">
+    <div class="jenkins-card__title">
+      ${it.msg('heat.title')}
+      <div class="jenkins-card__controls">
+        <div class="jenkins-select">
+          <label class="jenkins-visually-hidden" for="bv-period">${it.msg('heat.period')}</label>
+          <select class="jenkins-select__input bv-go" id="bv-period">
+            <j:forEach var="period" items="${view.heatmap.periods}">
+              <option value="${it.periodUrl(period.id)}"
+                      selected="${period.id == heat.period.id ? 'selected' : null}">
+                <j:choose>
+                  <j:when test="${period.rolling}">${it.msg('heat.lastYear')}</j:when>
+                  <j:otherwise>${period.id}</j:otherwise>
+                </j:choose>
+              </option>
+            </j:forEach>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="jenkins-card__content">
+      <div class="bv-heat__scroll">
+        <!-- A table is the honest structure here: one column per week, one row per weekday.
+             Weekday names are the row headers, so a screen reader can place a cell. -->
+        <table class="bv-heat__grid" data-size="l">
+          <caption class="jenkins-visually-hidden">
+            ${it.msg('heat.title')}: ${heat.period.start} – ${heat.period.end}
+          </caption>
+          <thead>
+            <tr>
+              <td/>
+              <j:forEach var="label" items="${heat.months()}">
+                <th scope="col" colspan="${label.weeks}" class="bv-heat__month">${label.text}</th>
+              </j:forEach>
+            </tr>
+          </thead>
+          <tbody>
+            <j:forEach var="row" items="${heat.rows()}">
+              <tr>
+                <th scope="row" class="bv-heat__day">${row.label}</th>
+                <j:forEach var="cell" items="${row.cells}">
+                  <j:choose>
+                    <j:when test="${cell == null}">
+                      <td class="bv-heat__pad"/>
+                    </j:when>
+                    <j:otherwise>
+                      <!-- Plain-text tooltip, so tippy shows it on hover and on keyboard focus and
+                           mirrors it to title before scripts run. -->
+                      <j:choose>
+                        <j:when test="${cell.count == 0}"><j:set var="tip" value="${it.msg1('heat.cellNone', cell.date)}"/></j:when>
+                        <j:when test="${cell.count == 1}"><j:set var="tip" value="${it.msg1('heat.cellOne', cell.date)}"/></j:when>
+                        <j:otherwise><j:set var="tip" value="${it.msg2('heat.cell', cell.date, cell.count)}"/></j:otherwise>
+                      </j:choose>
+                      <td class="bv-heat__cell bv-heat__cell--${heat.level(cell.count)}"
+                          tabindex="0" tooltip="${tip}"/>
+                    </j:otherwise>
+                  </j:choose>
+                </j:forEach>
+              </tr>
+            </j:forEach>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bv-heat__foot">
+        <span class="bv-heat__count">${it.msg1('heat.withBuilds', heat.withBuilds)}</span>
+        <span class="bv-heat__legend">
+          <span>${it.msg('heat.legendLess')}</span>
+          <i class="bv-heat__cell bv-heat__cell--0"/>
+          <i class="bv-heat__cell bv-heat__cell--1"/>
+          <i class="bv-heat__cell bv-heat__cell--2"/>
+          <i class="bv-heat__cell bv-heat__cell--3"/>
+          <i class="bv-heat__cell bv-heat__cell--4"/>
+          <span>${it.msg('heat.legendMore')}</span>
+        </span>
+      </div>
+
+      <dl class="bv-heat__stats">
+        <dt>${it.msg('heat.days')}</dt><dd>${heat.days.size()}</dd>
+        <dt>${it.msg('heat.blank')}</dt><dd>${heat.blank}</dd>
+        <dt>${it.msg('heat.max')}</dt><dd>${heat.max}</dd>
+        <dt>${it.msg('heat.avg')}</dt><dd>${heat.weekdayAverage()}</dd>
+      </dl>
+    </div>
+  </section>
+</j:jelly>

@@ -1,9 +1,43 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
-  <l:layout title="Build Stats" norefresh="true">
+<!--
+  The Build Stats page shell.
+
+  l:layout, l:side-panel and l:main-panel give the Jenkins header, breadcrumbs and two-column body,
+  so this page sits in the normal page chrome and follows whatever theme is active. All text comes
+  from the resource bundle for the request's locale, so the first HTML response is already in the
+  right language and nothing is rewritten after load.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <j:set var="view" value="${it.view}"/>
+  <j:set var="page" value="${it.page}"/>
+  <j:choose>
+    <j:when test="${page == 'computer'}"><j:set var="pageTitle" value="${it.msg('host.title')}"/></j:when>
+    <j:when test="${page == 'about'}"><j:set var="pageTitle" value="${it.msg('about.title')}"/></j:when>
+    <j:otherwise><j:set var="pageTitle" value="${it.displayName}"/></j:otherwise>
+  </j:choose>
+
+  <l:layout title="${pageTitle}" norefresh="true">
+    <l:side-panel>
+      <st:include page="sidebar.jelly" it="${it}"/>
+    </l:side-panel>
+
     <l:main-panel>
-      <link rel="stylesheet" href="${rootURL}/plugin/build-stats/css/build-stats.css?v=7" type="text/css"/>
-      <j:out value="${it.body}"/>
+      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=9" type="text/css"/>
+
+      <j:choose>
+        <j:when test="${page == 'computer'}">
+          <st:include page="computer.jelly" it="${it}"/>
+        </j:when>
+        <j:when test="${page == 'about'}">
+          <st:include page="about.jelly" it="${it}"/>
+        </j:when>
+        <j:otherwise>
+          <st:include page="overview.jelly" it="${it}"/>
+        </j:otherwise>
+      </j:choose>
+
+      <!-- One external script, no inline JS, so the page satisfies a strict CSP. -->
+      <script src="${it.assets}js/build-stats.js?v=9" type="text/javascript"/>
     </l:main-panel>
   </l:layout>
 </j:jelly>

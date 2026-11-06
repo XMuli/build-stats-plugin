@@ -6,43 +6,105 @@ import hudson.model.Job;
 import hudson.model.PageDecorator;
 import hudson.model.Run;
 import hudson.model.View;
-import io.jenkins.plugins.buildvalue.logic.PageHtml;
 import io.jenkins.plugins.buildvalue.logic.StatusSign;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.Stapler;
 
-/** The status card on the Jenkins home page and on each pipeline page. */
+/**
+ * The status card on the Jenkins home page and on each pipeline page.
+ *
+ * <p>This class only decides which build the card describes. The markup is in {@code footer.jelly},
+ * so the card picks up Jenkins card, button and tooltip styling instead of carrying its own.
+ */
 @Extension
 public class HomeSignDecorator extends PageDecorator {
     public HomeSignDecorator() {
         super();
     }
 
-    public String getMarkup() {
+    /** The plate to draw, or an absent one when this page should not show a card. */
+    public StatusSign getSign() {
         try {
             Jenkins jenkins = Jenkins.get();
             if (!jenkins.hasPermission(Jenkins.READ)) {
-                return "";
+                return StatusSign.none();
             }
             var request = Stapler.getCurrentRequest2();
             if (request == null) {
-                return "";
+                return StatusSign.none();
             }
             Job<?, ?> current = request.findAncestorObject(Job.class);
             if (current != null) {
-                return PageHtml.homeMarkup(signOf(current), "job");
+                return signOf(current);
             }
             if (!isHome()) {
-                return "";
+                return StatusSign.none();
             }
             Run<?, ?> chosen = newest(jenkins);
             if (chosen == null || chosen.getParent() == null) {
-                return PageHtml.homeMarkup(DevFeed.sign(), "home");
+                return DevFeed.sign();
             }
-            return PageHtml.homeMarkup(signOf(chosen), "home");
+            return signOf(chosen);
         } catch (RuntimeException ex) {
-            return "";
+            return StatusSign.none();
         }
+    }
+
+    /** "job" on a pipeline page, "home" on the primary view, so the card can place itself. */
+    public String getPlace() {
+        try {
+            var request = Stapler.getCurrentRequest2();
+            if (request != null && request.findAncestorObject(Job.class) != null) {
+                return "job";
+            }
+        } catch (RuntimeException ex) {
+            return "home";
+        }
+        return "home";
+    }
+
+    /** Where the Build Stats page lives, for the card's link. */
+    public String getStatsUrl() {
+        var request = Stapler.getCurrentRequest2();
+        String context = request == null || request.getContextPath() == null ? "" : request.getContextPath();
+        return context + "/build-stats";
+    }
+
+    /**
+     * Labels for the card's own controls.
+     *
+     * <p>A page decorator's view has its own name, so Jelly's {@code ${%key}} would look for a
+     * properties file beside this class rather than the plugin's one bundle. Reading the bundle
+     * here keeps all of the plugin's wording in one file.
+     */
+    public String getDockLabel() {
+        return io.jenkins.plugins.buildvalue.logic.Texts.message("sign.dock");
+    }
+
+    public String getCloseLabel() {
+        return io.jenkins.plugins.buildvalue.logic.Texts.message("sign.close");
+    }
+
+    public String getReopenLabel() {
+        return io.jenkins.plugins.buildvalue.logic.Texts.message("sign.reopen");
+    }
+
+    public String getPageTitle() {
+        return Messages.BuildValueRootAction_DisplayName();
+    }
+
+    /** Where this plugin's static files live, with a trailing slash, for the plate's artwork. */
+    public String getAssets() {
+        var request = Stapler.getCurrentRequest2();
+        String context = request == null || request.getContextPath() == null ? "" : request.getContextPath();
+        return context + "/plugin/build-stats/";
+    }
+
+    /** Default logo, so the card can show a replacement saved in this browser. */
+    public String getLogoUrl() {
+        var request = Stapler.getCurrentRequest2();
+        String context = request == null || request.getContextPath() == null ? "" : request.getContextPath();
+        return context + "/plugin/build-stats/images/logo.jpg";
     }
 
     private static Run<?, ?> newest(Jenkins jenkins) {

@@ -1,0 +1,223 @@
+<?jelly escape-by-default='true'?>
+<!--
+  Overview, and the detail of one selected job.
+
+  Only the selected job's detail is built, so the page holds one set of charts however many jobs the
+  controller has. The charts themselves stay server-rendered SVG; the Jelly here is the page
+  structure, the tables and the controls.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form"
+        >
+  <j:set var="view" value="${it.view}"/>
+  <j:set var="board" value="${view.dashboard}"/>
+
+  <j:set var="barTitle" value="${it.msg('BuildValueRootAction.DisplayName')}"/>
+  <j:if test="${view.jobSelected}">
+    <j:set var="barTitle" value="${view.selected.shortName}"/>
+  </j:if>
+
+  <l:app-bar title="${barTitle}">
+    <!-- Controls live in the app bar's own slot, so they inherit its spacing and wrapping. -->
+    <div class="jenkins-checkbox">
+      <input type="checkbox" id="bv-summary" class="bv-pref" data-pref="summary"/>
+      <label for="bv-summary">${it.msg('tools.summary')}</label>
+    </div>
+    <div class="jenkins-checkbox">
+      <input type="checkbox" id="bv-status" class="bv-pref" data-pref="status" checked="checked"/>
+      <label for="bv-status">${it.msg('tools.status')}</label>
+    </div>
+    <div class="jenkins-select">
+      <label class="jenkins-visually-hidden" for="bv-status-where">${it.msg('tools.statusWhere')}</label>
+      <select class="jenkins-select__input bv-pref-select" id="bv-status-where" data-pref="statusWhere">
+        <option value="all">${it.msg('sign.all')}</option>
+        <option value="home">${it.msg('sign.home')}</option>
+      </select>
+    </div>
+    <div class="jenkins-select">
+      <label class="jenkins-visually-hidden" for="bv-range">${it.msg('tools.range')}</label>
+      <!-- Navigating is a link's job; the select is a shortcut for it and degrades to the
+           no-JavaScript case because each option carries its own URL. -->
+      <select class="jenkins-select__input bv-go" id="bv-range">
+        <option value="${it.rangeUrl(7)}" selected="${view.days == 7 ? 'selected' : null}">${it.msg('range.7')}</option>
+        <option value="${it.rangeUrl(30)}" selected="${view.days == 30 ? 'selected' : null}">${it.msg('range.30')}</option>
+        <option value="${it.rangeUrl(90)}" selected="${view.days == 90 ? 'selected' : null}">${it.msg('range.90')}</option>
+        <option value="${it.rangeUrl(0)}" selected="${view.days == 0 ? 'selected' : null}">${it.msg('range.all')}</option>
+      </select>
+    </div>
+  </l:app-bar>
+
+  <j:if test="${board.banner != null and board.banner != ''}">
+    <l:notice title="${board.banner}" icon="symbol-information-circle"/>
+  </j:if>
+
+  <j:choose>
+    <!-- Nothing visible at all: the existing empty state, not an empty grid of charts. -->
+    <j:when test="${view.noBuilds and !view.jobSelected}">
+      <j:choose>
+        <j:when test="${view.days == 0}"><p class="bv-empty">${it.msg('empty.builds')}</p></j:when>
+        <j:otherwise><p class="bv-empty">${it.msg('empty.window')}</p></j:otherwise>
+      </j:choose>
+      <st:include page="notes.jelly" it="${it}"/>
+    </j:when>
+
+    <j:otherwise>
+      <j:set var="panel" value="${view.selected}"/>
+
+      <!-- Heatmap and plate share one row and one height on the desktop. On a narrow viewport the
+           grid collapses to one column and source order puts the heatmap first. -->
+      <div class="bv-head">
+        <st:include page="heatmap.jelly" it="${it}"/>
+        <j:if test="${view.hasSign()}">
+          <div class="bv-head__plate">
+            <j:set var="sign" value="${view.sign}"/>
+            <j:set var="assets" value="${it.assets}"/>
+            <st:include page="plate.jelly" it="${it}"/>
+          </div>
+        </j:if>
+      </div>
+
+      <j:choose>
+        <!-- One job selected: its own metrics and charts. -->
+        <j:when test="${view.jobSelected}">
+          <p class="bv-path" tooltip="${panel.jobName}">
+            <j:choose>
+              <j:when test="${panel.jobUrl != ''}">
+                <a href="${panel.jobUrl}">${panel.jobName}</a>
+              </j:when>
+              <j:otherwise>${panel.jobName}</j:otherwise>
+            </j:choose>
+          </p>
+          <p class="bv-summary">${it.text(panel.compare)}</p>
+
+          <j:set var="metrics" value="${view.metrics}"/>
+          <j:set var="charts" value="${view.charts}"/>
+          <st:include page="board.jelly" it="${it}"/>
+
+          <div class="bv-pair">
+            <l:card title="${it.msg('h.accounts')}">
+              <st:include page="accounts.jelly" it="${it}"/>
+            </l:card>
+            <l:card title="${it.msg('h.recent')}">
+              <j:choose>
+                <j:when test="${panel.recent.isEmpty()}">
+                  <p class="bv-muted">${it.msg('empty.none')}</p>
+                </j:when>
+                <j:otherwise>
+                  <div class="bv-scroller">
+                    <table class="jenkins-table jenkins-table--small">
+                      <thead>
+                        <tr>
+                          <th>${it.msg('col.build')}</th>
+                          <th>${it.msg('col.result')}</th>
+                          <th class="bv-num">${it.msg('col.duration')}</th>
+                          <th>${it.msg('col.who')}</th>
+                          <th>${it.msg('col.start')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <j:forEach var="row" items="${panel.recent}">
+                          <tr>
+                            <td>
+                              <j:choose>
+                                <j:when test="${row.href != ''}"><a href="${row.href}">${row.label}</a></j:when>
+                                <j:otherwise>${row.label}</j:otherwise>
+                              </j:choose>
+                            </td>
+                            <td><span class="bv-state bv-state--${it.stateClass(row.result)}">${it.stateText(row.result)}</span></td>
+                            <td class="bv-num">${it.text(row.duration)}</td>
+                            <td>${row.actor}</td>
+                            <td>${row.when}</td>
+                          </tr>
+                        </j:forEach>
+                      </tbody>
+                    </table>
+                  </div>
+                </j:otherwise>
+              </j:choose>
+            </l:card>
+          </div>
+        </j:when>
+
+        <!-- No job selected: the whole window. -->
+        <j:otherwise>
+          <p class="bv-summary">${it.text(board.headline)}</p>
+
+          <j:set var="metrics" value="${view.metrics}"/>
+          <j:set var="charts" value="${view.charts}"/>
+          <st:include page="board.jelly" it="${it}"/>
+
+          <l:card title="${it.msg('h.accounts')}">
+            <st:include page="accounts.jelly" it="${it}"/>
+          </l:card>
+
+          <l:card title="${it.msg('h.pipes')}">
+            <p class="bv-muted">${it.text(board.otherSummary)}</p>
+            <j:if test="${!board.others.isEmpty()}">
+              <div class="bv-scroller">
+                <table class="jenkins-table jenkins-table--small">
+                  <thead>
+                    <tr>
+                      <th>${it.msg('col.pipeline')}</th>
+                      <th class="bv-num">${it.msg('col.count')}</th>
+                      <th class="bv-num">${it.msg('col.total')}</th>
+                      <th class="bv-num">${it.msg('col.avg')}</th>
+                      <th class="bv-num">${it.msg('kpi.rate')}</th>
+                      <th class="bv-num">${it.msg('col.fail')}</th>
+                      <th>${it.msg('h.accounts')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <j:forEach var="row" items="${board.others}">
+                      <tr>
+                        <!-- Full path, wrapped rather than cut. The link goes to this plugin's own
+                             detail for the job, which is what a reader of this table wants next. -->
+                        <td class="bv-path-cell"><a href="${it.jobUrl(row.name)}">${row.name}</a></td>
+                        <td class="bv-num">${row.builds}</td>
+                        <td class="bv-num">${it.text(row.duration)}</td>
+                        <td class="bv-num">${it.text(row.average)}</td>
+                        <td class="bv-num">${row.success}</td>
+                        <td class="bv-num">${row.failures}</td>
+                        <td>${row.topPerson}</td>
+                      </tr>
+                    </j:forEach>
+                  </tbody>
+                </table>
+              </div>
+            </j:if>
+          </l:card>
+
+          <l:card title="${it.msg('h.ledger')}">
+            <!-- The scroll container clips and carries the border; the header row sits at its top
+                 and stays there while the body scrolls under it. -->
+            <div class="bv-scroller bv-scroller--tall">
+              <table class="jenkins-table jenkins-table--small bv-sticky-head">
+                <thead>
+                  <tr>
+                    <th>${it.msg('col.when')}</th>
+                    <th class="bv-num">${it.msg('col.period')}</th>
+                    <th class="bv-num">${it.msg('col.cum')}</th>
+                    <th class="bv-num">${it.msg('col.cumOk')}</th>
+                    <th class="bv-num">${it.msg('col.cumBad')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <j:forEach var="row" items="${board.cumRows}">
+                    <tr>
+                      <td>${row.label}</td>
+                      <td class="bv-num">${it.text(row.period)}</td>
+                      <td class="bv-num">${it.text(row.total)}</td>
+                      <td class="bv-num">${it.text(row.success)}</td>
+                      <td class="bv-num">${it.text(row.waste)}</td>
+                    </tr>
+                  </j:forEach>
+                </tbody>
+              </table>
+            </div>
+          </l:card>
+        </j:otherwise>
+      </j:choose>
+
+      <st:include page="notes.jelly" it="${it}"/>
+    </j:otherwise>
+  </j:choose>
+</j:jelly>
