@@ -35,6 +35,10 @@
   max-height: calc(100vh - var(--header-height, 4.125rem) - 2rem);
   min-height: 0;
   min-width: 0;
+  /* Stay under the sticky Jenkins header while the main column scrolls. The side panel is as
+     tall as the page, so without this the rail scrolls away with it. */
+  position: sticky;
+  top: var(--header-height, 4.125rem);
 }
 
 .bv-side-nav {
@@ -141,6 +145,29 @@
   white-space: nowrap;
 }
 
+/*
+ * App-bar controls. Jenkins sizes .jenkins-select to width:100%, which is right in a form row and
+ * wrong in this flex row: the two selects claim the whole slot, the row overflows, and every
+ * control shrinks to its min-content size. A Chinese label's min-content width is one character,
+ * so "状态牌" stacked one glyph per line. Size the slot's own controls to their text instead.
+ * Below 800px Jenkins itself sets flex-grow on these children with a more specific rule, so the
+ * narrow layout still wraps.
+ */
+.jenkins-app-bar__controls > .jenkins-checkbox,
+.jenkins-app-bar__controls > .jenkins-select {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.jenkins-app-bar__controls .jenkins-checkbox label {
+  white-space: nowrap;
+}
+
+.jenkins-app-bar__controls .jenkins-select__input {
+  max-width: none;
+  width: auto;
+}
+
 /* ---------------------------------------------------------------- page body */
 
 .bv-h2 {
@@ -228,6 +255,7 @@
 
   .bv-side {
     max-height: none;
+    position: static;
   }
 
   .bv-side-list {
@@ -258,7 +286,10 @@
 }
 
 .bv-heat__day {
-  padding-right: 0.5rem;
+  /* User-agent table padding plus the default line box made labelled rows almost twice as tall
+     as the empty ones, so the seven bands were not a regular grid. */
+  line-height: 11px;
+  padding: 0 0.5rem 0 0;
 }
 
 .bv-heat__cell,
@@ -555,6 +586,13 @@
   margin: 0;
 }
 
+/* Jenkins centres every cell. A row whose last cell is a long job list is then a thousand
+   pixels tall and the numbers sit in the middle of it, so the top of the scroller looks empty.
+   Keep each value on the first line, next to the header. */
+.bv-scroller .jenkins-table td {
+  vertical-align: top;
+}
+
 /*
  * The header stays at the top of the scroll container while the body scrolls under it. Jenkins
  * 2.555.3 has no sticky-header table class, so this is the plugin's own and deliberately minimal.
@@ -650,7 +688,16 @@
 .bv-about__id .jenkins-card__content {
   align-items: center;
   display: flex;
+  /* Jenkins lays card content out as a column. This card is the logo beside the name. */
+  flex-direction: row;
   gap: 1rem;
+  justify-content: flex-start;
+}
+
+/* --invert pins a button row to the trailing edge, which is the form-footer pattern.
+   On this page the actions sit under the text, at the start of the card. */
+#main-panel .jenkins-buttons-row--invert {
+  justify-content: flex-start;
 }
 
 .bv-about__logo {
