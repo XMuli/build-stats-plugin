@@ -26,7 +26,10 @@ Requires Jenkins 2.555.3 or newer, and Java 21 on the controller. After install,
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#overview">
-    <img src="docs/images/overview.png" alt="Build Stats overview: heatmap, charts, and the status plate" width="860">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/overview-dark.png">
+      <img src="docs/images/overview.png" alt="Build Stats overview: heatmap, charts, and the status plate" width="860">
+    </picture>
   </a>
 </p>
 
@@ -36,7 +39,10 @@ Heatmap, cumulative machine time, success and failure, build count, time of day,
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#pipeline">
-    <img src="docs/images/pipeline.png" alt="Duration, count, and success rate for one pipeline" width="860">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/pipeline-dark.png">
+      <img src="docs/images/pipeline.png" alt="Duration, count, and success rate for one pipeline" width="860">
+    </picture>
   </a>
 </p>
 
@@ -46,7 +52,10 @@ Each pipeline has its own page. Stage duration is included when Pipeline: Stage 
 
 <p align="center">
   <a href="https://build-stats-plugin.xmuli.tech/#machine">
-    <img src="docs/images/host.png" alt="This computer: CPU, memory, disk, GPU, and network" width="860">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/host-dark.png">
+      <img src="docs/images/host.png" alt="This computer: CPU, memory, disk, GPU, and network" width="860">
+    </picture>
   </a>
 </p>
 
@@ -76,7 +85,10 @@ After install, the chart icon at the top right of Jenkins opens the plugin. On t
 </p>
 
 <p align="center">
-  <img src="docs/images/home.png" alt="The status card on the Jenkins home page" width="280">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/home-dark.png">
+    <img src="docs/images/home.png" alt="The status card on the Jenkins home page" width="280">
+  </picture>
 </p>
 
 The page address is `/build-stats`. The page is in English unless you choose 中文.

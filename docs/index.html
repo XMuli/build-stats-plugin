@@ -74,9 +74,10 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.8rem 1.5rem;
-      padding: 1.15rem 0;
+      gap: 0.75rem 1.5rem;
+      min-height: 3.6rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--line);
     }
 
     .brand {
@@ -93,30 +94,51 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.35rem 1.1rem;
+      gap: 0.35rem 1.15rem;
+      margin-left: auto;
     }
 
-    nav a { text-decoration: none; }
+    nav a {
+      color: var(--ink);
+      font-size: 0.95rem;
+      text-decoration: none;
+    }
+
     nav a:hover { text-decoration: underline; text-underline-offset: 0.22em; }
 
-    .lang { display: inline-flex; }
+    .bar-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-    .lang button {
+    .switch {
+      display: inline-flex;
+      align-items: stretch;
+      padding: 2px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--sheet);
+    }
+
+    .switch button {
       appearance: none;
       background: transparent;
       border: 0;
-      color: var(--ink);
+      border-radius: 999px;
+      color: var(--muted);
       font: inherit;
-      padding: 0.3rem 0.35rem;
+      font-size: 0.8125rem;
+      line-height: 1;
+      min-height: 1.75rem;
+      padding: 0 0.72rem;
       cursor: pointer;
-      opacity: 0.5;
     }
 
-    .lang button[aria-pressed="true"] {
-      opacity: 1;
+    .switch button[aria-pressed="true"] {
+      background: var(--blue);
+      color: #fff;
       font-weight: 600;
-      text-decoration: underline;
-      text-underline-offset: 0.22em;
     }
 
     .hero {
@@ -181,13 +203,48 @@
 
     .shot figcaption { padding: 0.65rem 0.9rem 0.75rem; }
 
-    section { margin-top: 3.6rem; }
+    section,
+    .feature { margin-top: 3.6rem; }
+
+    .feature {
+      display: grid;
+      grid-template-columns: minmax(16rem, 0.78fr) minmax(0, 1.45fr);
+      gap: 1.25rem 2rem;
+      align-items: start;
+    }
+
+    .feature.flip {
+      grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.78fr);
+    }
+
+    .feature .shot { margin: 0; }
+
+    .facts {
+      list-style: none;
+      margin: 1rem 0 0;
+      padding: 0;
+    }
+
+    .facts li {
+      display: grid;
+      grid-template-columns: 6.75rem minmax(0, 1fr);
+      gap: 0.65rem 0.85rem;
+      padding: 0.7rem 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .facts strong {
+      font-weight: 600;
+    }
+
+    .facts li > span {
+      color: var(--muted);
+    }
 
     h2 {
       margin: 0;
       font-size: 1.65rem;
       font-weight: 600;
-      letter-spacing: -0.03em;
     }
 
     .copy {
@@ -267,10 +324,11 @@
     @media (max-width: 800px) {
       .wrap { width: min(1120px, calc(100% - 1.4rem)); }
       .hero,
-      .pair,
-      .pair.flip {
+      .feature,
+      .feature.flip {
         grid-template-columns: 1fr;
       }
+      .facts li { grid-template-columns: 5.5rem minmax(0, 1fr); }
       .hero figure { justify-self: start; }
       .hero img { width: min(16.5rem, 100%); }
       .plates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -302,11 +360,17 @@
         <a href="#machine"><span class="zh">本机</span><span class="en">Computer</span></a>
         <a href="#install"><span class="zh">安装</span><span class="en">Install</span></a>
         <a href="https://github.com/XMuli/build-stats-plugin">GitHub</a>
-        <div class="lang">
+      </nav>
+      <div class="bar-tools">
+        <div class="switch" role="group" aria-label="language">
           <button type="button" data-set-lang="zh-CN" aria-pressed="false">中文</button>
           <button type="button" data-set-lang="en" aria-pressed="true">English</button>
         </div>
-      </nav>
+        <div class="switch" role="group" aria-label="theme">
+          <button type="button" data-set-theme="light" aria-pressed="true"><span class="zh">浅色</span><span class="en">Light</span></button>
+          <button type="button" data-set-theme="dark" aria-pressed="false"><span class="zh">深色</span><span class="en">Dark</span></button>
+        </div>
+      </div>
     </header>
 
     <main id="content">
@@ -320,19 +384,40 @@
           <p class="lede en">The builds you can see, on one page: counts, duration, queue time, success rate, and pipeline stage time.</p>
         </div>
         <figure>
-          <img src="images/home.png" data-src-en="images/home.png" data-src-zh="images/home-zh.png" alt="首页右下角的状态牌" data-alt-en="The status card on the Jenkins home page" width="640" height="760">
+          <img src="images/home.png" data-src-en="images/home.png" data-src-zh="images/home-zh.png" data-src-en-dark="images/home-dark.png" data-src-zh-dark="images/home-dark-zh.png" alt="首页右下角的状态牌" data-alt-en="The status card on the Jenkins home page" width="640" height="760">
         </figure>
       </div>
 
-      <figure class="shot" id="overview">
-        <a href="images/overview.png">
-          <img src="images/overview.png" data-src-en="images/overview.png" data-src-zh="images/overview-zh.png" alt="构建统计总览：热力图、趋势和右侧状态牌" data-alt-en="Build Stats overview: heatmap, charts, and the status plate">
-        </a>
-        <figcaption>
-          <span class="zh">总览。点开看完整一页。</span>
-          <span class="en">Overview. Open the image for the full page.</span>
-        </figcaption>
-      </figure>
+      <section class="feature" id="overview">
+        <div>
+          <h2><span class="zh">总览</span><span class="en">Overview</span></h2>
+          <p class="copy zh">一页看完你能看到的构建。点图看完整页面。</p>
+          <p class="copy en">Everything you can see, on one page. Open the image for the full view.</p>
+          <ul class="facts">
+            <li>
+              <strong><span class="zh">热力图</span><span class="en">Heatmap</span></strong>
+              <span><span class="zh">最近 12 个月。工作日平均不算周末。</span><span class="en">Last 12 months. Weekday average skips weekends.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">趋势</span><span class="en">Trends</span></strong>
+              <span><span class="zh">机器时间、成败、次数、时段、成功率、结果、触发方式。</span><span class="en">Machine time, outcome, count, time of day, success rate, result, trigger.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">状态牌</span><span class="en">Plate</span></strong>
+              <span><span class="zh">跟着这个范围内最新一次构建。</span><span class="en">Follows the newest build in this range.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">范围</span><span class="en">Scope</span></strong>
+              <span><span class="zh">只算当前账号能看到的构建。</span><span class="en">Only builds the signed-in account can see.</span></span>
+            </li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <a href="images/overview.png">
+            <img src="images/overview.png" data-src-en="images/overview.png" data-src-zh="images/overview-zh.png" data-src-en-dark="images/overview-dark.png" data-src-zh-dark="images/overview-dark-zh.png" alt="构建统计总览：热力图、趋势和右侧状态牌" data-alt-en="Build Stats overview: heatmap, charts, and the status plate">
+          </a>
+        </figure>
+      </section>
 
       <section id="plates">
         <h2><span class="zh">状态牌</span><span class="en">Status plates</span></h2>
@@ -362,50 +447,88 @@
         </ul>
       </section>
 
-      <section id="pipeline">
-        <div class="pair">
-          <div>
-            <h2><span class="zh">一条流水线</span><span class="en">One pipeline</span></h2>
-            <p class="copy zh">每条流水线单独一页。有 Pipeline Stage View 的数据时，页上还有阶段耗时。</p>
-            <p class="copy en">Each pipeline has its own page. Stage duration appears when Pipeline Stage View data exists.</p>
-          </div>
-          <figure class="shot">
-            <a href="images/pipeline.png">
-              <img src="images/pipeline.png" data-src-en="images/pipeline.png" data-src-zh="images/pipeline-zh.png" alt="一条流水线的耗时、次数和成功率" data-alt-en="Duration, count, and success rate for one pipeline">
-            </a>
-            <figcaption>
-              <span class="zh">点开看完整一页。</span>
-              <span class="en">Open the image for the full page.</span>
-            </figcaption>
-          </figure>
+      <section class="feature" id="pipeline">
+        <div>
+          <h2><span class="zh">一条流水线</span><span class="en">One pipeline</span></h2>
+          <p class="copy zh">从左侧点进一条，看的就是它自己。</p>
+          <p class="copy en">Pick one from the side. The page is only that pipeline.</p>
+          <ul class="facts">
+            <li>
+              <strong><span class="zh">四个数</span><span class="en">Four numbers</span></strong>
+              <span><span class="zh">耗时、触发次数、成功率、失败次数。</span><span class="en">Duration, triggers, success rate, failures.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">趋势</span><span class="en">Trends</span></strong>
+              <span><span class="zh">这条流水线自己的耗时、次数和成功率。</span><span class="en">This pipeline's duration, count, and success rate.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">阶段</span><span class="en">Stages</span></strong>
+              <span><span class="zh">有 Stage View 数据时，才出现阶段耗时。</span><span class="en">Stage time appears only when Stage View data exists.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">最近</span><span class="en">Recent</span></strong>
+              <span><span class="zh">编号、结果、耗时、谁触发的。</span><span class="en">Number, result, duration, who triggered it.</span></span>
+            </li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <a href="images/pipeline.png">
+            <img src="images/pipeline.png" data-src-en="images/pipeline.png" data-src-zh="images/pipeline-zh.png" data-src-en-dark="images/pipeline-dark.png" data-src-zh-dark="images/pipeline-dark-zh.png" alt="一条流水线的耗时、次数和成功率" data-alt-en="Duration, count, and success rate for one pipeline">
+          </a>
+        </figure>
+      </section>
+
+      <section class="feature flip" id="machine">
+        <figure class="shot">
+          <a href="images/host.png">
+            <img src="images/host.png" data-src-en="images/host.png" data-src-zh="images/host-zh.png" data-src-en-dark="images/host-dark.png" data-src-zh-dark="images/host-dark-zh.png" alt="本机的 CPU、内存、磁盘、显卡和网络" data-alt-en="This computer: CPU, memory, disk, GPU, and network">
+          </a>
+        </figure>
+        <div>
+          <h2><span class="zh">这台电脑</span><span class="en">This computer</span></h2>
+          <p class="copy zh">跑 Jenkins 的这台机器，不是某一条流水线。</p>
+          <p class="copy en">The machine running Jenkins, not one pipeline.</p>
+          <ul class="facts">
+            <li>
+              <strong><span class="zh">资源</span><span class="en">Resources</span></strong>
+              <span><span class="zh">CPU、内存、磁盘、显卡。CPU 可在总量和每核之间切换。</span><span class="en">CPU, memory, disk, GPU. CPU switches between total and per core.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">吞吐</span><span class="en">Throughput</span></strong>
+              <span><span class="zh">网速和磁盘读写，每 1 秒刷新。</span><span class="en">Network and disk throughput, refreshed every second.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">出现</span><span class="en">Shown</span></strong>
+              <span><span class="zh">控制器是 Windows 才有这一页。</span><span class="en">Only when the controller runs on Windows.</span></span>
+            </li>
+          </ul>
         </div>
       </section>
 
-      <section id="machine">
-        <div class="pair flip">
-          <figure class="shot">
-            <a href="images/host.png">
-              <img src="images/host.png" data-src-en="images/host.png" data-src-zh="images/host-zh.png" alt="本机的 CPU、内存、磁盘、显卡和网络" data-alt-en="This computer: CPU, memory, disk, GPU, and network">
-            </a>
-            <figcaption>
-              <span class="zh">点开看完整一页。</span>
-              <span class="en">Open the image for the full page.</span>
-            </figcaption>
-          </figure>
-          <div>
-            <h2><span class="zh">这台电脑</span><span class="en">This computer</span></h2>
-            <p class="copy zh">运行 Jenkins 的这台机器：CPU、内存、磁盘、显卡、网速，以及磁盘读写。控制器不是 Windows 时不显示这一页。</p>
-            <p class="copy en">The machine running Jenkins: CPU, memory, disk, GPU, network, and disk throughput. This page is shown only when the controller runs on Windows.</p>
-          </div>
+      <section class="feature" id="open">
+        <div>
+          <h2><span class="zh">从哪里进来</span><span class="en">How to open it</span></h2>
+          <p class="copy zh">右上角的图进插件。首页右下角是同一块牌子。</p>
+          <p class="copy en">The chart icon opens the plugin. The home card is the same plate.</p>
+          <ul class="facts">
+            <li>
+              <strong><span class="zh">牌子</span><span class="en">Card</span></strong>
+              <span><span class="zh">可拖动、贴到右边、关闭。点图进统计，点字号开这次构建。</span><span class="en">Drag, dock, or close it. The picture opens Build Stats. The number opens that build.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">时间</span><span class="en">Time</span></strong>
+              <span><span class="zh">7 天、30 天、90 天、全部。默认全部。</span><span class="en">7 days, 30 days, 90 days, or All. All is the default.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">说明</span><span class="en">Summary</span></strong>
+              <span><span class="zh">默认不勾。勾上才出现次数、机器时间、排队和成功率。</span><span class="en">Off until checked. Then it shows runs, machine time, queue, and success rate.</span></span>
+            </li>
+            <li>
+              <strong><span class="zh">状态牌</span><span class="en">Plate</span></strong>
+              <span><span class="zh">默认勾选。首页和流水线都显示。选仅首页后，离开首页就收起。</span><span class="en">Checked by default, on the home page and on pipelines. Home only hides it after you leave home.</span></span>
+            </li>
+          </ul>
         </div>
-      </section>
-
-      <section id="open">
-        <h2><span class="zh">从哪里进来</span><span class="en">How to open it</span></h2>
-        <p class="copy zh">右上角的折线图标进入插件。首页右下角的状态牌可以拖动、收到右边，或关闭。点图片进入构建统计，点下面的文字打开这一次构建。</p>
-        <p class="copy en">The chart icon at the top right opens the plugin. The home card can be dragged, docked, or closed. The picture opens Build Stats. The text opens that build.</p>
-        <p class="copy zh">插件页右上角还有时间、语言、说明和状态牌。时间默认全部。语言默认英文。说明默认关闭，打开后才显示次数、机器时间、排队、成功率和触发账号那段话。状态牌默认在 Jenkins 首页和真实流水线页面都显示。选「仅首页」后，进入流水线页面不再显示。</p>
-        <p class="copy en">The plugin page also keeps time, language, the summary, and the status plate at the top right. Time defaults to All. Language defaults to English. The summary stays off until you turn it on, and then shows runs, machine time, queue time, success rate, and trigger accounts. The status card stays on the Jenkins home page and on each pipeline page. Home only keeps it on the Jenkins home page.</p>
         <figure class="entry">
           <img src="images/entry.svg" alt="从 Jenkins 右上角图标和首页状态牌进入构建统计" data-alt-en="Open Build Stats from the chart icon or the home status card">
         </figure>
@@ -413,11 +536,25 @@
 
       <section id="install">
         <h2><span class="zh">安装</span><span class="en">Install</span></h2>
-        <p class="copy zh">需要 Jenkins 2.555.3 或更新版本，控制器使用 Java 21。进入更新中心之前，用 JDK 21 打包，再从插件管理的高级设置里部署。</p>
-        <p class="copy en">Requires Jenkins 2.555.3 or newer, and Java 21 on the controller. Until it is in the update center, package with JDK 21 and deploy the file from the plugin manager.</p>
+        <ul class="facts">
+          <li>
+            <strong>Jenkins</strong>
+            <span><span class="zh">2.555.3 或更新。</span><span class="en">2.555.3 or newer.</span></span>
+          </li>
+          <li>
+            <strong>Java</strong>
+            <span><span class="zh">控制器使用 21。</span><span class="en">21 on the controller.</span></span>
+          </li>
+          <li>
+            <strong><span class="zh">页面</span><span class="en">Page</span></strong>
+            <span>/build-stats</span>
+          </li>
+          <li>
+            <strong><span class="zh">产物</span><span class="en">Package</span></strong>
+            <span>target/build-stats.hpi</span>
+          </li>
+        </ul>
         <pre><code>mvn package</code></pre>
-        <p class="copy zh">产物是 target/build-stats.hpi。页面地址是 /build-stats。</p>
-        <p class="copy en">The package is target/build-stats.hpi. The page is /build-stats.</p>
       </section>
 
       <footer>
@@ -434,6 +571,17 @@
       var root = document.documentElement;
       var buttons = document.querySelectorAll("[data-set-lang]");
 
+      var themeButtons = document.querySelectorAll("[data-set-theme]");
+      var theme = "light";
+
+      function shotSrc(img, english) {
+        var dark = theme === "dark";
+        var key = dark
+          ? (english ? "data-src-en-dark" : "data-src-zh-dark")
+          : (english ? "data-src-en" : "data-src-zh");
+        return img.getAttribute(key) || img.getAttribute(english ? "data-src-en" : "data-src-zh");
+      }
+
       function apply(lang) {
         var english = lang === "en";
         root.lang = english ? "en" : "zh-CN";
@@ -442,15 +590,22 @@
           var on = (btn.getAttribute("data-set-lang") === "en") === english;
           btn.setAttribute("aria-pressed", on ? "true" : "false");
         });
+        themeButtons.forEach(function (btn) {
+          btn.setAttribute("aria-pressed", btn.getAttribute("data-set-theme") === theme ? "true" : "false");
+        });
         document.querySelectorAll("img[data-alt-en]").forEach(function (img) {
           if (!img.dataset.altZh) img.dataset.altZh = img.alt;
           img.alt = english ? img.dataset.altEn : img.dataset.altZh;
         });
         document.querySelectorAll("img[data-src-en]").forEach(function (img) {
-          img.src = english ? img.getAttribute("data-src-en") : img.getAttribute("data-src-zh");
+          var src = shotSrc(img, english);
+          img.src = src;
+          var link = img.closest("a");
+          if (link && img.hasAttribute("data-src-en-dark")) link.href = src;
         });
         try {
           localStorage.setItem("build-stats-site-lang", english ? "en" : "zh");
+          localStorage.setItem("build-stats-site-theme", theme);
         } catch (e) {}
       }
 
@@ -459,7 +614,16 @@
           apply(btn.getAttribute("data-set-lang"));
         });
       });
+      themeButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          theme = btn.getAttribute("data-set-theme") === "dark" ? "dark" : "light";
+          apply(root.lang === "en" ? "en" : "zh-CN");
+        });
+      });
 
+      try {
+        if (localStorage.getItem("build-stats-site-theme") === "dark") theme = "dark";
+      } catch (e) {}
       apply(root.lang === "en" ? "en" : "zh-CN");
     })();
   </script>
