@@ -22,7 +22,7 @@
     </l:side-panel>
 
     <l:main-panel>
-      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=11" type="text/css"/>
+      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=19" type="text/css"/>
 
       <j:choose>
         <j:when test="${page == 'computer'}">
@@ -37,7 +37,7 @@
       </j:choose>
 
       <!-- One external script, no inline JS, so the page satisfies a strict CSP. -->
-      <script src="${it.assets}js/build-stats.js?v=10" type="text/javascript"/>
+      <script src="${it.assets}js/build-stats.js?v=19" type="text/javascript"/>
     </l:main-panel>
   </l:layout>
 </j:jelly>

@@ -348,6 +348,18 @@ public final class Dashboard {
             return jobs;
         }
 
+        /** Every pipeline this account triggered, one full path per line, for the native tooltip. */
+        public String getJobsTip() {
+            StringBuilder tip = new StringBuilder();
+            for (JobLink job : jobs) {
+                if (tip.length() > 0) {
+                    tip.append('\n');
+                }
+                tip.append(job.fullName);
+            }
+            return tip.toString();
+        }
+
         public int getBuilds() {
             return builds;
         }

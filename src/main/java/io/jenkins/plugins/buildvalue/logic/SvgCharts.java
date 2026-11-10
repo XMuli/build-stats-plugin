@@ -163,7 +163,12 @@ final class SvgCharts {
                 tip.append("  ").append(seriesItem.name).append(' ').append(Texts.num(value)).append(unit);
             }
             tip.insert(labels.get(i).length(), "  All " + Texts.num(total) + unit);
+            StringBuilder colors = new StringBuilder();
+            for (Series seriesItem : series) {
+                colors.append('|').append(seriesItem.color);
+            }
             svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(tip.toString()))
+                    .append("\" data-colors=\"").append(Texts.escape(colors.toString()))
                     .append("\" x=\"").append(fmt(left + i * slot)).append("\" y=\"").append(top)
                     .append("\" width=\"").append(fmt(slot)).append("\" height=\"").append(innerH)
                     .append("\" fill=\"transparent\"></rect>");
@@ -410,6 +415,7 @@ final class SvgCharts {
             double value = values.get(i) == null ? 0 : values.get(i);
             String tip = labels.get(i) + "  " + Texts.num(value);
             svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(tip))
+                    .append("\" data-colors=\"").append(Texts.escape(color))
                     .append("\" x=\"").append(fmt(left + i * slot)).append("\" y=\"").append(top)
                     .append("\" width=\"").append(fmt(slot)).append("\" height=\"").append(innerH)
                     .append("\" fill=\"transparent\"></rect>");
@@ -450,6 +456,12 @@ final class SvgCharts {
             svg.append("<text x=\"").append(barX + barW + 8).append("\" y=\"").append(y + 16)
                     .append("\" font-size=\"12\" fill=\"currentColor\">")
                     .append(Texts.escape(bar.valueText)).append("</text>");
+            String name = bar.title == null || bar.title.isEmpty() ? bar.label : bar.title;
+            svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(name + "  " + bar.valueText))
+                    .append("\" data-colors=\"").append(Texts.escape(THEME_ACCENT))
+                    .append("\" x=\"0\" y=\"").append(y)
+                    .append("\" width=\"").append(width).append("\" height=\"").append(row)
+                    .append("\" fill=\"transparent\"/>");
             y += row;
         }
         svg.append("</svg>");
@@ -498,7 +510,15 @@ final class SvgCharts {
                 }
             }
             String text = tip.toString();
+            StringBuilder colors = new StringBuilder();
+            for (Series seriesItem : series) {
+                if (colors.length() > 0) {
+                    colors.append('|');
+                }
+                colors.append(seriesItem.color);
+            }
             svg.append("<rect class=\"bv-hit\" data-tip=\"").append(Texts.escape(text))
+                    .append("\" data-colors=\"").append(Texts.escape(colors.toString()))
                     .append("\" data-x=\"").append(fmt(x))
                     .append("\" data-top=\"").append(top)
                     .append("\" data-bottom=\"").append(top + innerH)

@@ -49,11 +49,15 @@
                 <td>${row.lastWhen}</td>
                 <j:if test="${withJobs}">
                   <td class="bv-path-cell">
-                    <ul class="bv-joblist">
-                      <j:forEach var="job" items="${row.jobs}">
-                        <li><a href="${it.jobUrl(job.fullName)}">${job.fullName}</a></li>
-                      </j:forEach>
-                    </ul>
+                    <j:if test="${!row.jobs.isEmpty()}">
+                      <div class="bv-jobline">
+                        <a class="bv-jobline__name" href="${it.jobUrl(row.jobs[0].fullName)}"
+                           tooltip="${row.jobs[0].fullName}">${row.jobs[0].fullName}</a>
+                        <j:if test="${row.jobs.size() > 1}">
+                          <span class="bv-jobline__more" tabindex="0" tooltip="${row.jobsTip}">${it.msg1('col.more', row.jobs.size() - 1)}</span>
+                        </j:if>
+                      </div>
+                    </j:if>
                   </td>
                 </j:if>
               </tr>

@@ -220,13 +220,26 @@
   max-width: 24rem;
 }
 
-.bv-joblist {
+.bv-jobline {
+  align-items: baseline;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  gap: 0.5rem;
+  max-width: 22rem;
+  min-width: 0;
+}
+
+.bv-jobline__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bv-jobline__more {
+  color: var(--text-color-secondary);
+  flex: none;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .bv-num {
@@ -631,6 +644,118 @@
   width: 100%;
 }
 
+.bv-chart__plot .bv-hit {
+  cursor: crosshair;
+}
+
+.bv-chart__plot .bv-hit:not([data-x]) {
+  cursor: pointer;
+}
+
+/* A light wash over a hovered horizontal bar. Columns and slices emphasise themselves. */
+.bv-hit--on:not([data-color]) {
+  fill: currentColor;
+  fill-opacity: 0.08;
+}
+
+.bv-bar-dim {
+  opacity: 0.45;
+}
+
+.bv-tip {
+  background: #1d2127;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  color: #f5f7f8;
+  font-size: 0.75rem;
+  left: 0;
+  line-height: 1.35;
+  max-width: 16rem;
+  min-width: 5.5rem;
+  padding: 0.4rem 0.6rem 0.45rem;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+
+.bv-tip[hidden] {
+  display: none;
+}
+
+.bv-tip__title {
+  font-weight: 650;
+}
+
+.bv-tip__row {
+  align-items: baseline;
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.bv-tip__name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bv-tip__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  margin-left: auto;
+}
+
+.bv-tip__swatch {
+  align-self: center;
+  border-radius: 2px;
+  flex: none;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+/* Bar and pie tips hug their text and sit on the mark, so the value stays next to its label. */
+.bv-tip--pin {
+  min-width: 0;
+  width: max-content;
+}
+
+.bv-tip--pin .bv-tip__name {
+  flex: none;
+}
+
+.bv-tip--pin .bv-tip__value {
+  margin-left: 0.65rem;
+}
+
+/* The caret aims at the bar the numbers belong to, even when the card edge shifts the box. */
+.bv-tip--bar {
+  padding: 0.28rem 0.5rem 0.32rem;
+}
+
+.bv-tip--bar::after {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #1d2127;
+  bottom: -5px;
+  content: "";
+  left: var(--bv-caret, 50%);
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.bv-tip--bar.bv-tip--below::after {
+  border-bottom: 5px solid #1d2127;
+  border-top: 0;
+  bottom: auto;
+  top: -5px;
+}
+
+.bv-tip--bar .bv-tip__name {
+  color: rgba(245, 247, 248, 0.72);
+  font-weight: 600;
+}
+
 .bv-chart__note {
   color: var(--text-color-secondary);
   font-size: 0.8125rem;
@@ -866,41 +991,65 @@
 /* ---------------------------------------------------------------- about */
 
 .bv-about {
-  margin-top: 0.75rem;
-  /* The main column is as wide as the window. This page is one short record, so the card
-     stops at a reading width instead of stretching the GitHub button to the far edge. */
-  max-width: 46rem;
-}
-
-/* Jenkins lays card content out as a column and may add a gap. This card spaces itself. */
-.bv-about .jenkins-card__content {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding-top: 1.25rem;
-}
-
-.bv-about__top {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-}
-
-.bv-about__id {
-  align-items: center;
-  column-gap: 1rem;
   display: grid;
-  flex: 1 1 16rem;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  min-width: 0;
+  gap: 0.75rem;
+  grid-template-areas:
+    "id logo"
+    "info support";
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  margin-top: 0.25rem;
+}
+
+.bv-about > :nth-child(1) {
+  grid-area: id;
+}
+
+.bv-about > :nth-child(2) {
+  grid-area: info;
+}
+
+.bv-about > :nth-child(3) {
+  grid-area: logo;
+}
+
+.bv-about > :nth-child(4) {
+  grid-area: support;
+}
+
+.bv-about > .jenkins-card {
+  margin: 0;
+}
+
+@media (max-width: 1080px) {
+  .bv-about {
+    grid-template-areas:
+      "id"
+      "info"
+      "logo"
+      "support";
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bv-about .jenkins-card__content {
+  padding: 1.25rem;
+}
+
+.bv-about .jenkins-card__content.bv-about__id {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: 1.125rem;
+  justify-content: flex-start;
+  text-align: start;
 }
 
 .bv-about__logo {
-  border-radius: 0.5rem;
-  height: 4.5rem;
+  border-radius: 10px;
+  flex: none;
+  height: 5rem;
   object-fit: cover;
-  width: 4.5rem;
+  width: 5rem;
 }
 
 .bv-about__name {
@@ -909,15 +1058,37 @@
   margin: 0;
 }
 
-.bv-about__id p {
-  margin: 0.25rem 0 0;
+.bv-about__id p,
+.bv-about .bv-muted {
+  margin: 0.35rem 0 0;
+}
+
+.bv-about .jenkins-buttons-row {
+  justify-content: flex-start;
+  margin-top: 0.75rem;
+}
+
+.bv-about__meta {
+  display: grid;
+  gap: 0.6rem 1.5rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.bv-about__meta dt {
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.bv-about__meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .bv-lang {
   border: 1px solid var(--panel-border-color, #e4e9ee);
   border-radius: 6px;
   display: inline-flex;
-  margin-left: auto;
   overflow: hidden;
 }
 
@@ -945,49 +1116,11 @@
   outline-offset: -2px;
 }
 
-.bv-about__github {
-  margin-left: 0.75rem;
-}
-
-.bv-about__github svg {
+.jenkins-app-bar__controls .bv-lang + .jenkins-button svg,
+.bv-about .jenkins-button svg {
   fill: currentColor;
   height: 1rem;
   width: 1rem;
-}
-
-.bv-about__logo-row {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.625rem;
-  margin-top: 0.875rem;
-}
-
-.bv-about__logo-row p {
-  margin: 0 0.375rem 0 0;
-}
-
-.bv-about__facts {
-  border-top: 1px solid var(--panel-border-color, #e4e9ee);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.875rem 3rem;
-  margin: 1rem 0 0;
-  padding-top: 1rem;
-}
-
-.bv-about__facts > div {
-  min-width: min(100%, 11rem);
-}
-
-.bv-about__facts dt {
-  color: var(--text-color-secondary);
-  font-weight: 400;
-  margin: 0 0 0.25rem;
-}
-
-.bv-about__facts dd {
-  margin: 0;
 }
 
 .bv-about__version,
@@ -1002,15 +1135,9 @@
 
 .bv-about__build {
   color: var(--text-color-secondary);
+  display: block;
   font-size: 0.75rem;
   margin-top: 0.125rem;
-}
-
-.bv-about__note {
-  border-top: 1px solid var(--panel-border-color, #e4e9ee);
-  margin: 1rem 0 0;
-  max-width: 62ch;
-  padding-top: 1rem;
 }
 
 /* The file input is reached through its label, which is styled as a Jenkins button.

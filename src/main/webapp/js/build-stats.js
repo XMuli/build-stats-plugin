@@ -4,8 +4,8 @@
  * The pages are rendered on the server, so this file never produces visible text and never
  * translates anything: every string a reader sees comes from the resource bundle for the request's
  * locale and is already in the first HTML response. What is left here is the part a server cannot
- * do: browser-local preferences, navigating from a <select>, and the live sampler on the "this
- * computer" page.
+ * do: browser-local preferences, navigating from a <select>, the chart hover preview, and the
+ * live sampler on the "this computer" page.
  *
  * Loaded as one external file with no inline handlers, no eval and no new Function, so a strict
  * Content-Security-Policy accepts the page as it is.
@@ -773,6 +773,578 @@
     card.hidden = !prefOn("status");
   }
 
+  /* ------------------------------------------------------------------ 6. chart hover
+   *
+   * The trend SVGs are drawn on the server. Each one already carries a transparent hit shape per
+   * point, with the label and the values for that x (or that slice, or that bar) in data-tip.
+   * A line chart carries the x of the sample and the y of every series, so the guide is a vertical
+   * line through that x and a dot where the line meets each curve. A bar chart has no guide line:
+   * the hovered bar stays bright and the others recede, and the tip sits on top of the bar. A pie
+   * slice grows and the rest fade, with the tip beside the slice. The words were escaped into the
+   * SVG with the page.
+   */
+
+  var chartTip = null;
+  var activeSvg = null;
+  var activeHit = null;
+
+  function ensureTip() {
+    if (chartTip) {
+      return chartTip;
+    }
+    chartTip = el("div", "bv-tip");
+    chartTip.setAttribute("role", "tooltip");
+    chartTip.hidden = true;
+    document.body.appendChild(chartTip);
+    return chartTip;
+  }
+
+  function safeColor(value) {
+    if (/^#[0-9A-Fa-f]{3,8}$/.test(value || "")) {
+      return value;
+    }
+    if (/^var\(--[a-z0-9-]+,#[0-9A-Fa-f]{3,8}\)$/.test(value || "")) {
+      return value;
+    }
+    return "";
+  }
+
+  function attrNum(node, name) {
+    var value = parseFloat(node.getAttribute(name));
+    return isNaN(value) ? 0 : value;
+  }
+
+  function looksLikeValue(value) {
+    return /^(?:—|\d+(?:\.\d+)?(?:%|h|m)?)$/.test(value);
+  }
+
+  /** Split "Success 12" into a name and a value. Leave a phrase such as "12 runs" intact. */
+  function splitValue(text) {
+    var cut = text.lastIndexOf(" ");
+    if (cut <= 0) {
+      return looksLikeValue(text) ? { name: "", value: text } : { name: text, value: "" };
+    }
+    var value = text.slice(cut + 1);
+    var name = text.slice(0, cut);
+    if (looksLikeValue(value) && !/\d/.test(name)) {
+      return { name: name, value: value };
+    }
+    return { name: text, value: "" };
+  }
+
+  function rowColors(hit, count) {
+    var blank = [];
+    var i;
+    for (i = 0; i < count; i++) {
+      blank.push("");
+    }
+    var raw = hit.getAttribute("data-colors");
+    if (raw) {
+      var listed = raw.split("|").map(safeColor);
+      if (listed.length === count) {
+        return listed;
+      }
+    }
+    var one = safeColor(hit.getAttribute("data-color") || "");
+    if (one && count > 0) {
+      blank[0] = one;
+      return blank;
+    }
+    var fromDots = [];
+    (hit.getAttribute("data-ys") || "").split(";").forEach(function (part) {
+      if (!part) {
+        return;
+      }
+      fromDots.push(safeColor(part.split("|")[1] || ""));
+    });
+    if (fromDots.length === count) {
+      return fromDots;
+    }
+    return blank;
+  }
+
+  function paintTip(hit) {
+    var tip = ensureTip();
+    clear(tip);
+    var parts = (hit.getAttribute("data-tip") || "").split(/\s{2,}/).filter(function (part) {
+      return part.length > 0;
+    });
+    if (!parts.length) {
+      tip.hidden = true;
+      return;
+    }
+    tip.hidden = false;
+    tip.classList.toggle("bv-tip--pin", !hit.hasAttribute("data-x"));
+    tip.classList.remove("bv-tip--bar");
+    var rows = parts.slice(1);
+    var colors = rowColors(hit, rows.length);
+    // One series already shows its colour as the bar, so the tip is just the category and the value.
+    if (isColumn(hit) && rows.length === 1 && !splitValue(rows[0]).name) {
+      var alone = el("div", "bv-tip__row");
+      alone.appendChild(el("span", "bv-tip__name", parts[0]));
+      alone.appendChild(el("b", "bv-tip__value", rows[0]));
+      tip.appendChild(alone);
+      return;
+    }
+    tip.appendChild(el("div", "bv-tip__title", parts[0]));
+    // A slice's count and share are one fact. Keep them on one line instead of a second row.
+    if (hit.hasAttribute("data-x1") && rows.length > 1) {
+      rows = [rows.join(" · ")];
+      var sliceColor = "";
+      colors.forEach(function (color) {
+        if (!sliceColor && color) {
+          sliceColor = color;
+        }
+      });
+      colors = [sliceColor];
+    }
+    var anySwatch = colors.some(function (color) {
+      return color;
+    });
+    rows.forEach(function (text, index) {
+      var row = el("div", "bv-tip__row");
+      var split = splitValue(text);
+      if (anySwatch) {
+        var swatch = el("i", "bv-tip__swatch");
+        if (colors[index]) {
+          swatch.style.background = colors[index];
+        } else {
+          swatch.style.visibility = "hidden";
+        }
+        row.appendChild(swatch);
+      }
+      if (split.name) {
+        row.appendChild(el("span", "bv-tip__name", split.name));
+      }
+      if (split.value) {
+        row.appendChild(el("b", "bv-tip__value", split.value));
+      }
+      tip.appendChild(row);
+    });
+  }
+
+  function crossOf(svgNode) {
+    var cross = svgNode.querySelector(".bv-cross");
+    if (cross) {
+      return cross;
+    }
+    cross = svg("g", { class: "bv-cross", visibility: "hidden", "pointer-events": "none" });
+    cross.appendChild(svg("line", {
+      class: "bv-cross-line",
+      stroke: "currentColor",
+      "stroke-opacity": "0.9"
+    }));
+    cross.appendChild(svg("g", { class: "bv-cross-dots" }));
+    svgNode.appendChild(cross);
+    return cross;
+  }
+
+  function showGuide(svgNode, x1, y1, x2, y2, dots) {
+    var cross = crossOf(svgNode);
+    var matrix = svgNode.getScreenCTM();
+    var scale = matrix ? Math.abs(matrix.a) || 1 : 1;
+    var line = cross.querySelector(".bv-cross-line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+    line.setAttribute("stroke-width", String(1 / scale));
+    line.setAttribute("stroke-dasharray", (3 / scale) + " " + (3 / scale));
+    var group = cross.querySelector(".bv-cross-dots");
+    clear(group);
+    var radius = 4.5 / scale;
+    var stroke = 1.75 / scale;
+    dots.forEach(function (dot) {
+      group.appendChild(svg("circle", {
+        cx: dot.x,
+        cy: dot.y,
+        r: radius,
+        fill: dot.color || "currentColor",
+        stroke: "var(--card-background,#fff)",
+        "stroke-width": stroke
+      }));
+    });
+    cross.setAttribute("visibility", "visible");
+  }
+
+  function lineDots(hit, x) {
+    var dots = [];
+    (hit.getAttribute("data-ys") || "").split(";").forEach(function (part) {
+      if (!part) {
+        return;
+      }
+      var bits = part.split("|");
+      var color = safeColor(bits[1] || "");
+      if (!color) {
+        return;
+      }
+      dots.push({ x: x, y: bits[0], color: color });
+    });
+    return dots;
+  }
+
+  function isColumn(hit) {
+    if (!hit || hit.tagName.toLowerCase() !== "rect") {
+      return false;
+    }
+    if (hit.hasAttribute("data-x") || hit.hasAttribute("data-x1")) {
+      return false;
+    }
+    var owner = hit.ownerSVGElement;
+    if (owner && owner.classList.contains("bv-status")) {
+      return false;
+    }
+    var width = attrNum(hit, "width");
+    var height = attrNum(hit, "height");
+    return height > 40 && height > width;
+  }
+
+  function columnGuide(svgNode, hit) {
+    var x = attrNum(hit, "x");
+    var y = attrNum(hit, "y");
+    var width = attrNum(hit, "width");
+    var height = attrNum(hit, "height");
+    var top = null;
+    var color = "currentColor";
+    all("rect", svgNode).forEach(function (rect) {
+      if (rect.classList.contains("bv-hit")) {
+        return;
+      }
+      var rx = attrNum(rect, "x");
+      var ry = attrNum(rect, "y");
+      var rw = attrNum(rect, "width");
+      var rh = attrNum(rect, "height");
+      if (rw < 2 || rh < 2) {
+        return;
+      }
+      if (rx < x - 0.6 || rx + rw > x + width + 0.6) {
+        return;
+      }
+      if (ry < y - 0.6 || ry + rh > y + height + 0.6) {
+        return;
+      }
+      if (top === null || ry < top) {
+        top = ry;
+        color = safeColor(rect.getAttribute("fill") || "") || "currentColor";
+      }
+    });
+    return {
+      x: x + width / 2,
+      y1: y,
+      y2: y + height,
+      dots: top === null ? [] : [{ x: x + width / 2, y: top, color: color }]
+    };
+  }
+
+  function focusSlice(svgNode, color) {
+    all("circle", svgNode).forEach(function (circle) {
+      if (circle.closest(".bv-cross")) {
+        return;
+      }
+      var stroke = circle.getAttribute("stroke") || "";
+      if (!safeColor(stroke)) {
+        return;
+      }
+      var on = stroke.toLowerCase() === String(color).toLowerCase();
+      circle.style.opacity = on ? "1" : "0.22";
+      // Attribute, not CSS: a CSS length would be pixels and blow the ring up.
+      // 18 is the width every slice is drawn at; 28 lifts the one under the pointer.
+      circle.setAttribute("stroke-width", on ? "28" : "18");
+    });
+  }
+
+  function isBarSegment(rect) {
+    if (rect.classList.contains("bv-hit")) {
+      return false;
+    }
+    var width = attrNum(rect, "width");
+    var height = attrNum(rect, "height");
+    // Legend swatches are 8×8 and sit below the plot.
+    if (width === 8 && height === 8) {
+      return false;
+    }
+    return width > 2 && height > 0.4;
+  }
+
+  /** Brighten the bars in this column and fade the rest. No guide line. */
+  function emphasizeColumn(svgNode, hit) {
+    var x = attrNum(hit, "x");
+    var y = attrNum(hit, "y");
+    var width = attrNum(hit, "width");
+    var height = attrNum(hit, "height");
+    all("rect", svgNode).forEach(function (rect) {
+      if (!isBarSegment(rect)) {
+        return;
+      }
+      var rx = attrNum(rect, "x");
+      var ry = attrNum(rect, "y");
+      var rw = attrNum(rect, "width");
+      var rh = attrNum(rect, "height");
+      if (ry + rh < y - 0.6 || ry > y + height + 0.6) {
+        return;
+      }
+      var inside = rx >= x - 0.6 && rx + rw <= x + width + 0.6;
+      rect.classList.toggle("bv-bar-on", inside);
+      rect.classList.toggle("bv-bar-dim", !inside);
+    });
+  }
+
+  function clearGuide(svgNode) {
+    if (!svgNode) {
+      return;
+    }
+    var cross = svgNode.querySelector(".bv-cross");
+    if (cross) {
+      cross.setAttribute("visibility", "hidden");
+      var dots = cross.querySelector(".bv-cross-dots");
+      if (dots) {
+        clear(dots);
+      }
+    }
+    all(".bv-hit--on", svgNode).forEach(function (node) {
+      node.classList.remove("bv-hit--on");
+    });
+    all(".bv-bar-on, .bv-bar-dim", svgNode).forEach(function (rect) {
+      rect.classList.remove("bv-bar-on");
+      rect.classList.remove("bv-bar-dim");
+    });
+    all("circle", svgNode).forEach(function (circle) {
+      circle.style.opacity = "";
+      if (circle.getAttribute("stroke-width") === "28") {
+        circle.setAttribute("stroke-width", "18");
+      }
+    });
+  }
+
+  function showHit(svgNode, hit) {
+    clearGuide(svgNode);
+    if (hit.hasAttribute("data-x")) {
+      hit.classList.add("bv-hit--on");
+      var x = hit.getAttribute("data-x");
+      showGuide(svgNode, x, hit.getAttribute("data-top"), x, hit.getAttribute("data-bottom"), lineDots(hit, x));
+      return;
+    }
+    if (hit.hasAttribute("data-x1")) {
+      var color = safeColor(hit.getAttribute("data-color") || "");
+      if (color) {
+        focusSlice(svgNode, color);
+      }
+      return;
+    }
+    if (isColumn(hit)) {
+      var cap = columnGuide(svgNode, hit);
+      showGuide(svgNode, cap.x, cap.y1, cap.x, cap.y2, cap.dots);
+      return;
+    }
+    hit.classList.add("bv-hit--on");
+  }
+
+  function toScreen(svgNode, x, y) {
+    var matrix = svgNode.getScreenCTM();
+    if (!matrix || !svgNode.createSVGPoint) {
+      return null;
+    }
+    var point = svgNode.createSVGPoint();
+    point.x = x;
+    point.y = y;
+    var mapped = point.matrixTransform(matrix);
+    return { x: mapped.x, y: mapped.y };
+  }
+
+  function anchorOf(svgNode, hit, event) {
+    var point = null;
+    if (hit.hasAttribute("data-x")) {
+      point = toScreen(svgNode, parseFloat(hit.getAttribute("data-x")), parseFloat(hit.getAttribute("data-top")));
+    } else if (hit.hasAttribute("data-x2")) {
+      point = toScreen(svgNode, parseFloat(hit.getAttribute("data-x2")), parseFloat(hit.getAttribute("data-y2")));
+    } else if (isColumn(hit)) {
+      var cap = columnGuide(svgNode, hit);
+      point = toScreen(svgNode, cap.x, cap.y1);
+    }
+    if (!point) {
+      point = { x: event.clientX, y: event.clientY };
+    }
+    return point;
+  }
+
+  function placeTip(svgNode, hit, event) {
+    var tip = ensureTip();
+    if (tip.hidden) {
+      return;
+    }
+    var anchor = anchorOf(svgNode, hit, event);
+    var box = tip.getBoundingClientRect();
+    var x;
+    var y;
+    var outside = null;
+    var card = hit.closest(".bv-chart");
+    // The dashed guide stays on the drawing. The tip sits outside that drawing: above a line or
+    // a bar, and radially outside a slice, so the numbers never cover the chart itself.
+    if (hit.hasAttribute("data-x") || isColumn(hit)) {
+      var parked = placeOffPlot(anchor, box, plotScreenBox(svgNode), card, svgNode);
+      x = parked.x;
+      y = parked.y;
+    } else if (hit.hasAttribute("data-x1")) {
+      outside = placeOutsideRing(svgNode, hit, box);
+      x = outside ? outside.x : anchor.x - box.width / 2;
+      y = outside ? outside.y : anchor.y - box.height - 10;
+    } else {
+      x = anchor.x - box.width / 2;
+      y = anchor.y - box.height - 8;
+      var clamped = clampToCard(x, y, box, card);
+      x = clamped.x;
+      y = clamped.y;
+    }
+    if (x + box.width > window.innerWidth - 8) {
+      x = window.innerWidth - box.width - 8;
+    }
+    if (y + box.height > window.innerHeight - 8) {
+      // A slice stays on its outward side. Pulling it back above the anchor lands it on the ring.
+      y = hit.hasAttribute("data-x1")
+        ? window.innerHeight - box.height - 8
+        : Math.max(8, y);
+    }
+    if (y < 8) {
+      y = 8;
+    }
+    if (x < 8) {
+      x = 8;
+    }
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+
+  function plotScreenBox(svgNode) {
+    var hits = svgNode.querySelectorAll(".bv-hit");
+    var left = Infinity;
+    var top = Infinity;
+    var right = -Infinity;
+    var bottom = -Infinity;
+    for (var i = 0; i < hits.length; i++) {
+      var rect = hits[i].getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      if (rect.left < left) {
+        left = rect.left;
+      }
+      if (rect.top < top) {
+        top = rect.top;
+      }
+      if (rect.right > right) {
+        right = rect.right;
+      }
+      if (rect.bottom > bottom) {
+        bottom = rect.bottom;
+      }
+    }
+    if (left === Infinity) {
+      return svgNode.getBoundingClientRect();
+    }
+    return { left: left, top: top, right: right, bottom: bottom };
+  }
+
+  function overlapsPlot(x, y, box, plot) {
+    return x < plot.right && x + box.width > plot.left && y < plot.bottom && y + box.height > plot.top;
+  }
+
+  function clampToCard(x, y, box, card) {
+    if (!card) {
+      return { x: x, y: y };
+    }
+    var bounds = card.getBoundingClientRect();
+    if (x < bounds.left + 6) {
+      x = bounds.left + 6;
+    }
+    if (x + box.width > bounds.right - 6) {
+      x = bounds.right - box.width - 6;
+    }
+    return { x: x, y: y };
+  }
+
+  function coversAnotherPlot(x, y, box, svgNode) {
+    var plots = document.querySelectorAll(".bv-chart__plot svg");
+    for (var i = 0; i < plots.length; i++) {
+      if (plots[i] === svgNode) {
+        continue;
+      }
+      if (overlapsPlot(x, y, box, plotScreenBox(plots[i]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Prefer above the drawing, then below it. Either way the box stays off every plotted area. */
+  function placeOffPlot(anchor, box, plot, card, svgNode) {
+    var gap = 8;
+    var above = clampToCard(anchor.x - box.width / 2, plot.top - box.height - gap, box, card);
+    if (above.y >= 8 && !overlapsPlot(above.x, above.y, box, plot) && !coversAnotherPlot(above.x, above.y, box, svgNode)) {
+      return above;
+    }
+    var below = clampToCard(anchor.x - box.width / 2, plot.bottom + gap, box, card);
+    if (!overlapsPlot(below.x, below.y, box, plot) && !coversAnotherPlot(below.x, below.y, box, svgNode)) {
+      return below;
+    }
+    return above.y >= 8 ? above : below;
+  }
+
+  /**
+   * Put the pie tip on the outside of the ring, along the slice's own direction, so it cannot
+   * cover the hole or the slice it is describing.
+   */
+  function placeOutsideRing(svgNode, hit, box) {
+    var ring = svgNode.querySelector("circle[cx]");
+    if (!ring) {
+      return null;
+    }
+    var center = toScreen(svgNode, parseFloat(ring.getAttribute("cx")), parseFloat(ring.getAttribute("cy")));
+    var outer = toScreen(svgNode, parseFloat(hit.getAttribute("data-x2")), parseFloat(hit.getAttribute("data-y2")));
+    if (!center || !outer) {
+      return null;
+    }
+    var dx = outer.x - center.x;
+    var dy = outer.y - center.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / len;
+    var uy = dy / len;
+    var reach = Math.abs(ux) * box.width / 2 + Math.abs(uy) * box.height / 2;
+    var dist = len + 16 + reach;
+    return {
+      x: center.x + ux * dist - box.width / 2,
+      y: center.y + uy * dist - box.height / 2
+    };
+  }
+
+  function hideChartTip() {
+    if (chartTip) {
+      chartTip.hidden = true;
+    }
+    clearGuide(activeSvg);
+    activeSvg = null;
+    activeHit = null;
+  }
+
+  function onPointerMove(event) {
+    var target = event.target;
+    var hit = target && target.closest ? target.closest("svg .bv-hit") : null;
+    if (!hit || !hit.closest("#main-panel")) {
+      hideChartTip();
+      return;
+    }
+    var svgNode = hit.ownerSVGElement;
+    if (activeHit !== hit) {
+      if (activeSvg && activeSvg !== svgNode) {
+        clearGuide(activeSvg);
+      }
+      activeSvg = svgNode;
+      activeHit = hit;
+      paintTip(hit);
+      showHit(svgNode, hit);
+    }
+    placeTip(svgNode, hit, event);
+  }
+
   /* ------------------------------------------------------------------ wiring
    *
    * Two delegated listeners on the document instead of one per control. Several of these regions
@@ -861,6 +1433,9 @@
 
   document.addEventListener("change", onChange);
   document.addEventListener("click", onClick);
+  document.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("scroll", hideChartTip, true);
+  window.addEventListener("blur", hideChartTip);
 
   // A hidden tab does not need a controller to keep measuring its own CPU. The timer is dropped on
   // the way out and a fresh sample is taken on the way back, so the first thing a returning reader
