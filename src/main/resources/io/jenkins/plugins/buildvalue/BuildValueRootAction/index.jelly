@@ -22,7 +22,7 @@
     </l:side-panel>
 
     <l:main-panel>
-      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=19" type="text/css"/>
+      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=20" type="text/css"/>
 
       <j:choose>
         <j:when test="${page == 'computer'}">

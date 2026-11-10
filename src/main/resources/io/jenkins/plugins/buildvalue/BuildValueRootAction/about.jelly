@@ -2,9 +2,8 @@
 <!--
   About: what this plugin is, which version is installed, and where the source is.
 
-  The version comes from the plugin wrapper Jenkins loaded. The logo a user uploads stays in their
-  own browser; nothing is sent to the controller. Language follows Jenkins until a choice is made
-  here, and anything other than Chinese falls back to English.
+  The version comes from the plugin wrapper Jenkins loaded. Language follows Jenkins until a choice
+  is made here, and anything other than Chinese falls back to English.
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <j:set var="repo" value="https://github.com/XMuli/build-stats-plugin"/>
@@ -22,58 +21,47 @@
 
   <div class="bv-about">
     <section class="jenkins-card">
-      <div class="jenkins-card__content bv-about__id">
-        <img class="bv-about__logo" data-bv-logo="" src="${it.assets}images/logo.jpg"
-             alt="" width="80" height="80"/>
-        <div>
-          <h2 class="bv-about__name">${it.msg('BuildValueRootAction.DisplayName')}</h2>
-          <p class="bv-muted">${it.msg('about.summary')}</p>
+      <div class="jenkins-card__content">
+        <div class="bv-about__id">
+          <img class="bv-about__logo" data-bv-logo="" src="${it.assets}images/logo.jpg"
+               alt="" width="80" height="80"/>
+          <div>
+            <h2 class="bv-about__name">${it.msg('BuildValueRootAction.DisplayName')}</h2>
+            <p class="bv-muted">${it.msg('about.summary')}</p>
+          </div>
+          <a class="jenkins-button bv-about__star" href="${repo}" target="_blank" rel="noopener noreferrer">
+            <l:icon src="symbol-logo-github plugin-ionicons-api"/>
+            ${it.msg('about.starGo')}<span aria-hidden="true"> ↗</span>
+          </a>
         </div>
+        <dl class="bv-about__meta">
+          <div>
+            <dt>${it.msg('about.version')}</dt>
+            <dd>
+              <span class="bv-about__version">${it.pluginVersionName}</span>
+              <j:if test="${it.pluginVersionBuild != ''}">
+                <span class="bv-about__build">${it.pluginVersionBuild}</span>
+              </j:if>
+            </dd>
+          </div>
+          <div>
+            <dt>${it.msg('about.author')}</dt>
+            <dd>
+              <a href="https://github.com/XMuli" target="_blank" rel="noopener noreferrer">XMuli<span aria-hidden="true"> ↗</span></a>
+            </dd>
+          </div>
+          <div>
+            <dt>${it.msg('about.repo')}</dt>
+            <dd>
+              <a class="bv-about__repo" href="${repo}" target="_blank" rel="noopener noreferrer">
+                <l:icon src="symbol-logo-github plugin-ionicons-api"/>
+                <span>XMuli/build-stats-plugin</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </dd>
+          </div>
+        </dl>
       </div>
     </section>
-
-    <l:card title="${it.msg('about.info')}">
-      <dl class="bv-about__meta">
-        <dt>${it.msg('about.version')}</dt>
-        <dd>
-          <span class="bv-about__version">${it.pluginVersionName}</span>
-          <j:if test="${it.pluginVersionBuild != ''}">
-            <span class="bv-about__build">${it.pluginVersionBuild}</span>
-          </j:if>
-        </dd>
-        <dt>${it.msg('about.author')}</dt>
-        <dd>XMuli</dd>
-        <dt>${it.msg('about.repo')}</dt>
-        <dd>
-          <a href="${repo}" target="_blank" rel="noopener noreferrer">
-            XMuli/build-stats-plugin<span aria-hidden="true"> ↗</span>
-          </a>
-        </dd>
-      </dl>
-    </l:card>
-
-    <l:card title="${it.msg('about.logo')}">
-      <p class="bv-muted" data-bv-logo-note=""
-         data-note-custom="${it.msg('about.logoCustom')}"
-         data-note-too-big="${it.msg('about.logoTooBig')}"
-         data-note-no-room="${it.msg('about.logoNoRoom')}">${it.msg('about.logoDefault')}</p>
-      <div class="jenkins-buttons-row">
-        <label class="jenkins-button" for="bv-logo-file">${it.msg('about.upload')}</label>
-        <input class="bv-logo-file" id="bv-logo-file" type="file"
-               accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"/>
-        <button class="jenkins-button jenkins-button--tertiary" type="button" data-bv-logo-clear="">
-          ${it.msg('about.restore')}
-        </button>
-      </div>
-    </l:card>
-
-    <l:card title="${it.msg('about.support')}">
-      <p class="bv-muted">${it.msg('about.star')}</p>
-      <div class="jenkins-buttons-row">
-        <a class="jenkins-button" href="${repo}" target="_blank" rel="noopener noreferrer">
-          ${it.msg('about.starGo')}<span aria-hidden="true"> ↗</span>
-        </a>
-      </div>
-    </l:card>
   </div>
 </j:jelly>

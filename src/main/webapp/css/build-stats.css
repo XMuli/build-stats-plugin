@@ -991,57 +991,34 @@
 /* ---------------------------------------------------------------- about */
 
 .bv-about {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  grid-template-areas:
-    "id logo"
-    "info support";
-  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
   margin-top: 0.25rem;
-}
-
-.bv-about > :nth-child(1) {
-  grid-area: id;
-}
-
-.bv-about > :nth-child(2) {
-  grid-area: info;
-}
-
-.bv-about > :nth-child(3) {
-  grid-area: logo;
-}
-
-.bv-about > :nth-child(4) {
-  grid-area: support;
 }
 
 .bv-about > .jenkins-card {
   margin: 0;
 }
 
-@media (max-width: 1080px) {
-  .bv-about {
-    grid-template-areas:
-      "id"
-      "info"
-      "logo"
-      "support";
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 .bv-about .jenkins-card__content {
+  align-items: stretch;
   padding: 1.25rem;
+  text-align: start;
 }
 
-.bv-about .jenkins-card__content.bv-about__id {
+.bv-about__id {
   align-items: center;
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
   gap: 1.125rem;
   justify-content: flex-start;
   text-align: start;
+}
+
+.bv-about__star {
+  margin-left: auto;
 }
 
 .bv-about__logo {
@@ -1069,20 +1046,46 @@
 }
 
 .bv-about__meta {
+  border-top: 1px solid var(--panel-border-color, #e4e9ee);
   display: grid;
-  gap: 0.6rem 1.5rem;
-  grid-template-columns: max-content minmax(0, 1fr);
-  margin: 0;
+  gap: 1rem 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.25rem 0 0;
+  padding-top: 1.125rem;
 }
 
 .bv-about__meta dt {
   color: var(--text-color-secondary);
+  font-size: 0.75rem;
   margin: 0;
 }
 
 .bv-about__meta dd {
-  margin: 0;
+  margin: 0.3rem 0 0;
   overflow-wrap: anywhere;
+}
+
+.bv-about__repo {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.bv-about__repo svg {
+  fill: currentColor;
+  flex: none;
+  height: 1rem;
+  width: 1rem;
+}
+
+@media (max-width: 800px) {
+  .bv-about__meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bv-about__star {
+    margin-left: 0;
+  }
 }
 
 .bv-lang {
