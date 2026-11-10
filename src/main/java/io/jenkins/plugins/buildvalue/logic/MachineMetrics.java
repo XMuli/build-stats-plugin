@@ -60,12 +60,9 @@ public final class MachineMetrics {
         slow.start();
     }
 
+    /** Sampling stays at one second. {@code raw} is ignored so an old page cannot select five. */
     public static void pace(String raw) {
-        if ("1".equals(raw)) {
-            paceMs = 1000;
-        } else if ("5".equals(raw)) {
-            paceMs = 5000;
-        }
+        paceMs = 1000;
     }
 
     public static String json() {

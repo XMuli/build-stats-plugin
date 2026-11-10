@@ -101,7 +101,7 @@ public final class Heatmap {
                 max = count;
             }
         }
-        return new Grid(period, List.copyOf(days), max, total, blank, counts);
+        return new Grid(period, List.copyOf(days), max, total, blank, counts, today);
     }
 
     /** A selectable heatmap period. */
@@ -180,14 +180,23 @@ public final class Heatmap {
         public final int total;
         public final int blank;
         private final Map<LocalDate, Integer> counts;
+        private final LocalDate today;
 
-        Grid(Period period, List<Day> days, int max, int total, int blank, Map<LocalDate, Integer> counts) {
+        Grid(
+                Period period,
+                List<Day> days,
+                int max,
+                int total,
+                int blank,
+                Map<LocalDate, Integer> counts,
+                LocalDate today) {
             this.period = period;
             this.days = days;
             this.max = max;
             this.total = total;
             this.blank = blank;
             this.counts = counts;
+            this.today = today;
         }
 
         public Period getPeriod() {
@@ -275,11 +284,18 @@ public final class Heatmap {
             return List.copyOf(labels);
         }
 
-        /** Mean builds per weekday across the period, ignoring Saturdays and Sundays. */
+        /**
+         * Mean builds per actual weekday. Monday to Friday on or before today are the denominator,
+         * including weekdays that had no builds. Saturday, Sunday and any day still in the future
+         * are left out of both the count and the total.
+         */
         public String weekdayAverage() {
             int counted = 0;
             int sum = 0;
             for (Day day : days) {
+                if (day.date.isAfter(today)) {
+                    continue;
+                }
                 int dow = day.date.getDayOfWeek().getValue();
                 if (dow >= 6) {
                     continue;

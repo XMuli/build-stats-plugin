@@ -154,18 +154,26 @@
  * narrow layout still wraps.
  */
 .jenkins-app-bar__controls > .jenkins-checkbox,
-.jenkins-app-bar__controls > .jenkins-select {
+.jenkins-app-bar__controls > .jenkins-select,
+.bv-heat .jenkins-card__controls > .jenkins-select {
   flex: 0 0 auto;
-  width: auto;
+  width: max-content;
 }
 
 .jenkins-app-bar__controls .jenkins-checkbox label {
   white-space: nowrap;
 }
 
-.jenkins-app-bar__controls .jenkins-select__input {
-  max-width: none;
-  width: auto;
+/*
+ * The chevron is an absolutely positioned mask, 13px in from the right of the wrapper. A select
+ * shrunk to its text draws that mask on top of the last glyphs. The extra padding is the room
+ * the arrow used to have when the control was a full form column.
+ */
+.jenkins-app-bar__controls .jenkins-select__input,
+.bv-heat .jenkins-select__input {
+  max-width: none !important;
+  padding-right: 2.25rem;
+  width: auto !important;
 }
 
 /* ---------------------------------------------------------------- page body */
@@ -265,15 +273,33 @@
 
 /* ---------------------------------------------------------------- heatmap */
 
+.bv-heat,
+.bv-heat .jenkins-card__content,
+.bv-heat__scroll {
+  min-width: 0;
+}
+
 .bv-heat__scroll {
   /* The grid is wider than the card on a narrow viewport; scroll it rather than squash the cells. */
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  width: 100%;
 }
 
 .bv-heat__grid {
   border-collapse: separate;
   border-spacing: 3px;
+  /* Fill the card. A fixed 11px cell left the whole year sitting in the top-left corner once the
+     card grew past the grid. The label column keeps its own width; the weeks share the rest. */
+  /* About 11px per week. Narrower than this, the card scrolls instead of flattening the cells. */
+  min-width: 49rem;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.bv-heat__grid > thead > tr > :first-child,
+.bv-heat__day {
+  width: 2.25rem;
 }
 
 .bv-heat__month,
@@ -286,18 +312,30 @@
 }
 
 .bv-heat__day {
-  /* User-agent table padding plus the default line box made labelled rows almost twice as tall
-     as the empty ones, so the seven bands were not a regular grid. */
-  line-height: 11px;
-  padding: 0 0.5rem 0 0;
+  /* The row height comes from the cell, not from this label's line box. A fixed line-height
+     made short columns taller than they were wide. */
+  line-height: 1;
+  padding: 0 0.35rem 0 0;
+  vertical-align: middle;
 }
 
 .bv-heat__cell,
 .bv-heat__pad {
-  border-radius: 2px;
-  height: 11px;
+  border-radius: 3px;
+  font-size: 0;
+  height: auto;
+  line-height: 0;
   padding: 0;
-  width: 11px;
+  width: auto;
+}
+
+/* 1.25 × as wide as tall, the same proportion as the design. Percentage padding tracks the
+   column width, which a table cell's own aspect-ratio does not. */
+.bv-heat__grid .bv-heat__cell::before,
+.bv-heat__grid .bv-heat__pad::before {
+  content: "";
+  display: block;
+  padding-bottom: 80%;
 }
 
 /*
@@ -307,6 +345,14 @@
  */
 .bv-heat__legend .bv-heat__cell {
   display: inline-block;
+  height: 12px;
+  width: 12px;
+}
+
+.bv-heat__legend .bv-heat__cell::before {
+  content: none;
+  display: none;
+  padding: 0;
 }
 
 /*
@@ -340,9 +386,17 @@
   display: flex;
   flex-wrap: wrap;
   font-size: 0.8125rem;
-  gap: 0.75rem;
+  gap: 0.75rem 1.5rem;
   justify-content: space-between;
   margin-top: 0.5rem;
+}
+
+.bv-heat__meta {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1.75rem;
+  white-space: nowrap;
 }
 
 .bv-heat__legend {
@@ -352,11 +406,12 @@
 }
 
 .bv-heat__stats {
-  display: grid;
-  gap: 0 0.5rem;
-  grid-template-columns: auto auto;
-  margin: 0.75rem 0 0;
-  width: fit-content;
+  align-items: baseline;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin: 0;
+  width: auto;
 }
 
 .bv-heat__stats dt {
@@ -367,7 +422,7 @@
 .bv-heat__stats dd {
   font-size: 0.8125rem;
   font-weight: 600;
-  margin: 0;
+  margin: 0 1.5rem 0 0;
 }
 
 /* ---------------------------------------------------------------- status plate */
@@ -383,16 +438,11 @@
   padding: 0.75rem;
 }
 
-.bv-plate__top {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
 .bv-plate__kicker {
   color: var(--text-color-secondary);
   font-size: 0.75rem;
   font-weight: 600;
+  margin-left: auto;
 }
 
 /*
@@ -426,6 +476,13 @@
   max-width: 100%;
   object-fit: contain;
   width: auto;
+}
+
+/* Beside the heatmap the picture uses the height freed by moving the kicker off the top. */
+.bv-head .bv-plate__img {
+  height: 100%;
+  max-height: none;
+  width: 100%;
 }
 
 .bv-plate__live {
@@ -539,7 +596,25 @@
 .bv-board {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  /* Three charts across. auto-fit with a 20rem minimum only fitted two once the
+     sidebar took its share of the row. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bv-board > .jenkins-card {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .bv-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .bv-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .bv-pair {
@@ -553,6 +628,7 @@
   display: block;
   height: auto;
   max-width: 100%;
+  width: 100%;
 }
 
 .bv-chart__note {
@@ -606,52 +682,156 @@
 
 /* ---------------------------------------------------------------- this computer */
 
-.bv-board--live {
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+/* Four across, like the design, then two, then one. The trends board stays at three. */
+.bv-board.bv-board--live {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1150px) {
+  .bv-board.bv-board--live {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .bv-board.bv-board--live {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bv-gpu-slot {
+  display: contents;
+}
+
+.bv-board--live > .bv-live {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bv-live > .jenkins-card__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
 }
 
 .bv-live__value {
   display: block;
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 650;
+  line-height: 1.25;
 }
 
 .bv-live__sub {
   color: var(--text-color-secondary);
   font-size: 0.8125rem;
-  margin: 0.125rem 0 0.5rem;
+  margin: 0.25rem 0 0.5rem;
 }
 
 .bv-spark {
+  aspect-ratio: 320 / 96;
   display: block;
-  height: 60px;
-  margin-top: 0.5rem;
+  height: auto;
+  margin-top: auto;
+  order: 1;
   width: 100%;
 }
 
 .bv-live-pill {
-  background: color-mix(in srgb, var(--accent-color, #3ca2ea) 15%, transparent);
-  border-radius: 1em;
-  color: var(--accent-color, #3ca2ea);
+  align-items: center;
+  background: color-mix(in srgb, var(--success-color, #1ea64b) 16%, transparent);
+  border-radius: 100px;
+  color: var(--success-color, #1ea64b);
+  display: inline-flex;
   font-size: 0.8125rem;
-  padding: 0.125rem 0.625rem;
+  font-weight: 650;
+  padding: 0.25rem 0.625rem;
   white-space: nowrap;
+}
+
+[data-live="cpu"] > .jenkins-card__title {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.bv-cpu-switch {
+  border: 1px solid var(--panel-border-color, #e4e9ee);
+  border-radius: 6px;
+  display: inline-flex;
+  margin-left: auto;
+  overflow: hidden;
+}
+
+.bv-cpu-switch button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.bv-cpu-switch button + button {
+  border-left: 1px solid var(--panel-border-color, #e4e9ee);
+}
+
+.bv-cpu-switch button[aria-pressed="true"] {
+  background: var(--accent-color, #0b6aa2);
+  color: var(--primary-button-text-color, #fff);
+}
+
+.bv-cpu-switch button:focus-visible {
+  outline: 2px solid var(--focus-input-border, var(--accent-color, #0b6aa2));
+  outline-offset: -2px;
+}
+
+/* The per-core grid needs the whole row. Sixteen charts do not fit in one quarter of it. */
+.bv-live--cores {
+  grid-column: 1 / -1;
+}
+
+.bv-live--cores .bv-live__value,
+.bv-live--cores .bv-spark {
+  display: none;
 }
 
 .bv-core-grid {
   display: grid;
-  gap: 0.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .bv-core-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The class sets display, which would otherwise beat the hidden attribute and show every core. */
+.bv-core-grid[hidden] {
+  display: none;
 }
 
 .bv-core {
+  border: 1px solid var(--panel-border-color, #e4e9ee);
+  border-radius: 8px;
   font-size: 0.75rem;
+  padding: 0.5rem 0.75rem 0.25rem;
+}
+
+.bv-core b {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 650;
 }
 
 .bv-core svg {
   display: block;
-  height: 24px;
+  height: 28px;
+  margin-top: 0.25rem;
   width: 100%;
 }
 
@@ -685,59 +865,170 @@
 
 /* ---------------------------------------------------------------- about */
 
-.bv-about__id .jenkins-card__content {
-  align-items: center;
-  display: flex;
-  /* Jenkins lays card content out as a column. This card is the logo beside the name. */
-  flex-direction: row;
-  gap: 1rem;
-  justify-content: flex-start;
+.bv-about {
+  margin-top: 0.75rem;
+  /* The main column is as wide as the window. This page is one short record, so the card
+     stops at a reading width instead of stretching the GitHub button to the far edge. */
+  max-width: 46rem;
 }
 
-/* --invert pins a button row to the trailing edge, which is the form-footer pattern.
-   On this page the actions sit under the text, at the start of the card. */
-#main-panel .jenkins-buttons-row--invert {
-  justify-content: flex-start;
+/* Jenkins lays card content out as a column and may add a gap. This card spaces itself. */
+.bv-about .jenkins-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 1.25rem;
+}
+
+.bv-about__top {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.bv-about__id {
+  align-items: center;
+  column-gap: 1rem;
+  display: grid;
+  flex: 1 1 16rem;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  min-width: 0;
 }
 
 .bv-about__logo {
-  border-radius: var(--form-input-border-radius, 6px);
-  flex: 0 0 auto;
-  height: 72px;
+  border-radius: 0.5rem;
+  height: 4.5rem;
   object-fit: cover;
-  width: 72px;
+  width: 4.5rem;
 }
 
 .bv-about__name {
   font-size: 1.125rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.bv-about__id p {
+  margin: 0.25rem 0 0;
+}
+
+.bv-lang {
+  border: 1px solid var(--panel-border-color, #e4e9ee);
+  border-radius: 6px;
+  display: inline-flex;
+  margin-left: auto;
+  overflow: hidden;
+}
+
+.bv-lang button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.bv-lang button + button {
+  border-left: 1px solid var(--panel-border-color, #e4e9ee);
+}
+
+.bv-lang button[aria-pressed="true"] {
+  background: var(--accent-color, #0b6aa2);
+  color: var(--primary-button-text-color, #fff);
+}
+
+.bv-lang button:focus-visible {
+  outline: 2px solid var(--focus-input-border, var(--accent-color, #0b6aa2));
+  outline-offset: -2px;
+}
+
+.bv-about__github {
+  margin-left: 0.75rem;
+}
+
+.bv-about__github svg {
+  fill: currentColor;
+  height: 1rem;
+  width: 1rem;
+}
+
+.bv-about__logo-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.625rem;
+  margin-top: 0.875rem;
+}
+
+.bv-about__logo-row p {
+  margin: 0 0.375rem 0 0;
+}
+
+.bv-about__facts {
+  border-top: 1px solid var(--panel-border-color, #e4e9ee);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem 3rem;
+  margin: 1rem 0 0;
+  padding-top: 1rem;
+}
+
+.bv-about__facts > div {
+  min-width: min(100%, 11rem);
+}
+
+.bv-about__facts dt {
+  color: var(--text-color-secondary);
+  font-weight: 400;
   margin: 0 0 0.25rem;
 }
 
-.bv-about__meta {
-  display: grid;
-  gap: 0.375rem 1.5rem;
-  grid-template-columns: auto 1fr;
+.bv-about__facts dd {
   margin: 0;
 }
 
-.bv-about__meta dt {
+.bv-about__version,
+.bv-about__build {
+  font-family: var(--font-family-mono, ui-monospace, "Cascadia Mono", Consolas, monospace);
+  overflow-wrap: anywhere;
+}
+
+.bv-about__version {
+  font-size: 0.8125rem;
+}
+
+.bv-about__build {
   color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  margin-top: 0.125rem;
 }
 
-.bv-about__meta dd {
-  margin: 0;
+.bv-about__note {
+  border-top: 1px solid var(--panel-border-color, #e4e9ee);
+  margin: 1rem 0 0;
+  max-width: 62ch;
+  padding-top: 1rem;
 }
 
-/* The file input is reached through its label, which is styled as a Jenkins button. */
-.bv-logo-file {
+/* The file input is reached through its label, which is styled as a Jenkins button.
+   Jenkins' own file-input rules are specific enough to put the native widget back on screen. */
+#main-panel input.bv-logo-file {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   height: 1px;
-  opacity: 0;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
   position: absolute;
+  white-space: nowrap;
   width: 1px;
 }
 
-/* Keep the focus ring visible when the hidden input takes focus from its label. */
-.bv-logo-file:focus-visible + .jenkins-button,
+/* Keep the focus ring on the upload label when the hidden input takes focus from it.
+   The next control is Restore, so an adjacent-sibling ring would land on the wrong button. */
 .jenkins-button:has(+ .bv-logo-file:focus-visible) {
   outline: 2px solid var(--focus-input-border, var(--accent-color, #3ca2ea));
   outline-offset: 2px;
@@ -747,29 +1038,239 @@
 
 .bv-home {
   bottom: 1rem;
-  max-width: 15rem;
   position: fixed;
   right: 1rem;
-  z-index: 100;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), left 0.5s cubic-bezier(0.22, 1, 0.36, 1), top 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 15rem;
+  z-index: 1000;
 }
 
 .bv-home[hidden] {
-  display: none;
+  display: none !important;
+}
+
+.bv-home .bv-plate {
+  margin: 0;
+  padding: 0.5rem 0.5rem 0.35rem;
+}
+
+.bv-home .bv-plate__img {
+  height: auto;
+  max-height: 12.5rem;
+  width: 100%;
+}
+
+.bv-home .bv-plate__job {
+  font-size: 0.9375rem;
+}
+
+.bv-home .bv-plate__build,
+.bv-home .bv-plate__kicker {
+  font-size: 0.8125rem;
 }
 
 .bv-home__tools {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.125rem;
   position: absolute;
-  right: 0.5rem;
-  top: 0.5rem;
+  right: 0.3rem;
+  top: 0.3rem;
+  z-index: 2;
 }
 
-.bv-home__open {
+.bv-home__tools .jenkins-button {
+  background: color-mix(in srgb, var(--background, #fff) 90%, transparent);
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0 0.3rem;
+}
+
+.bv-home__reopen[hidden] {
+  display: none !important;
+}
+
+.bv-home--dragging {
+  cursor: grabbing;
+  transition: none;
+  user-select: none;
+}
+
+/* Closed: only the small button that brings the card back. */
+.bv-home--closed {
+  width: auto;
+}
+
+.bv-home--closed .bv-plate,
+.bv-home--closed .bv-home__tools {
+  display: none;
+}
+
+/* Parked on an edge: the same rounded card, with only a slice left on screen. */
+.bv-home--peek {
+  cursor: pointer;
+}
+
+.bv-home--peek:not(.bv-home--left) {
+  transform: translateX(calc(100% - 7rem));
+}
+
+.bv-home--peek.bv-home--left {
+  transform: translateX(calc(-100% + 7rem));
+}
+
+.bv-home--peek:not(.bv-home--left) .bv-plate {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.bv-home--peek.bv-home--left .bv-plate {
+  border-bottom-left-radius: 0;
+  border-top-left-radius: 0;
+}
+
+/* Preview dock styles (?dock=a|b|c). A separate widget, not a crop of the open card. */
+.bv-dock[hidden] {
+  display: none !important;
+}
+
+.bv-home--peek.bv-dock--a,
+.bv-home--peek.bv-dock--b,
+.bv-home--peek.bv-dock--c {
+  height: auto;
+  right: 0 !important;
+  left: auto !important;
+  transform: none;
+  width: auto;
+}
+
+.bv-home--peek.bv-dock--a.bv-home--left,
+.bv-home--peek.bv-dock--b.bv-home--left,
+.bv-home--peek.bv-dock--c.bv-home--left {
+  left: 0 !important;
+  right: auto !important;
+}
+
+.bv-home--peek.bv-dock--a .bv-plate,
+.bv-home--peek.bv-dock--a .bv-home__tools,
+.bv-home--peek.bv-dock--b .bv-plate,
+.bv-home--peek.bv-dock--b .bv-home__tools,
+.bv-home--peek.bv-dock--c .bv-plate,
+.bv-home--peek.bv-dock--c .bv-home__tools {
+  display: none;
+}
+
+.bv-dock {
+  align-items: center;
+  background: var(--card-background, var(--background, #fff));
+  border: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--text-color, #000) 16%, transparent);
+  color: var(--text-color, #1a1d24);
+}
+
+.bv-dock__img {
   display: block;
+  object-fit: cover;
+}
+
+.bv-dock__state {
+  border-radius: 999px;
   font-size: 0.75rem;
-  margin-top: 0.25rem;
-  text-align: center;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+}
+
+.bv-home--peek.bv-dock--a.bv-home--reach,
+.bv-home--peek.bv-dock--b.bv-home--reach,
+.bv-home--peek.bv-dock--c.bv-home--reach {
+  width: 15rem;
+}
+
+.bv-home--peek.bv-dock--a.bv-home--reach .bv-plate,
+.bv-home--peek.bv-dock--b.bv-home--reach .bv-plate,
+.bv-home--peek.bv-dock--c.bv-home--reach .bv-plate,
+.bv-home--peek.bv-dock--a.bv-home--reach .bv-home__tools,
+.bv-home--peek.bv-dock--b.bv-home--reach .bv-home__tools,
+.bv-home--peek.bv-dock--c.bv-home--reach .bv-home__tools {
+  display: flex;
+}
+
+.bv-home--peek.bv-dock--a.bv-home--reach .bv-dock,
+.bv-home--peek.bv-dock--b.bv-home--reach .bv-dock,
+.bv-home--peek.bv-dock--c.bv-home--reach .bv-dock {
+  display: none !important;
+}
+
+.bv-home--peek.bv-dock--a .bv-dock {
+  border-radius: 12px 0 0 12px;
+  border-right: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.55rem 0.45rem;
+  width: 4.25rem;
+}
+
+.bv-home--peek.bv-dock--a .bv-dock__img {
+  border-radius: 8px;
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.bv-home--peek.bv-dock--a .bv-dock__num {
+  display: none;
+}
+
+.bv-home--peek.bv-dock--b .bv-dock {
+  border-radius: 999px 0 0 999px;
+  border-right: 0;
+  flex-direction: row;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.35rem;
+}
+
+.bv-home--peek.bv-dock--b .bv-dock__img {
+  border-radius: 50%;
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+.bv-home--peek.bv-dock--b .bv-dock__num {
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.bv-home--peek.bv-dock--c .bv-dock {
+  border-radius: 12px 0 0 12px;
+  border-right: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  width: 6.5rem;
+}
+
+.bv-home--peek.bv-dock--c .bv-dock__img {
+  border-radius: 8px;
+  height: 4rem;
+  width: 100%;
+}
+
+.bv-home--peek.bv-dock--c .bv-dock__num {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.bv-home--peek.bv-dock--a.bv-home--left .bv-dock,
+.bv-home--peek.bv-dock--c.bv-home--left .bv-dock {
+  border-radius: 0 12px 12px 0;
+  border-left: 0;
+  border-right: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
+}
+
+.bv-home--peek.bv-dock--b.bv-home--left .bv-dock {
+  border-radius: 0 999px 999px 0;
+  border-left: 0;
+  border-right: 1px solid var(--card-border-color, var(--panel-border-color, #e4e9ee));
+  padding: 0.35rem 0.35rem 0.35rem 0.75rem;
 }
 
 /* Only the home page shows the card when the preference is "home only". */

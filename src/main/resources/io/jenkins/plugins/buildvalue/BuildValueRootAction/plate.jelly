@@ -9,10 +9,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <j:if test="${sign.present()}">
     <figure class="jenkins-card bv-plate">
-      <div class="bv-plate__top">
-        <span class="bv-plate__kicker">${sign.kicker()}</span>
-      </div>
-
       <div class="bv-plate__art">
         <j:if test="${sign.live}">
           <span class="bv-plate__live">${sign.stateText()}</span>
@@ -44,6 +40,7 @@
           </j:choose>
           <!-- Word and colour both carry the state, so colour is never the only cue. -->
           <span class="bv-plate__state bv-state--${sign.stateClass()}">${sign.stateText()}</span>
+          <span class="bv-plate__kicker">${sign.kicker()}</span>
         </span>
       </figcaption>
     </figure>

@@ -242,4 +242,26 @@ class HeatmapTest {
         assertEquals(
                 String.format(java.util.Locale.ROOT, "%.2f", expected), grid.weekdayAverage());
     }
+
+    @Test
+    void weekdayAverageSkipsFutureWeekdays() {
+        // Friday. The rest of 2026 is still ahead, so those weekdays are not actual working days.
+        LocalDate today = LocalDate.of(2026, 11, 6);
+        List<BuildSample> samples = new ArrayList<>();
+        samples.addAll(buildsOn(
+                UTC, LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 3), LocalDate.of(2026, 10, 31)));
+        // A Monday that has not happened yet must not raise the numerator or the denominator.
+        samples.addAll(buildsOn(UTC, LocalDate.of(2026, 12, 7)));
+        Heatmap heatmap = Heatmap.of(samples, at(today, UTC), UTC);
+        Heatmap.Grid grid = heatmap.grid(heatmap.period("2026"));
+
+        int weekdays = 0;
+        for (LocalDate day = LocalDate.of(2026, 1, 1); !day.isAfter(today); day = day.plusDays(1)) {
+            if (day.getDayOfWeek().getValue() < 6) {
+                weekdays++;
+            }
+        }
+        // Saturday 2026-10-31 is in the samples and is not one of the two weekday builds.
+        assertEquals(String.format(java.util.Locale.ROOT, "%.2f", 2.0 / weekdays), grid.weekdayAverage());
+    }
 }

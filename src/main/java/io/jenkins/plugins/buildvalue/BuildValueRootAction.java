@@ -159,6 +159,14 @@ public class BuildValueRootAction implements RootAction {
         return Texts.message(key);
     }
 
+    /** True when this response is in Chinese: the visitor's choice, else Jenkins' locale. */
+    public boolean isChinese() {
+        var request = org.kohsuke.stapler.Stapler.getCurrentRequest2();
+        return request != null
+                && request.getLocale() != null
+                && "zh".equals(request.getLocale().getLanguage());
+    }
+
     /** Probe: same body under a different name, to see whether the name is what fails. */
     public String label(String key) {
         return Texts.message(key);
@@ -202,6 +210,34 @@ public class BuildValueRootAction implements RootAction {
         } catch (RuntimeException ex) {
             return "";
         }
+    }
+
+    /**
+     * Splits {@code 999999-SNAPSHOT (private-ee3ab155-Venn)} into the version and the qualifier.
+     * A version with no parenthetical qualifier comes back with an empty second line.
+     */
+    static String[] versionLines(String version) {
+        if (version == null || version.isEmpty()) {
+            return new String[] {"", ""};
+        }
+        int open = version.lastIndexOf(" (");
+        if (open > 0 && version.endsWith(")")) {
+            return new String[] {
+                version.substring(0, open),
+                version.substring(open + 2, version.length() - 1)
+            };
+        }
+        return new String[] {version, ""};
+    }
+
+    /** Installed version without a parenthetical build qualifier. */
+    public String getPluginVersionName() {
+        return versionLines(getPluginVersion())[0];
+    }
+
+    /** Build qualifier Jenkins appends in parentheses, or empty when there is none. */
+    public String getPluginVersionBuild() {
+        return versionLines(getPluginVersion())[1];
     }
 
     /** The heatmap period in the query string, or null when the default applies. */

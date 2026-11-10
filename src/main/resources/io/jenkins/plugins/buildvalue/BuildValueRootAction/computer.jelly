@@ -8,14 +8,7 @@
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <l:app-bar title="${it.msg('host.title')}" subtitle="${it.msg('host.subtitle')}">
-    <span class="bv-live-pill" data-bv-live-status="">${it.msg('host.offline')}</span>
-    <div class="jenkins-select">
-      <label class="jenkins-visually-hidden" for="bv-pace">${it.msg('host.pace')}</label>
-      <select class="jenkins-select__input" id="bv-pace" data-bv-pace="">
-        <option value="1">${it.msg('host.pace1')}</option>
-        <option value="5" selected="selected">${it.msg('host.pace5')}</option>
-      </select>
-    </div>
+    <span class="bv-live-pill" data-bv-live-status="" data-bv-live-on="${it.msg1('host.live', '1')}">${it.msg('host.offline')}</span>
   </l:app-bar>
 
   <j:choose>
@@ -26,13 +19,17 @@
       <h2 class="bv-h2">${it.msg('host.resources')}</h2>
       <div class="bv-board bv-board--live">
         <article class="jenkins-card bv-live" data-live="cpu">
-          <div class="jenkins-card__title">${it.msg('host.cpu')}</div>
+          <div class="jenkins-card__title">
+            ${it.msg('host.cpu')}
+            <!-- Two real buttons, so Enter and Space both work and the pressed one reports its state. -->
+            <div class="bv-cpu-switch" role="group" aria-label="${it.msg('host.cpu')}">
+              <button type="button" data-bv-cpu-mode="total" aria-pressed="true">${it.msg('host.total')}</button>
+              <button type="button" data-bv-cpu-mode="cores" aria-pressed="false">${it.msg('host.cores')}</button>
+            </div>
+          </div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub" data-bv-cpu-meta="">${it.msg('host.usage')}</p>
-            <!-- A real button: Enter and Space both work, and it reports its state. -->
-            <button class="jenkins-button jenkins-button--tertiary bv-core-toggle" type="button"
-                    data-bv-cpu-toggle="" aria-pressed="false">${it.msg('host.cores')}</button>
+            <div class="bv-live__sub" data-bv-cpu-meta="">${it.msg('host.usage')}</div>
             <div class="bv-core-grid" hidden="hidden"/>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
@@ -42,7 +39,7 @@
           <div class="jenkins-card__title">${it.msg('host.mem')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.usage')}</p>
+            <div class="bv-live__sub">${it.msg('host.usage')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
         </article>
@@ -51,7 +48,7 @@
           <div class="jenkins-card__title">${it.msg('host.disk')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.usage')}</p>
+            <div class="bv-live__sub">${it.msg('host.usage')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
             <!-- Per-volume usage, filled from the same sample. -->
             <div class="bv-disk-list"/>
@@ -68,7 +65,7 @@
           <div class="jenkins-card__title">${it.msg('host.down')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.incoming')}</p>
+            <div class="bv-live__sub">${it.msg('host.incoming')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
         </article>
@@ -76,7 +73,7 @@
           <div class="jenkins-card__title">${it.msg('host.up')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.outgoing')}</p>
+            <div class="bv-live__sub">${it.msg('host.outgoing')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
         </article>
@@ -84,7 +81,7 @@
           <div class="jenkins-card__title">${it.msg('host.read')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.perSecond')}</p>
+            <div class="bv-live__sub">${it.msg('host.perSecond')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
         </article>
@@ -92,7 +89,7 @@
           <div class="jenkins-card__title">${it.msg('host.write')}</div>
           <div class="jenkins-card__content">
             <strong class="bv-live__value">--</strong>
-            <p class="bv-live__sub">${it.msg('host.perSecond')}</p>
+            <div class="bv-live__sub">${it.msg('host.perSecond')}</div>
             <svg class="bv-spark" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"/>
           </div>
         </article>

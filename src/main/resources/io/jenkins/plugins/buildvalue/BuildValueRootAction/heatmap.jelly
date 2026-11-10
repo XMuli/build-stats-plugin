@@ -78,7 +78,15 @@
       </div>
 
       <div class="bv-heat__foot">
-        <span class="bv-heat__count">${it.msg1('heat.withBuilds', heat.withBuilds)}</span>
+        <div class="bv-heat__meta">
+          <span class="bv-heat__count">${it.msg1('heat.withBuilds', heat.withBuilds)}</span>
+          <dl class="bv-heat__stats">
+            <dt>${it.msg('heat.days')}</dt><dd>${heat.days.size()}</dd>
+            <dt>${it.msg('heat.blank')}</dt><dd>${heat.blank}</dd>
+            <dt>${it.msg('heat.max')}</dt><dd>${heat.max}</dd>
+            <dt>${it.msg('heat.avg')}</dt><dd>${heat.weekdayAverage()}</dd>
+          </dl>
+        </div>
         <span class="bv-heat__legend">
           <span>${it.msg('heat.legendLess')}</span>
           <i class="bv-heat__cell bv-heat__cell--0"/>
@@ -89,13 +97,6 @@
           <span>${it.msg('heat.legendMore')}</span>
         </span>
       </div>
-
-      <dl class="bv-heat__stats">
-        <dt>${it.msg('heat.days')}</dt><dd>${heat.days.size()}</dd>
-        <dt>${it.msg('heat.blank')}</dt><dd>${heat.blank}</dd>
-        <dt>${it.msg('heat.max')}</dt><dd>${heat.max}</dd>
-        <dt>${it.msg('heat.avg')}</dt><dd>${heat.weekdayAverage()}</dd>
-      </dl>
     </div>
   </section>
 </j:jelly>

@@ -204,7 +204,7 @@
   });
   var coreHistory = [];
   var gpuHistory = [];
-  var pace = 5;
+  var pace = 1;
   var timer = 0;
   var sampling = false;
   var activityDefaults = null;
@@ -488,11 +488,25 @@
       }
       // The CPU card's sub line carries the processor description instead, so it is left alone
       // unless a caller passes replacement text.
-      var note = sub == null ? null : card.querySelector(".bv-live__sub");
-      if (note) {
-        note.textContent = sub;
+      if (sub != null) {
+        setNote(card.querySelector(".bv-live__sub"), sub);
       }
     });
+  }
+
+  /*
+   * Replacing a subtitle must not take the sparkline with it. An omitted </p> makes the following
+   * <svg> a child of the subtitle, and assigning textContent then deletes the chart.
+   */
+  function setNote(note, text) {
+    if (!note) {
+      return;
+    }
+    var spark = note.querySelector(".bv-spark");
+    if (spark && note.parentElement) {
+      note.parentElement.appendChild(spark);
+    }
+    note.textContent = text;
   }
 
   /** Processor make, core counts and clock, which only the sample knows. Units, not words. */
@@ -514,7 +528,7 @@
       return;
     }
     all("[data-bv-cpu-meta]").forEach(function (note) {
-      note.textContent = parts.join(" · ");
+      setNote(note, parts.join(" · "));
     });
   }
 
@@ -541,9 +555,8 @@
 
   /*
    * The sampler pill. Its offline wording is what the server already rendered into it, so it is
-   * read once and restored rather than written from here. While sampling, it shows the selected
-   * refresh interval, which is also server-rendered text — this file has no string of its own to
-   * put on screen. (host.live exists in the bundle but no element exposes it; see the report.)
+   * read once and restored rather than written from here. While sampling, it shows the one-second
+   * label the server put on data-bv-live-on. This file has no string of its own to put on screen.
    */
   var offlineLabel = null;
 
@@ -552,9 +565,8 @@
       if (offlineLabel == null) {
         offlineLabel = pill.textContent;
       }
-      var paceSelect = document.querySelector("[data-bv-pace]");
-      var chosen = paceSelect && paceSelect.selectedOptions[0];
-      pill.textContent = live && chosen ? chosen.textContent.trim() : offlineLabel;
+      var on = pill.getAttribute("data-bv-live-on");
+      pill.textContent = live && on ? on : offlineLabel;
     });
   }
 
@@ -622,16 +634,14 @@
     timer = window.setInterval(tick, pace * 1000);
   }
 
-  function choosePace(raw) {
-    pace = String(raw) === "1" ? 1 : 5;
-    startSampling();
-  }
-
+  /** Total chart, or one chart per logical processor. The pressed button is the one on screen. */
   function setCpuCores(on) {
-    all("[data-bv-cpu-toggle]").forEach(function (button) {
-      // aria-pressed is the only thing telling a screen reader which view is showing, so it is
-      // kept in step with the grid rather than set once.
-      button.setAttribute("aria-pressed", on ? "true" : "false");
+    all("[data-live='cpu']").forEach(function (card) {
+      card.classList.toggle("bv-live--cores", on);
+    });
+    all("[data-bv-cpu-mode]").forEach(function (button) {
+      var cores = button.getAttribute("data-bv-cpu-mode") === "cores";
+      button.setAttribute("aria-pressed", String(cores === on));
     });
     all(".bv-core-grid").forEach(function (grid) {
       grid.hidden = !on;
@@ -736,34 +746,7 @@
     });
   }
 
-  /* ------------------------------------------------------------------ 5. star bar
-   *
-   * The appeal for a GitHub star is dismissed for good once dismissed, per browser. The card
-   * carries the id, so the whole card goes rather than just the button.
-   */
-
-  var STAR_KEY = "bv-star-hide";
-
-  function starCard(from) {
-    return document.getElementById("bv-star") || (from && from.closest(".jenkins-card"));
-  }
-
-  function applyStar() {
-    var card = starCard(null);
-    if (card && readStore(STAR_KEY) === "1") {
-      card.hidden = true;
-    }
-  }
-
-  function dismissStar(button) {
-    var card = starCard(button);
-    if (card) {
-      card.hidden = true;
-    }
-    writeStore(STAR_KEY, "1");
-  }
-
-  /* ------------------------------------------------------------------ 6. home-page card
+  /* ------------------------------------------------------------------ 5. home-page card
    *
    * The card the page decorator adds, on the Jenkins home page and on job pages. Its placement and
    * its open / docked / closed state belong to home-card.js, which owns the drag, the clamping to
@@ -821,12 +804,6 @@
       return;
     }
 
-    var paceSelect = target.closest("[data-bv-pace]");
-    if (paceSelect) {
-      choosePace(paceSelect.value);
-      return;
-    }
-
     var logo = target.closest(".bv-logo-file");
     if (logo) {
       acceptLogo(logo);
@@ -839,9 +816,19 @@
       return;
     }
 
-    var cores = target.closest("[data-bv-cpu-toggle]");
-    if (cores) {
-      setCpuCores(cores.getAttribute("aria-pressed") !== "true");
+    var lang = target.closest("[data-bv-lang]");
+    if (lang) {
+      var code = lang.getAttribute("data-bv-lang");
+      if (code === "zh" || code === "en") {
+        document.cookie = "bv-lang=" + code + "; path=/; max-age=31536000; SameSite=Lax";
+        window.location.reload();
+      }
+      return;
+    }
+
+    var mode = target.closest("[data-bv-cpu-mode]");
+    if (mode) {
+      setCpuCores(mode.getAttribute("data-bv-cpu-mode") === "cores");
       return;
     }
 
@@ -850,25 +837,17 @@
       return;
     }
 
-    var star = target.closest("[data-bv-star-dismiss]");
-    if (star) {
-      dismissStar(star);
-      return;
-    }
-
-    // The card's own dock, close and reopen buttons are home-card.js's: see section 6.
+    // The card's own dock, close and reopen buttons are home-card.js's: see section 5.
   }
 
   function ready() {
     reflectPrefControls();
     restoreLogo();
-    applyStar();
 
     // Sampling happens only where the cards to fill actually exist, so the overview and About
     // pages — and every page the decorator's card rides on — issue no requests at all.
     if (document.querySelector("[data-live]")) {
-      var paceSelect = document.querySelector("[data-bv-pace]");
-      pace = paceSelect && String(paceSelect.value) === "1" ? 1 : 5;
+      pace = 1;
       setCpuCores(false);
       setSamplerState(false);
       sampling = true;

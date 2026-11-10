@@ -84,7 +84,7 @@ public final class StatusSign {
         return Texts.stateText(result);
     }
 
-    /** "Latest build", for the small heading above the illustration. */
+    /** "Latest build", shown at the right of the last line under the illustration. */
     public String kicker() {
         return io.jenkins.plugins.buildvalue.Messages.sign_latest();
     }
