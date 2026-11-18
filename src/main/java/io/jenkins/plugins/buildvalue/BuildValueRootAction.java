@@ -19,6 +19,7 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * The Build Stats page.
@@ -327,6 +328,13 @@ public class BuildValueRootAction implements RootAction {
         return pageNumber(Stapler.getCurrentRequest2());
     }
 
+    /**
+     * One machine sample for the computer page.
+     *
+     * <p>The first call starts the sampler, and the page reads it every second, so a link on another
+     * site must not be able to start that work. The page posts this with the Jenkins crumb.
+     */
+    @POST
     public HttpResponse doMachine() {
         Jenkins.get().checkPermission(Jenkins.READ);
         if (!MachineMetrics.supported()) {
@@ -339,6 +347,13 @@ public class BuildValueRootAction implements RootAction {
         return json(MachineMetrics.json());
     }
 
+    /**
+     * Recent controller activity for the computer page.
+     *
+     * <p>The answer walks every job the caller can read, so it is too expensive to leave open to a
+     * cross-site GET. The page posts this with the Jenkins crumb.
+     */
+    @POST
     public HttpResponse doActivity() {
         Jenkins.get().checkPermission(Jenkins.READ);
         return json(JenkinsActivity.json());

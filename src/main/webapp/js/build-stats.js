@@ -544,8 +544,25 @@
     return base + name;
   }
 
+  /** Jenkins rejects a POST that does not carry the crumb printed on this page. */
+  function crumbHeaders() {
+    var head = document.head;
+    var name = head && head.getAttribute("data-crumb-header");
+    var value = head && head.getAttribute("data-crumb-value");
+    var headers = {};
+    if (name && value) {
+      headers[name] = value;
+    }
+    return headers;
+  }
+
   function fetchJson(url) {
-    return fetch(url, { cache: "no-store", credentials: "same-origin" }).then(function (response) {
+    return fetch(url, {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: crumbHeaders()
+    }).then(function (response) {
       if (!response.ok) {
         throw new Error(String(response.status));
       }
