@@ -1,11 +1,15 @@
 <?jelly escape-by-default='true'?>
 <!--
-  The Build Stats page shell.
+  The Build Stats page shell, shared by every page of the plugin.
 
-  l:layout, l:side-panel and l:main-panel give the Jenkins header, breadcrumbs and two-column body,
-  so this page sits in the normal page chrome and follows whatever theme is active. All text comes
-  from the resource bundle for the request's locale, so the first HTML response is already in the
-  right language and nothing is rewritten after load.
+  The overview renders this directly. computer/, about/ and job/<name>/ render it from their own
+  index.jelly, and "page" and the selected job come from the URL path, so the sidebar, styles and
+  script are the same everywhere and l:task can mark the current page. All text comes from the
+  resource bundle for the request's locale, so the first HTML response is already in the right
+  language.
+
+  Assets come from resURL, which changes with every Jenkins start, so a plugin update is picked up
+  without a version query to maintain.
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <j:set var="view" value="${it.view}"/>
@@ -13,17 +17,20 @@
   <j:choose>
     <j:when test="${page == 'computer'}"><j:set var="pageTitle" value="${it.msg('host.title')}"/></j:when>
     <j:when test="${page == 'about'}"><j:set var="pageTitle" value="${it.msg('about.title')}"/></j:when>
+    <j:when test="${view.jobSelected}"><j:set var="pageTitle" value="${view.selected.shortName}"/></j:when>
     <j:otherwise><j:set var="pageTitle" value="${it.displayName}"/></j:otherwise>
   </j:choose>
 
-  <l:layout title="${pageTitle}" norefresh="true">
+  <l:layout title="${pageTitle}">
+    <l:header>
+      <link rel="stylesheet" href="${resURL}/plugin/build-stats/css/build-stats.css" type="text/css"/>
+    </l:header>
+
     <l:side-panel>
       <st:include page="sidebar.jelly" it="${it}"/>
     </l:side-panel>
 
     <l:main-panel>
-      <link rel="stylesheet" href="${it.assets}css/build-stats.css?v=20" type="text/css"/>
-
       <j:choose>
         <j:when test="${page == 'computer'}">
           <st:include page="computer.jelly" it="${it}"/>
@@ -37,7 +44,7 @@
       </j:choose>
 
       <!-- One external script, no inline JS, so the page satisfies a strict CSP. -->
-      <script src="${it.assets}js/build-stats.js?v=21" type="text/javascript"/>
+      <script src="${resURL}/plugin/build-stats/js/build-stats.js" type="text/javascript"/>
     </l:main-panel>
   </l:layout>
 </j:jelly>

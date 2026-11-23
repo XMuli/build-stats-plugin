@@ -1,8 +1,8 @@
 /*
  * The status card that floats on the Jenkins home page and on a job page.
  *
- * Placement only: where the card sits, whether it is docked, closed or open, and remembering that
- * in this browser. All of its text and artwork are rendered by footer.jelly for the request's
+ * Placement only: where the card sits, whether it is docked or open, and remembering that in this
+ * browser. Closing it turns the status plate off, the same switch as the Build Stats checkbox. All of its text and artwork are rendered by footer.jelly for the request's
  * locale, so nothing here reads or rewrites language — the older version carried its own
  * translation table and an onboarding bubble, and both are gone.
  */
@@ -58,6 +58,19 @@
     return !(stored(WHERE) === "home" && page !== "home");
   }
 
+  // Earlier versions remembered a closed card and left a reopen button on every page. Closing now
+  // means the status plate is off, so carry an old closed state over to that.
+  try {
+    var earlier = JSON.parse(stored(PLACE) || "{}");
+    if (earlier.mode === "closed") {
+      store(SHOW, "0");
+      earlier.mode = "open";
+      store(PLACE, JSON.stringify(earlier));
+    }
+  } catch (e) {
+    // An unreadable entry is replaced the next time the card is placed.
+  }
+
   if (!wanted()) {
     root.remove();
     return;
@@ -68,13 +81,12 @@
   document.body.appendChild(root);
 
   var close = root.querySelector("[data-bv-home-close]");
-  var reopen = root.querySelector("[data-bv-home-reopen]");
 
   function readPlace() {
     try {
       var raw = JSON.parse(stored(PLACE) || "{}");
       return {
-        mode: raw.mode === "peek" || raw.mode === "closed" ? raw.mode : "open",
+        mode: raw.mode === "peek" ? "peek" : "open",
         side: raw.side === "left" ? "left" : "right",
         left: typeof raw.left === "number" ? raw.left : null,
         top: typeof raw.top === "number" ? raw.top : null
@@ -120,11 +132,7 @@
 
   function apply() {
     root.classList.toggle("bv-home--peek", state.mode === "peek");
-    root.classList.toggle("bv-home--closed", state.mode === "closed");
     root.classList.toggle("bv-home--left", state.side === "left");
-    if (reopen) {
-      reopen.hidden = state.mode !== "closed";
-    }
     root.style.left = "";
     root.style.top = "";
     root.style.right = "";
@@ -227,15 +235,12 @@
   apply();
   paintDock();
 
+  // Closing turns the status plate off in this browser, the same switch as the Build Stats
+  // checkbox. Nothing is left behind on the page, so nothing can cover the Jenkins footer.
   if (close) {
     close.addEventListener("click", function () {
-      state.mode = "closed";
-      savePlace();
-      apply();
-      // Move focus somewhere real, so it does not vanish with the button that was pressed.
-      if (reopen) {
-        reopen.focus();
-      }
+      store(SHOW, "0");
+      root.remove();
     });
   }
 
@@ -247,15 +252,6 @@
     }
     savePlace();
     apply();
-  }
-
-  if (reopen) {
-    reopen.addEventListener("click", function () {
-      openOut();
-      if (close) {
-        close.focus();
-      }
-    });
   }
 
   // Clicking a docked card brings it back, without swallowing clicks on its own controls.
@@ -282,9 +278,6 @@
       return;
     }
     if (event.target.closest("button") || event.target.closest("a")) {
-      return;
-    }
-    if (state.mode === "closed") {
       return;
     }
     var box = root.getBoundingClientRect();
@@ -415,7 +408,7 @@
 
   /** The card's own link already opens Build Stats. Double-click and right-click do the same. */
   function openStats() {
-    if (plate.dataset.dragged === "1" || state.mode === "closed") {
+    if (plate.dataset.dragged === "1") {
       return;
     }
     var href = root.getAttribute("data-bv-stats");
@@ -432,7 +425,7 @@
   });
 
   root.addEventListener("contextmenu", function (event) {
-    if (event.target.closest("button") || state.mode === "closed") {
+    if (event.target.closest("button")) {
       return;
     }
     event.preventDefault();

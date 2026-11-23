@@ -533,35 +533,21 @@
   }
 
   /*
-   * Both endpoints hang off this page's own URL, so they inherit the context path, the reverse
-   * proxy prefix and the session without any of that being written down here.
+   * Both endpoints belong to the Build Stats action, whichever of its pages is open. Jenkins puts
+   * its root URL on <head>, so the context path and any reverse-proxy prefix come with it.
    */
   function endpoint(name) {
-    var base = window.location.pathname;
-    if (base.charAt(base.length - 1) !== "/") {
-      base += "/";
-    }
-    return base + name;
+    var rootUrl = (document.head && document.head.getAttribute("data-rooturl")) || "";
+    return rootUrl + "/build-stats/" + name;
   }
 
-  /** Jenkins rejects a POST that does not carry the crumb printed on this page. */
-  function crumbHeaders() {
-    var head = document.head;
-    var name = head && head.getAttribute("data-crumb-header");
-    var value = head && head.getAttribute("data-crumb-value");
-    var headers = {};
-    if (name && value) {
-      headers[name] = value;
-    }
-    return headers;
-  }
-
+  /** Jenkins rejects a POST without the crumb; its global crumb object adds the header. */
   function fetchJson(url) {
     return fetch(url, {
       method: "POST",
       cache: "no-store",
       credentials: "same-origin",
-      headers: crumbHeaders()
+      headers: window.crumb ? window.crumb.wrap({}) : {}
     }).then(function (response) {
       if (!response.ok) {
         throw new Error(String(response.status));
@@ -766,10 +752,11 @@
   /* ------------------------------------------------------------------ 5. home-page card
    *
    * The card the page decorator adds, on the Jenkins home page and on job pages. Its placement and
-   * its open / docked / closed state belong to home-card.js, which owns the drag, the clamping to
-   * the viewport and the "bv-home-card" entry in storage. This file only does the part that
-   * belongs to the preferences above, so neither script attaches a second handler to the dock,
-   * close and reopen buttons or writes the other's state.
+   * its open / docked state belong to home-card.js, which owns the drag, the clamping to the
+   * viewport and the "bv-home-card" entry in storage. This file only does the part that belongs
+   * to the preferences above, so neither script attaches a second handler to the card's close
+   * button or writes the other's state. Closing the card writes the same status preference that
+   * the checkbox here reads.
    *
    * The two scripts meet at the preference keys: the card asks whether it is wanted when it loads,
    * and these preferences live in the Build Stats app bar. So turning the plate off, or restricting
@@ -1426,7 +1413,7 @@
       return;
     }
 
-    // The card's own dock, close and reopen buttons are home-card.js's: see section 5.
+    // The card's own close button is home-card.js's: see section 5.
   }
 
   function ready() {

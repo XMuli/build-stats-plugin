@@ -13,7 +13,7 @@
 
   <j:choose>
     <j:when test="${!it.machineSupported}">
-      <p class="bv-empty">${it.msg('host.unsupported')}</p>
+      <l:notice title="${it.msg('host.unsupported')}" icon="symbol-information-circle"/>
     </j:when>
     <j:otherwise>
       <h2 class="bv-h2">${it.msg('host.resources')}</h2>
@@ -96,13 +96,9 @@
       </div>
 
       <l:card title="${it.msg('host.now')}">
-        <table class="jenkins-table jenkins-table--small">
-          <thead>
-            <tr>
-              <th>${it.msg('host.event')}</th>
-              <th>${it.msg('host.details')}</th>
-            </tr>
-          </thead>
+        <!-- A label and a value per row, so no header row: the left column only needs to be as
+             wide as its longest label. -->
+        <table class="jenkins-table jenkins-table--small bv-facts">
           <!-- Rows are filled from the activity endpoint, which applies the same read permission
                as the rest of the page. -->
           <tbody data-bv-activity="">

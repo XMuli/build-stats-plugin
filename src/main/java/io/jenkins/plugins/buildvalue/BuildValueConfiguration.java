@@ -8,9 +8,18 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
+/**
+ * The plugin's section on the global configuration page.
+ *
+ * <p>{@link GlobalConfiguration#configure} only binds the submitted form onto these setters, so
+ * each setter saves; otherwise a change would be lost on the next restart.
+ */
 @Extension
 public class BuildValueConfiguration extends GlobalConfiguration {
     private int minutesPerFailure = 15;
+
+    /** Inverted so a configuration saved before this field existed loads with the card shown. */
+    private boolean hideHomeCard;
 
     public BuildValueConfiguration() {
         load();
@@ -30,6 +39,18 @@ public class BuildValueConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setMinutesPerFailure(int minutesPerFailure) {
         this.minutesPerFailure = Math.max(0, Math.min(480, minutesPerFailure));
+        save();
+    }
+
+    /** Whether the status card is added to the Jenkins home page and to pipeline pages. */
+    public boolean isShowHomeCard() {
+        return !hideHomeCard;
+    }
+
+    @DataBoundSetter
+    public void setShowHomeCard(boolean showHomeCard) {
+        this.hideHomeCard = !showHomeCard;
+        save();
     }
 
     /**

@@ -1,0 +1,5 @@
+<?jelly escape-by-default='true'?>
+<!-- job/<name>/. The shared shell reads the selected job from the URL. -->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+  <st:include page="index.jelly" it="${it.root}"/>
+</j:jelly>

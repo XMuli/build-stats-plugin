@@ -22,9 +22,17 @@ public class HomeSignDecorator extends PageDecorator {
         super();
     }
 
-    /** The plate to draw, or an absent one when this page should not show a card. */
+    /**
+     * The plate to draw, or an absent one when this page should not show a card.
+     *
+     * <p>Absent everywhere when an administrator has turned the card off, so nothing is injected.
+     */
     public StatusSign getSign() {
         try {
+            BuildValueConfiguration configuration = BuildValueConfiguration.get();
+            if (configuration != null && !configuration.isShowHomeCard()) {
+                return StatusSign.none();
+            }
             Jenkins jenkins = Jenkins.get();
             if (!jenkins.hasPermission(Jenkins.READ)) {
                 return StatusSign.none();
@@ -85,26 +93,8 @@ public class HomeSignDecorator extends PageDecorator {
         return io.jenkins.plugins.buildvalue.logic.Texts.message("sign.close");
     }
 
-    public String getReopenLabel() {
-        return io.jenkins.plugins.buildvalue.logic.Texts.message("sign.reopen");
-    }
-
     public String getPageTitle() {
         return Messages.BuildValueRootAction_DisplayName();
-    }
-
-    /** Where this plugin's static files live, with a trailing slash, for the plate's artwork. */
-    public String getAssets() {
-        var request = Stapler.getCurrentRequest2();
-        String context = request == null || request.getContextPath() == null ? "" : request.getContextPath();
-        return context + "/plugin/build-stats/";
-    }
-
-    /** Default logo, so the card can show a replacement saved in this browser. */
-    public String getLogoUrl() {
-        var request = Stapler.getCurrentRequest2();
-        String context = request == null || request.getContextPath() == null ? "" : request.getContextPath();
-        return context + "/plugin/build-stats/images/logo.jpg";
     }
 
     private static Run<?, ?> newest(Jenkins jenkins) {

@@ -3,8 +3,8 @@
   The vertical status plate: kicker, illustration, then job name, build link and state badge.
 
   Included by the overview, the job detail and the home-page card, so all three stay identical.
-  Expects "sign" (a StatusSign) and "assets" in the context. The illustration keeps its own aspect
-  ratio and is never cropped; the card grows to it rather than the other way round.
+  Expects "sign" (a StatusSign) in the context. The illustration keeps its own aspect ratio and is
+  never cropped; the card grows to it rather than the other way round.
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <j:if test="${sign.present()}">
@@ -18,7 +18,7 @@
           paint is already right and nothing swaps afterwards. The intrinsic size is the real
           pixel size of the files, so the space is reserved before the image loads.
         -->
-        <img class="bv-plate__img" src="${it.assets}images/${sign.localizedImage()}"
+        <img class="bv-plate__img" src="${resURL}/plugin/build-stats/images/${sign.localizedImage()}"
              alt="${sign.alt}" width="1107" height="1491"/>
       </div>
 

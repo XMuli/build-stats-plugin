@@ -5,5 +5,8 @@
              description="Failure count multiplied by these minutes. Not included in execution time.">
       <f:number clazz="positive-number" min="0" max="480" default="15"/>
     </f:entry>
+    <f:entry description="Uncheck to stop adding the status card to the Jenkins home page and to pipeline pages for every user. Each user can also hide it in their own browser.">
+      <f:checkbox field="showHomeCard" title="Show the status card on the home page and pipeline pages" default="true"/>
+    </f:entry>
   </f:section>
 </j:jelly>

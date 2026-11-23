@@ -10,11 +10,9 @@
 /* ---------------------------------------------------------------- sidebar */
 
 /*
- * The sidebar runs from under the Jenkins header to the bottom of the viewport. Search and the
- * pager stay put; only the job list scrolls. The main column keeps normal page scrolling.
- * --header-height is Jenkins' own (4.125rem in 2.555.3).
- */
-/*
+ * The page links and job links are Jenkins tasks and take their look from Jenkins. This only lays
+ * out the job search below them.
+ *
  * Jenkins only gives #side-panel a width through "body.two-column", which this page does not set,
  * and the panel is flex-shrink:0. Without a width of its own it grows to its widest job name and
  * squeezes the main column until its app bar wraps one character per line. Fixing the width here
@@ -27,47 +25,35 @@
   width: var(--side-panel-width, 18rem);
 }
 
-.bv-side {
+/*
+ * The task list runs from under the Jenkins header to the bottom of the viewport. The page links,
+ * search and pager stay put; only the job list scrolls. The side panel is as tall as the page, so
+ * without sticky the rail would scroll away with the main column.
+ */
+#tasks:has(.bv-side) {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  /* No border-right: the two columns are separated by the layout's own gap. */
   max-height: calc(100vh - var(--header-height, 4.125rem) - 2rem);
   min-height: 0;
-  min-width: 0;
-  /* Stay under the sticky Jenkins header while the main column scrolls. The side panel is as
-     tall as the page, so without this the rail scrolls away with it. */
   position: sticky;
   top: var(--header-height, 4.125rem);
 }
 
-.bv-side-nav {
+.bv-side {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
-}
-
-.bv-side-link {
-  border-radius: var(--form-input-border-radius, 6px);
-  color: var(--text-color);
-  padding: 0.5rem 0.75rem;
-  text-decoration: none;
-}
-
-.bv-side-link:hover {
-  background: var(--item-background--hover, rgba(0, 0, 0, 0.05));
-}
-
-.bv-side-link--active {
-  background: var(--item-background--active, rgba(0, 0, 0, 0.08));
-  font-weight: 600;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  min-height: 0;
+  min-width: 0;
 }
 
 .bv-side-heading {
   color: var(--text-color-secondary);
   font-size: 0.875rem;
   font-weight: 600;
-  margin: 0.5rem 0 0;
+  margin: 0;
 }
 
 .bv-side-search {
@@ -95,36 +81,14 @@
   overscroll-behavior: contain;
 }
 
-.bv-job-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
 /*
  * Full job paths are shown in full. They wrap over as many lines as they need and break inside a
  * long segment, so a deep organization-folder path stays readable instead of being cut off.
  */
-.bv-job-link {
-  border-radius: var(--form-input-border-radius, 6px);
-  display: block;
-  line-height: 1.35;
+.bv-job-link .task-link-text {
   overflow-wrap: anywhere;
-  padding: 0.375rem 0.75rem;
-  text-decoration: none;
+  white-space: normal;
   word-break: break-word;
-}
-
-.bv-job-link:hover {
-  background: var(--item-background--hover, rgba(0, 0, 0, 0.05));
-}
-
-.bv-job-link--active {
-  background: var(--item-background--active, rgba(0, 0, 0, 0.08));
-  font-weight: 600;
 }
 
 .bv-side-none {
@@ -274,7 +238,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .bv-side {
+  #tasks:has(.bv-side) {
     max-height: none;
     position: static;
   }
@@ -967,6 +931,14 @@
   margin-top: 0.5rem;
 }
 
+/* Label and value rows. Jenkins centres header cells; a label column reads left to right. */
+.bv-facts th[scope="row"] {
+  padding-right: 2rem;
+  text-align: left;
+  white-space: nowrap;
+  width: 1%;
+}
+
 .bv-disk {
   align-items: center;
   display: grid;
@@ -1215,24 +1187,10 @@
   padding: 0 0.3rem;
 }
 
-.bv-home__reopen[hidden] {
-  display: none !important;
-}
-
 .bv-home--dragging {
   cursor: grabbing;
   transition: none;
   user-select: none;
-}
-
-/* Closed: only the small button that brings the card back. */
-.bv-home--closed {
-  width: auto;
-}
-
-.bv-home--closed .bv-plate,
-.bv-home--closed .bv-home__tools {
-  display: none;
 }
 
 /* Parked on an edge: the same rounded card, with only a slice left on screen. */

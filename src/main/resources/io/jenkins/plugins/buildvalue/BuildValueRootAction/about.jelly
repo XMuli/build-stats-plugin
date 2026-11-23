@@ -23,7 +23,7 @@
     <section class="jenkins-card">
       <div class="jenkins-card__content">
         <div class="bv-about__id">
-          <img class="bv-about__logo" data-bv-logo="" src="${it.assets}images/logo.jpg"
+          <img class="bv-about__logo" data-bv-logo="" src="${resURL}/plugin/build-stats/images/logo.jpg"
                alt="" width="80" height="80"/>
           <div>
             <h2 class="bv-about__name">${it.msg('BuildValueRootAction.DisplayName')}</h2>

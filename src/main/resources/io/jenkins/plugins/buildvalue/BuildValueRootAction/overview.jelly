@@ -70,7 +70,6 @@
         <j:if test="${view.hasSign()}">
           <div class="bv-head__plate">
             <j:set var="sign" value="${view.sign}"/>
-            <j:set var="assets" value="${it.assets}"/>
             <st:include page="plate.jelly" it="${it}"/>
           </div>
         </j:if>

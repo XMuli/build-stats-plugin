@@ -1,6 +1,8 @@
 package io.jenkins.plugins.buildvalue;
 
 import hudson.Extension;
+import hudson.Util;
+import hudson.model.ModelObject;
 import hudson.model.RootAction;
 import io.jenkins.plugins.buildvalue.logic.BuildSample;
 import io.jenkins.plugins.buildvalue.logic.JobIndex;
@@ -24,14 +26,19 @@ import org.kohsuke.stapler.verb.POST;
 /**
  * The Build Stats page.
  *
- * <p>One request builds one {@link StatsView} and the Jelly views read it. Every piece of state the
- * page can be in — the time window, the selected job, the sidebar search and page, the heatmap
- * period, and which of the three sub-pages is showing — lives in the query string, so any view can
- * be linked to, bookmarked, and reached with the browser's back and forward buttons.
+ * <p>Which page is showing is part of the path: {@code /build-stats/} is the overview,
+ * {@code computer/} and {@code about/} are the other two, and {@code job/<name>/} is one pipeline,
+ * with one {@code job/} segment per folder level as in Jenkins itself. That lets the sidebar's
+ * {@code l:task} links mark the current page from the URL. Filters that only narrow a page — the
+ * time window, the sidebar search and page, and the heatmap period — stay in the query string.
+ *
+ * <p>One request builds one {@link StatsView} and every page's Jelly reads it.
  */
 @Extension
 public class BuildValueRootAction implements RootAction {
     private static final String CACHE = "build-stats-view";
+    private static final String COMPUTER = "computer";
+    private static final String ABOUT = "about";
 
     @Override
     public String getIconFileName() {
@@ -85,6 +92,7 @@ public class BuildValueRootAction implements RootAction {
                 banner = "Build records exported for local development.";
             }
         }
+        JobView job = request == null ? null : request.findAncestorObject(JobView.class);
         StatsView view = StatsView.of(
                 samples,
                 now,
@@ -92,7 +100,7 @@ public class BuildValueRootAction implements RootAction {
                 ZoneId.systemDefault(),
                 minutes,
                 banner,
-                parameter(request, "job"),
+                job == null ? "" : job.getFullName(),
                 parameter(request, "q"),
                 pageNumber(request),
                 parameter(request, "period"));
@@ -102,17 +110,26 @@ public class BuildValueRootAction implements RootAction {
         return view;
     }
 
-    /** Which sub-page to render: overview, computer or about. */
+    /** Which page to render, from the path: overview, computer or about. A pipeline is the overview view. */
     public String getPage() {
         StaplerRequest2 request = Stapler.getCurrentRequest2();
-        String raw = parameter(request, "page");
-        if ("computer".equals(raw) && MachineMetrics.supported()) {
-            return "computer";
-        }
-        if ("about".equals(raw)) {
-            return "about";
-        }
-        return "overview";
+        Page page = request == null ? null : request.findAncestorObject(Page.class);
+        return page == null ? "overview" : page.name;
+    }
+
+    /** {@code /build-stats/computer/}, only where the sampler can run. */
+    public Page getComputer() {
+        return MachineMetrics.supported() ? new Page(this, COMPUTER) : null;
+    }
+
+    /** {@code /build-stats/about/}. */
+    public Page getAbout() {
+        return new Page(this, ABOUT);
+    }
+
+    /** {@code /build-stats/job/<name>/}: a top-level job, or the first folder of a deeper path. */
+    public JobView getJob(String name) {
+        return new JobView(this, name);
     }
 
     public boolean isMachineSupported() {
@@ -194,11 +211,6 @@ public class BuildValueRootAction implements RootAction {
         return Texts.message(key, first, second, third);
     }
 
-    /** Where this plugin's static files live, with a trailing slash. */
-    public String getAssets() {
-        return contextPath() + "/plugin/build-stats/";
-    }
-
     /** Version Jenkins reports for this plugin, empty when it cannot be read. */
     public String getPluginVersion() {
         try {
@@ -247,57 +259,80 @@ public class BuildValueRootAction implements RootAction {
         return raw.isEmpty() ? null : raw;
     }
 
-    /** Form target for the sidebar search: this page, with no query of its own. */
-    public String getSearchAction() {
+    /** {@code /build-stats/}, the overview. Plain, so {@code l:task} can match it against the URL. */
+    public String getOverviewUrl() {
         return contextPath() + "/" + getUrlName() + "/";
     }
 
-    /** This page with one sub-page selected, keeping the window, search and page. */
-    public String pageUrl(String page) {
-        return url(page, parameter(Stapler.getCurrentRequest2(), "job"), currentQuery(), currentPage(), currentPeriod());
+    public String getComputerUrl() {
+        return getOverviewUrl() + COMPUTER + "/";
     }
 
-    /** The overview with one job selected. */
-    public String jobUrl(String fullName) {
-        return url("overview", fullName, currentQuery(), currentPage(), currentPeriod());
-    }
-
-    /** The current view on another sidebar page. */
-    public String pagerUrl(int page) {
-        return url(getPage(), parameter(Stapler.getCurrentRequest2(), "job"), currentQuery(), page, currentPeriod());
-    }
-
-    /** The current view with the search cleared, back on page one. */
-    public String getClearSearchUrl() {
-        return url(getPage(), parameter(Stapler.getCurrentRequest2(), "job"), "", 1, currentPeriod());
-    }
-
-    /** The current view over another time window, back on page one of the sidebar. */
-    public String rangeUrl(int days) {
-        return url(getPage(), parameter(Stapler.getCurrentRequest2(), "job"), currentQuery(), 1, currentPeriod(), days);
-    }
-
-    /** The current view with another heatmap period. */
-    public String periodUrl(String period) {
-        return url(getPage(), parameter(Stapler.getCurrentRequest2(), "job"), currentQuery(), currentPage(), period);
-    }
-
-    private String url(String page, String job, String query, int pageNumber, String period) {
-        return url(page, job, query, pageNumber, period, days(Stapler.getCurrentRequest2()));
+    public String getAboutUrl() {
+        return getOverviewUrl() + ABOUT + "/";
     }
 
     /**
-     * Build one of this page's URLs. Every value is percent-encoded for a query string, which is a
-     * different escaping from the HTML escaping the views apply to the same job names.
+     * The page one job's detail lives on. Each folder level gets its own {@code job/} segment, so a
+     * slash in a full name never has to be encoded inside one segment.
      */
-    private String url(String page, String job, String query, int pageNumber, String period, int days) {
-        List<String> parts = new ArrayList<>(5);
-        if (page != null && !page.isEmpty() && !"overview".equals(page)) {
-            parts.add("page=" + encode(page));
+    String jobPath(String fullName) {
+        StringBuilder path = new StringBuilder(getOverviewUrl());
+        for (String segment : fullName.split("/")) {
+            if (!segment.isEmpty()) {
+                path.append("job/").append(Util.rawEncode(segment)).append('/');
+            }
         }
-        if (job != null && !job.isEmpty()) {
-            parts.add("job=" + encode(job));
+        return path.toString();
+    }
+
+    /** The page this request is on, without its query. */
+    private String currentPath() {
+        StaplerRequest2 request = Stapler.getCurrentRequest2();
+        JobView job = request == null ? null : request.findAncestorObject(JobView.class);
+        if (job != null) {
+            return jobPath(job.getFullName());
         }
+        String page = getPage();
+        return "overview".equals(page) ? getOverviewUrl() : getOverviewUrl() + page + "/";
+    }
+
+    /** Form target for the sidebar search: this page, with no query of its own. */
+    public String getSearchAction() {
+        return currentPath();
+    }
+
+    /** One job's detail, keeping the window, the sidebar search and page, and the heatmap period. */
+    public String jobUrl(String fullName) {
+        return withQuery(jobPath(fullName), currentQuery(), currentPage(), currentPeriod(), currentDays());
+    }
+
+    /** The current page with another page of the sidebar. */
+    public String pagerUrl(int page) {
+        return withQuery(currentPath(), currentQuery(), page, currentPeriod(), currentDays());
+    }
+
+    /** The current page with the search cleared, back on page one. */
+    public String getClearSearchUrl() {
+        return withQuery(currentPath(), "", 1, currentPeriod(), currentDays());
+    }
+
+    /** The current page over another time window, back on page one of the sidebar. */
+    public String rangeUrl(int days) {
+        return withQuery(currentPath(), currentQuery(), 1, currentPeriod(), days);
+    }
+
+    /** The current page with another heatmap period. */
+    public String periodUrl(String period) {
+        return withQuery(currentPath(), currentQuery(), currentPage(), period, currentDays());
+    }
+
+    /**
+     * Add the filters to a page's path. Every value is percent-encoded for a query string, which is
+     * a different escaping from the HTML escaping the views apply to the same job names.
+     */
+    private static String withQuery(String path, String query, int pageNumber, String period, int days) {
+        List<String> parts = new ArrayList<>(4);
         if (query != null && !query.isEmpty()) {
             parts.add("q=" + encode(query));
         }
@@ -312,8 +347,11 @@ public class BuildValueRootAction implements RootAction {
         }
         // Plain "&" here. These URLs are emitted through Jelly with escape-by-default, which turns
         // it into &amp; in the HTML; writing &amp; here would escape twice.
-        String base = contextPath() + "/" + getUrlName() + "/";
-        return parts.isEmpty() ? base : base + "?" + String.join("&", parts);
+        return parts.isEmpty() ? path : path + "?" + String.join("&", parts);
+    }
+
+    private int currentDays() {
+        return days(Stapler.getCurrentRequest2());
     }
 
     private String currentQuery() {
@@ -418,5 +456,59 @@ public class BuildValueRootAction implements RootAction {
             return "";
         }
         return request.getContextPath();
+    }
+
+    /**
+     * {@code computer/} or {@code about/}. Its own {@code index.jelly} renders the shared layout, so
+     * the sidebar, styles and scripts are the same on every page.
+     */
+    public static final class Page implements ModelObject {
+        private final BuildValueRootAction root;
+        final String name;
+
+        Page(BuildValueRootAction root, String name) {
+            this.root = root;
+            this.name = name;
+        }
+
+        public BuildValueRootAction getRoot() {
+            return root;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return Texts.message(COMPUTER.equals(name) ? "nav.host" : "nav.about");
+        }
+    }
+
+    /**
+     * {@code job/<name>/}, one segment of a job's full name. {@code job/<child>/} below it goes one
+     * folder deeper, so {@code job/team/job/app/} is the job {@code team/app}.
+     */
+    public static final class JobView implements ModelObject {
+        private final BuildValueRootAction root;
+        private final String fullName;
+
+        JobView(BuildValueRootAction root, String fullName) {
+            this.root = root;
+            this.fullName = fullName;
+        }
+
+        public BuildValueRootAction getRoot() {
+            return root;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public JobView getJob(String child) {
+            return new JobView(root, fullName + "/" + child);
+        }
+
+        @Override
+        public String getDisplayName() {
+            return BuildSample.shortName(fullName);
+        }
     }
 }
