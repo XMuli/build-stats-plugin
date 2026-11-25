@@ -21,6 +21,9 @@ public class BuildValueConfiguration extends GlobalConfiguration {
     /** Inverted so a configuration saved before this field existed loads with the card shown. */
     private boolean hideHomeCard;
 
+    /** Inverted so a configuration saved before this field existed keeps sampling available. */
+    private boolean hideHostStats;
+
     public BuildValueConfiguration() {
         load();
     }
@@ -50,6 +53,20 @@ public class BuildValueConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setShowHomeCard(boolean showHomeCard) {
         this.hideHomeCard = !showHomeCard;
+        save();
+    }
+
+    /**
+     * Whether This computer is offered and the controller samples its own CPU, memory, disk and
+     * network. Sampling still runs only while that page is open.
+     */
+    public boolean isHostStats() {
+        return !hideHostStats;
+    }
+
+    @DataBoundSetter
+    public void setHostStats(boolean hostStats) {
+        this.hideHostStats = !hostStats;
         save();
     }
 

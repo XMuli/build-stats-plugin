@@ -73,12 +73,22 @@
   min-height: 1.2em;
 }
 
-/* The one scrolling region. */
+/*
+ * The one scrolling region.
+ *
+ * Jenkins pulls every .task left by 0.5rem so the hover and selected background can round its left
+ * corners. A vertical scrollport also clips the horizontal axis, and that clip squares the corner
+ * off. The padding keeps the overhang inside the scrollport; the negative margin puts the job
+ * links back in line with Overview, This computer and About.
+ */
 .bv-side-list {
+  box-sizing: border-box;
   flex: 1 1 auto;
+  margin-left: -0.5rem;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-left: 0.5rem;
 }
 
 /*
@@ -161,6 +171,10 @@
 .bv-notes,
 .bv-chart__note {
   display: none;
+}
+
+.bv-notes {
+  margin-top: 1rem;
 }
 
 .bv-summary-on .bv-notes,
@@ -598,6 +612,14 @@
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  margin-top: 1rem;
+}
+
+/* Accounts, Pipelines, Cumulative time. The chart grid spaces itself; these sit in normal flow. */
+.bv-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   margin-top: 1rem;
 }
 

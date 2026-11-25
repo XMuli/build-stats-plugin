@@ -1,6 +1,7 @@
 package io.jenkins.plugins.buildvalue.logic;
 
 import com.sun.management.OperatingSystemMXBean;
+import io.jenkins.plugins.buildvalue.BuildValueConfiguration;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
@@ -8,11 +9,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystems;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** One-second snapshot of this computer, in the same spirit as Task Manager. */
+/**
+ * One-second snapshot of this computer, in the same spirit as Task Manager.
+ *
+ * <p>The two sampler threads start on the first request from the computer page and do no work
+ * unless that page has asked again within the last few seconds. Closing the page therefore stops
+ * the PowerShell counters instead of leaving them running for the life of the controller.
+ */
 public final class MachineMetrics {
+    /** How long after the last request the samplers keep working. The page asks once a second. */
+    static final long IDLE_NANOS = TimeUnit.SECONDS.toNanos(3);
+
     private static final AtomicReference<String> JSON = new AtomicReference<>("{\"ok\":false}");
+    private static final AtomicLong LAST_POLL = new AtomicLong();
     private static volatile boolean started;
     private static volatile int paceMs = 1000;
     private static volatile Double cpu;
@@ -42,8 +55,20 @@ public final class MachineMetrics {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
     }
 
-    public static void start() {
+    /**
+     * The computer page is shown only on Windows, and only when an administrator has left sampling
+     * on. A configuration saved before the switch existed leaves it on.
+     */
+    public static boolean offered() {
         if (!supported()) {
+            return false;
+        }
+        BuildValueConfiguration config = BuildValueConfiguration.get();
+        return config == null || config.isHostStats();
+    }
+
+    public static void start() {
+        if (!offered()) {
             return;
         }
         synchronized (MachineMetrics.class) {
@@ -66,16 +91,35 @@ public final class MachineMetrics {
     }
 
     public static String json() {
-        if (!supported()) {
+        if (!offered()) {
             return "{\"ok\":false,\"supported\":false}";
         }
+        LAST_POLL.set(System.nanoTime());
         start();
         return JSON.get();
+    }
+
+    /** True while {@code lastNanos} is a request new enough that the samplers should still run. */
+    static boolean watching(long lastNanos, long nowNanos) {
+        return lastNanos != 0 && nowNanos - lastNanos < IDLE_NANOS;
+    }
+
+    /** The page is offered and someone asked for a sample recently enough to keep sampling. */
+    private static boolean live() {
+        try {
+            return offered() && watching(LAST_POLL.get(), System.nanoTime());
+        } catch (Throwable ex) {
+            return false;
+        }
     }
 
     private static void fastLoop() {
         OperatingSystemMXBean os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         while (!Thread.currentThread().isInterrupted()) {
+            if (!live()) {
+                sleep(500);
+                continue;
+            }
             try {
                 double load = os.getCpuLoad();
                 if (load >= 0) {
@@ -210,6 +254,10 @@ public final class MachineMetrics {
                 'gpus=' + ($gpuParts -join ';;')
                 """;
         while (!Thread.currentThread().isInterrupted()) {
+            if (!live()) {
+                sleep(500);
+                continue;
+            }
             try {
                 readCounters(script);
             } catch (Exception ignored) {

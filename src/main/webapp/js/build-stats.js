@@ -177,6 +177,8 @@
    * off the page's own URL. Nothing starts unless those cards are in the document, so the overview
    * and About pages never open a request, and the timer is dropped whenever the tab is hidden —
    * a background tab that keeps a controller sampling its own CPU every second is pure waste.
+   * The controller's own sampler, including the PowerShell counters, runs only while these
+   * requests keep arriving and stops a few seconds after they do.
    */
 
   var SPARK_W = 320;

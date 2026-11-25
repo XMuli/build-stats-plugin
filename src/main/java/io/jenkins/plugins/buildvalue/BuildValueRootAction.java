@@ -117,9 +117,9 @@ public class BuildValueRootAction implements RootAction {
         return page == null ? "overview" : page.name;
     }
 
-    /** {@code /build-stats/computer/}, only where the sampler can run. */
+    /** {@code /build-stats/computer/}, only where the sampler can run and has not been turned off. */
     public Page getComputer() {
-        return MachineMetrics.supported() ? new Page(this, COMPUTER) : null;
+        return MachineMetrics.offered() ? new Page(this, COMPUTER) : null;
     }
 
     /** {@code /build-stats/about/}. */
@@ -133,7 +133,7 @@ public class BuildValueRootAction implements RootAction {
     }
 
     public boolean isMachineSupported() {
-        return MachineMetrics.supported();
+        return MachineMetrics.offered();
     }
 
     /**
@@ -369,13 +369,14 @@ public class BuildValueRootAction implements RootAction {
     /**
      * One machine sample for the computer page.
      *
-     * <p>The first call starts the sampler, and the page reads it every second, so a link on another
-     * site must not be able to start that work. The page posts this with the Jenkins crumb.
+     * <p>The sampler runs only while this is called, which the open page does every second, and it
+     * stops shortly after the calls stop. A link on another site must not be able to start that
+     * work, so the page posts this with the Jenkins crumb.
      */
     @POST
     public HttpResponse doMachine() {
         Jenkins.get().checkPermission(Jenkins.READ);
-        if (!MachineMetrics.supported()) {
+        if (!MachineMetrics.offered()) {
             return json("{\"ok\":false,\"supported\":false}");
         }
         StaplerRequest2 request = Stapler.getCurrentRequest2();

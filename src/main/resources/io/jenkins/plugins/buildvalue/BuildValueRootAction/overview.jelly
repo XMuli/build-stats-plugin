@@ -145,6 +145,8 @@
           <j:set var="charts" value="${view.charts}"/>
           <st:include page="board.jelly" it="${it}"/>
 
+          <!-- These three are not in the chart grid, so the stack supplies the gap the grid would have. -->
+          <div class="bv-stack">
           <l:card title="${it.msg('h.accounts')}">
             <st:include page="accounts.jelly" it="${it}"/>
           </l:card>
@@ -213,6 +215,7 @@
               </table>
             </div>
           </l:card>
+          </div>
         </j:otherwise>
       </j:choose>
 
