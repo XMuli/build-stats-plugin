@@ -1,17 +1,20 @@
 # Build Stats
 
 <p align="center">
+  <a href="https://github.com/jenkinsci/build-stats-plugin"><img alt="Jenkins hosting" src="https://img.shields.io/badge/Jenkins-jenkinsci%2Fbuild--stats--plugin-D24939?logo=jenkins&logoColor=white"></a>
   <a href="https://build-stats-plugin.xmuli.tech/"><img alt="Website" src="https://img.shields.io/badge/website-build--stats--plugin.xmuli.tech-3ca2ea"></a>
-  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="Original repository" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
   <a href="https://www.jenkins.io/"><img alt="Jenkins 2.555.3 or newer" src="https://img.shields.io/badge/Jenkins-2.555.3%2B-D24939?logo=jenkins&logoColor=white"></a>
   <a href="https://adoptium.net/"><img alt="Java 21" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-4d6270"></a>
 </p>
 
 <p align="center">
-  <a href="https://build-stats-plugin.xmuli.tech/"><strong>Website</strong></a>
+  <a href="https://github.com/jenkinsci/build-stats-plugin"><strong>GitHub</strong></a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/XMuli/build-stats-plugin"><strong>GitHub</strong></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><strong>Original</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://build-stats-plugin.xmuli.tech/"><strong>Website</strong></a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="README.zh-CN.md"><strong>中文说明</strong></a>
 </p>
@@ -102,13 +105,14 @@ Time, language, the summary, and the status plate sit together at the top right.
 
 ## About
 
-The author and GitHub link are fixed. A replacement logo stays in this browser only. **Restore default** clears it.
+The author and GitHub links are fixed. A replacement logo stays in this browser only. **Restore default** clears it.
 
 | Field | Default |
 | --- | --- |
 | Author | XMuli |
 | Website | https://build-stats-plugin.xmuli.tech/ |
-| GitHub | https://github.com/XMuli/build-stats-plugin |
+| GitHub | https://github.com/jenkinsci/build-stats-plugin |
+| Original | https://github.com/XMuli/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 
 Replace `logo.jpg` to change the image every new browser sees.

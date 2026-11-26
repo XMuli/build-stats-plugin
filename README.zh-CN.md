@@ -1,17 +1,20 @@
 # 构建统计
 
 <p align="center">
+  <a href="https://github.com/jenkinsci/build-stats-plugin"><img alt="Jenkins 托管" src="https://img.shields.io/badge/Jenkins-jenkinsci%2Fbuild--stats--plugin-D24939?logo=jenkins&logoColor=white"></a>
   <a href="https://build-stats-plugin.xmuli.tech/"><img alt="官网" src="https://img.shields.io/badge/website-build--stats--plugin.xmuli.tech-3ca2ea"></a>
-  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><img alt="原始仓库" src="https://img.shields.io/badge/GitHub-XMuli%2Fbuild--stats--plugin-173044"></a>
   <a href="https://www.jenkins.io/"><img alt="Jenkins 2.555.3 或更新版本" src="https://img.shields.io/badge/Jenkins-2.555.3%2B-D24939?logo=jenkins&logoColor=white"></a>
   <a href="https://adoptium.net/"><img alt="Java 21" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-4d6270"></a>
 </p>
 
 <p align="center">
-  <a href="https://build-stats-plugin.xmuli.tech/"><strong>官网</strong></a>
+  <a href="https://github.com/jenkinsci/build-stats-plugin"><strong>GitHub</strong></a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/XMuli/build-stats-plugin"><strong>GitHub</strong></a>
+  <a href="https://github.com/XMuli/build-stats-plugin"><strong>原始仓库</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://build-stats-plugin.xmuli.tech/"><strong>官网</strong></a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="README.md"><strong>English</strong></a>
 </p>
@@ -108,7 +111,8 @@
 | --- | --- |
 | 作者 | XMuli |
 | 官网 | https://build-stats-plugin.xmuli.tech/ |
-| GitHub | https://github.com/XMuli/build-stats-plugin |
+| GitHub | https://github.com/jenkinsci/build-stats-plugin |
+| 原始仓库 | https://github.com/XMuli/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 
 要让所有新打开的浏览器都看到新 Logo，换掉 `logo.jpg`。
