@@ -102,13 +102,14 @@ Time, language, the summary, and the status plate sit together at the top right.
 
 ## About
 
-The author and GitHub link are fixed. A replacement logo stays in this browser only. **Restore default** clears it.
+The author and GitHub links are fixed. A replacement logo stays in this browser only. **Restore default** clears it.
 
 | Field | Default |
 | --- | --- |
 | Author | XMuli |
 | Website | https://build-stats-plugin.xmuli.tech/ |
 | GitHub | https://github.com/XMuli/build-stats-plugin |
+| GitHub after hosting | https://github.com/jenkinsci/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 
 Replace `logo.jpg` to change the image every new browser sees.

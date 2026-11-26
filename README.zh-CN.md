@@ -109,6 +109,7 @@
 | 作者 | XMuli |
 | 官网 | https://build-stats-plugin.xmuli.tech/ |
 | GitHub | https://github.com/XMuli/build-stats-plugin |
+| 托管后的 GitHub | https://github.com/jenkinsci/build-stats-plugin |
 | Logo | `src/main/webapp/images/logo.jpg` |
 
 要让所有新打开的浏览器都看到新 Logo，换掉 `logo.jpg`。
